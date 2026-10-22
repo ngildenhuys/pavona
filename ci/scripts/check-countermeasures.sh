@@ -7,11 +7,6 @@
 
 set -e
 
-cleanup () {
-  git restore .
-  git clean -df .
-}
-
 if [ $# != 1 ]; then
     echo >&2 "Usage: check-countermeasures.sh <toplevel-name>"
     exit 1
@@ -28,5 +23,3 @@ fi
     cleanup
     exit 1
 }
-
-cleanup
