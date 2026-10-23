@@ -8,7 +8,7 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "acorn_hdr",
-    hdrs = ["acorn.h"]
+    hdrs = ["acorn.h"],
 )
 
 rust_bindgen_library(

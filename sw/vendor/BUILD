@@ -23,6 +23,15 @@ cc_library(
 
 cc_library(
     name = "cryptoc",
+    srcs = glob(
+        ["cryptoc/*.c"],
+        exclude = [
+            "cryptoc/sha512.c",
+            "cryptoc/sha384.c",
+            "cryptoc/*_unittest.c",
+        ],
+    ),
+    hdrs = glob(["cryptoc/include/cryptoc/*.h"]),
     copts = select({
         # The compiler configured for the riscv32 target has a very strict
         # default configuration.
@@ -32,13 +41,5 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    srcs = glob(
-        ["cryptoc/*.c"],
-        exclude=[
-            "cryptoc/sha512.c",
-            "cryptoc/sha384.c",
-            "cryptoc/*_unittest.c",
-        ]),
-    hdrs = glob(["cryptoc/include/cryptoc/*.h"]),
     strip_include_prefix = "cryptoc/include",
 )
