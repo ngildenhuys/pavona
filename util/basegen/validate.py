@@ -26,7 +26,7 @@ BUILTIN_SCHEMAS = []
 for sd in SCHEMA_DIRS:
     BUILTIN_SCHEMAS += list(import_hjson(hj) for hj in sd.rglob("*.hjson"))
 BUILTIN_SCHEMAS_REGISTRY = SchemaRegistry().with_resources(
-    (s["$id"], SchemaResource(contents=s, specification=DRAFT202012))
+    (s["$id"], DRAFT202012.create_resource(s))
     for s in BUILTIN_SCHEMAS).crawl()
 
 
