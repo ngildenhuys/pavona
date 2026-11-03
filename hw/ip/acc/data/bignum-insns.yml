@@ -9,7 +9,6 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-
 # Definitions for the big number group of instructions. See insns.yml
 # for the detailed format.
 
@@ -206,7 +205,6 @@
       wrs1: wrs1
       funct3: b101
       wrd: wrd
-
 
 - mnemonic: bn.trn
   synopsis: Partial transpose
@@ -1089,7 +1087,6 @@
       dpp: grs2_inc
       funct3: b101
 
-
 - mnemonic: bn.ld
   synopsis: Load Word
   operands:
@@ -1351,27 +1348,7 @@
     - *mulqacc-wrs2
     - *mulqacc-wrd
     - name: type
-      type: enum(.16h.even, .8s.even, .16h.odd, .8s.odd,
-                 .16h.even.acc, .8s.even.acc, .16h.odd.acc, .8s.odd.acc,
-                 .16h.even.acc.z, .8s.even.acc.z, .16h.odd.acc.z, .8s.odd.acc.z,
-                 "", "", "", "",
-                 .16h.lo,
-                 .8s.even.lo, "", .8s.odd.lo,
-                 .16h.acc.lo,
-                 .8s.even.acc.lo, "", .8s.odd.acc.lo,
-                 .16h.acc.z.lo,
-                 .8s.even.acc.z.lo, "", .8s.odd.acc.z.lo,
-                 "", "", "", "",
-                 .16h.hi,
-                 .8s.even.hi, "", .8s.odd.hi,
-                 .16h.acc.hi,
-                 .8s.even.acc.hi, "", .8s.odd.acc.hi,
-                 .16h.acc.z.hi,
-                 .8s.even.acc.z.hi, "", .8s.odd.acc.z.hi,
-                 "", "", "", "", "", "", "", "",
-                 "", "", "", "", "", "", "", "",
-                 "", "", "", ""
-                 )
+      type: enum(.16h.even, .8s.even, .16h.odd, .8s.odd, .16h.even.acc, .8s.even.acc, .16h.odd.acc, .8s.odd.acc, .16h.even.acc.z, .8s.even.acc.z, .16h.odd.acc.z, .8s.odd.acc.z, "", "", "", "", .16h.lo, .8s.even.lo, "", .8s.odd.lo, .16h.acc.lo, .8s.even.acc.lo, "", .8s.odd.acc.lo, .16h.acc.z.lo, .8s.even.acc.z.lo, "", .8s.odd.acc.z.lo, "", "", "", "", .16h.hi, .8s.even.hi, "", .8s.odd.hi, .16h.acc.hi, .8s.even.acc.hi, "", .8s.odd.acc.hi, .16h.acc.z.hi, .8s.even.acc.z.hi, "", .8s.odd.acc.z.hi, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" )
   glued-ops: true
   doc: |
     Multiplies corresponding elements of the two source vectors `<wrs1>` and
@@ -1475,27 +1452,7 @@
       type: uimm4
       doc: Index of the element within `<lane_reg>` to multiply by.
     - name: type
-      type: enum(.16h.even, .8s.even, .16h.odd, .8s.odd,
-                 .16h.even.acc, .8s.even.acc, .16h.odd.acc, .8s.odd.acc,
-                 .16h.even.acc.z, .8s.even.acc.z, .16h.odd.acc.z, .8s.odd.acc.z,
-                 "", "", "", "",
-                 .16h.lo,
-                 .8s.even.lo, "", .8s.odd.lo,
-                 .16h.acc.lo,
-                 .8s.even.acc.lo, "", .8s.odd.acc.lo,
-                 .16h.acc.z.lo,
-                 .8s.even.acc.z.lo, "", .8s.odd.acc.z.lo,
-                 "", "", "", "",
-                 .16h.hi,
-                 .8s.even.hi, "", .8s.odd.hi,
-                 .16h.acc.hi,
-                 .8s.even.acc.hi, "", .8s.odd.acc.hi,
-                 .16h.acc.z.hi,
-                 .8s.even.acc.z.hi, "", .8s.odd.acc.z.hi,
-                 "", "", "", "", "", "", "", "",
-                 "", "", "", "", "", "", "", "",
-                 "", "", "", ""
-                 )
+      type: enum(.16h.even, .8s.even, .16h.odd, .8s.odd, .16h.even.acc, .8s.even.acc, .16h.odd.acc, .8s.odd.acc, .16h.even.acc.z, .8s.even.acc.z, .16h.odd.acc.z, .8s.odd.acc.z, "", "", "", "", .16h.lo, .8s.even.lo, "", .8s.odd.lo, .16h.acc.lo, .8s.even.acc.lo, "", .8s.odd.acc.lo, .16h.acc.z.lo, .8s.even.acc.z.lo, "", .8s.odd.acc.z.lo, "", "", "", "", .16h.hi, .8s.even.hi, "", .8s.odd.hi, .16h.acc.hi, .8s.even.acc.hi, "", .8s.odd.acc.hi, .16h.acc.z.hi, .8s.even.acc.z.hi, "", .8s.odd.acc.z.hi, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" )
   glued-ops: true
   doc: |
     Multiplies each element of the source vector `<wrs1>` by a single element
