@@ -20,23 +20,17 @@ from pathlib import Path
 REPO_TOP = Path(__file__).resolve().parent.parent
 
 IGNORED_PATHS = {
-    Path('sw/device/silicon_creator/rom/e2e/presigned_images/rom_e2e_self_hash_sim_dv.logs.txt'),
-    Path('sw/device/silicon_creator/rom/e2e/presigned_images/rom_e2e_self_hash_sim_dv.rodata.txt'),
+    Path("sw/device/silicon_creator/rom/e2e/presigned_images/rom_e2e_self_hash_sim_dv.logs.txt"),
+    Path("sw/device/silicon_creator/rom/e2e/presigned_images/rom_e2e_self_hash_sim_dv.rodata.txt"),
 }
 
-IGNORED_SUFFIXES = {
-    ".bin",
-    ".excalidraw",
-    ".patch",
-    ".tpl",
-    ".svg"
-}
+IGNORED_SUFFIXES = {".bin", ".excalidraw", ".patch", ".tpl", ".svg"}
 
 
 def is_ignored(path):
     if path in IGNORED_PATHS:
         return True
-    git_check = subprocess.run(['git', 'check-ignore', path]).returncode
+    git_check = subprocess.run(["git", "check-ignore", path]).returncode
     if git_check == 128:  # fatal error (https://git-scm.com/docs/git-check-ignore#_exit_status)
         print("`git check-ignore` failed; not referencing any gitignore files (nothing ignored)")
     return git_check == 0
@@ -47,10 +41,10 @@ def walk_tree(paths=[REPO_TOP]):
         if isinstance(path, str):
             path = Path(path)
 
-        if path.is_symlink() or is_ignored(path) or 'LICENSE' in path.parts:
+        if path.is_symlink() or is_ignored(path) or "LICENSE" in path.parts:
             continue
 
-        if path.is_dir() and 'vendor' not in path.parts:
+        if path.is_dir() and "vendor" not in path.parts:
             yield from walk_tree(path.iterdir())
         else:
             yield path
@@ -59,24 +53,17 @@ def walk_tree(paths=[REPO_TOP]):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='report writes which would have happened')
-    parser.add_argument(
-        '--recursive', '-r',
-        action='store_true',
-        default=False,
-        help='traverse the entire tree modulo .gitignore'
+        "--dry-run", action="store_true", help="report writes which would have happened"
     )
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='verbose output')
-    parser.add_argument(
-        'files',
-        type=str,
-        nargs='*',
-        help='files to fix whitespace for')
+        "--recursive",
+        "-r",
+        action="store_true",
+        default=False,
+        help="traverse the entire tree modulo .gitignore",
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+    parser.add_argument("files", type=str, nargs="*", help="files to fix whitespace for")
     args = parser.parse_args()
 
     files = args.files
@@ -88,7 +75,7 @@ def main():
         path = Path(path).resolve().relative_to(REPO_TOP)
         if not path.is_file() or path.is_symlink() or is_ignored(path):
             continue
-        if 'vendor' in path.parts:
+        if "vendor" in path.parts:
             continue
         if path.suffix in IGNORED_SUFFIXES:
             continue
@@ -109,12 +96,12 @@ def main():
                 path.write_text(new_text)
 
     if total_fixable:
-        verb = 'Would have fixed' if args.dry_run else 'Fixed'
-        print(f'{verb} {total_fixable} files.', file=sys.stderr)
+        verb = "Would have fixed" if args.dry_run else "Fixed"
+        print(f"{verb} {total_fixable} files.", file=sys.stderr)
 
     # Pass if we fixed everything or there was nothing to fix.
     return 1 if total_fixable > 0 else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

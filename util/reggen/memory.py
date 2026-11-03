@@ -6,7 +6,7 @@ from reggen.window import Window
 
 
 class Memory:
-    '''A class representing a memory'''
+    """A class representing a memory"""
 
     windows: list[Window] = list()
     """A list of windows into the memory"""
@@ -15,7 +15,7 @@ class Memory:
         pass
 
     @staticmethod
-    def from_raw(raw: object) -> 'Memory':
+    def from_raw(raw: object) -> "Memory":
         # No keys supported at the moment.
         return Memory()
 

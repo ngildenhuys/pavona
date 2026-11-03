@@ -41,10 +41,15 @@ def get_config_params(cfg_filepath):
 
     for param_name in (param_dict | dtgen_dict).keys():
         dtgen_details = dtgen_dict.get(param_name)
-        params.append({"name": param_name,
-                       "value": param_dict.get(param_name, "default"),
-                       "dtgen": f"{dtgen_details['name']} ({dtgen_details['type']})"
-                                if dtgen_details is not None else ""})
+        params.append(
+            {
+                "name": param_name,
+                "value": param_dict.get(param_name, "default"),
+                "dtgen": f"{dtgen_details['name']} ({dtgen_details['type']})"
+                if dtgen_details is not None
+                else "",
+            }
+        )
     return params
 
 
@@ -52,24 +57,32 @@ def make_parameter_table(parameters, ip_cfg=False):
     if parameters is None:
         return "\t*unknown, no template description file found*"
     elif ip_cfg:
-        param_table = ["| name | value | dtgen |",
-                       "| ---- | ----- | ----- |"]
+        param_table = ["| name | value | dtgen |", "| ---- | ----- | ----- |"]
         for param_dict in parameters:
-            param_table.append("| "
-                               + " | ".join([str(param_dict[col])
-                                             for col in ("name", "value", "dtgen")])
-                               + " |")
+            param_table.append(
+                "| "
+                + " | ".join([str(param_dict[col]) for col in ("name", "value", "dtgen")])
+                + " |"
+            )
     else:
-        param_table = ["| name | type | default | dtgen | description |",
-                       "| ---- | ---- | ------- | ----- | ----------- |"]
+        param_table = [
+            "| name | type | default | dtgen | description |",
+            "| ---- | ---- | ------- | ----- | ----------- |",
+        ]
         for param_dict in parameters:
-            param_table.append("| "
-                               + " | ".join((param_dict["name"],
-                                             param_dict["type"],
-                                             str(param_dict["default"]),
-                                             str("dtgen" in param_dict.keys()).lower(),
-                                             param_dict.get("description", "none")))
-                               + " |")
+            param_table.append(
+                "| "
+                + " | ".join(
+                    (
+                        param_dict["name"],
+                        param_dict["type"],
+                        str(param_dict["default"]),
+                        str("dtgen" in param_dict.keys()).lower(),
+                        param_dict.get("description", "none"),
+                    )
+                )
+                + " |"
+            )
     return "\n".join(param_table)
 
 
@@ -92,8 +105,7 @@ if __name__ == "__main__":
         # render ip configurations
         elif ".ipconfig.hjson" in src_path:
             params = get_config_params(src_path)
-            chapter["content"] = IPCONFIG_TEXT.format(
-                make_parameter_table(params, True))
+            chapter["content"] = IPCONFIG_TEXT.format(make_parameter_table(params, True))
 
     # Dump the book into stdout.
     print(json.dumps(book))

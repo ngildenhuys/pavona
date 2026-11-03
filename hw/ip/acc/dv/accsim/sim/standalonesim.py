@@ -8,18 +8,17 @@ from typing import Dict, Optional, TextIO
 from .sim import ACCSim
 from .state import FsmState
 
-_TEST_RND_DATA = cycle([
-    0xAAAAAAAA_99999999_AAAAAAAA_99999999_AAAAAAAA_99999999_AAAAAAAA_99999999,
-    0xCCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB,
-])
+_TEST_RND_DATA = cycle(
+    [
+        0xAAAAAAAA_99999999_AAAAAAAA_99999999_AAAAAAAA_99999999_AAAAAAAA_99999999,
+        0xCCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB_CCCCCCCC_BBBBBBBB,
+    ]
+)
 
 
 # This is the default seed for URND PRNG. Note that the actualy URND value will
 # be random since we are modelling PRNG inside the URND register model.
-_TEST_URND_DATA = [
-    0x84ddfadaf7e1134d, 0x70aa1c59de6197ff,
-    0x25a4fe335d095f1e, 0x2cba89acbe4a07e9
-]
+_TEST_URND_DATA = [0x84DDFADAF7E1134D, 0x70AA1C59DE6197FF, 0x25A4FE335D095F1E, 0x2CBA89ACBE4A07E9]
 
 
 class StandaloneSim(ACCSim):
@@ -27,11 +26,11 @@ class StandaloneSim(ACCSim):
         super().__init__(pqc=pqc)
 
     def run(self, verbose: bool, dump_file: Optional[TextIO]) -> int:
-        '''Run until ECALL.
+        """Run until ECALL.
 
         Return the number of cycles taken.
 
-        '''
+        """
         insn_count = 0
 
         # Skip the initial secure wipe
@@ -39,9 +38,8 @@ class StandaloneSim(ACCSim):
 
         while True:
             # If there's a RND request, respond immediately
-            if self.state.ext_regs.read('RND_REQ', True):
-                self.state.wsrs.RND.set_unsigned(next(_TEST_RND_DATA), False,
-                                                 False)
+            if self.state.ext_regs.read("RND_REQ", True):
+                self.state.wsrs.RND.set_unsigned(next(_TEST_RND_DATA), False, False)
             # If there's a URND request, respond immediately.
             if not self.state.wsrs.URND.running:
                 self.state.wsrs.URND.set_seed(_TEST_URND_DATA)
@@ -67,26 +65,26 @@ class StandaloneSim(ACCSim):
         for label, value in dmem_vars.items():
             offset = self.symbols.get(label)
             if offset is None:
-                raise KeyError(f'Symbol {label} does not exist in the elf')
+                raise KeyError(f"Symbol {label} does not exist in the elf")
             assert offset % 4 == 0, "Only word-aligned variables are supported."
             self.state.dmem.load_le_words(value, has_validity=False, word_offset=offset // 4)
 
     def load_regs_vars(self, regs: Dict[str, int]) -> None:
         for label, value in regs.items():
-            if label.startswith('x'):
+            if label.startswith("x"):
                 gpr_idx = int(label[1:])
                 self.state.gprs.get_reg(gpr_idx).write_unsigned(value)
-            elif label.startswith('w'):
+            elif label.startswith("w"):
                 wdr_idx = int(label[1:])
                 self.state.wdrs.get_reg(wdr_idx).write_unsigned(value)
             else:
                 self.state.ext_regs.write(label, value, from_hw=False)
 
     def dump_regs(self, tgt: TextIO) -> None:
-        for reg in ['ERR_BITS', 'INSN_CNT', 'STOP_PC']:
+        for reg in ["ERR_BITS", "INSN_CNT", "STOP_PC"]:
             value = self.state.ext_regs.read(reg, False)
-            tgt.write(' {} = 0x{:08x}\n'.format(reg, value))
+            tgt.write(" {} = 0x{:08x}\n".format(reg, value))
         for idx, value in enumerate(self.state.gprs.peek_unsigned_values()):
-            tgt.write(' x{:<2} = 0x{:08x}\n'.format(idx, value))
+            tgt.write(" x{:<2} = 0x{:08x}\n".format(idx, value))
         for idx, value in enumerate(self.state.wdrs.peek_unsigned_values()):
-            tgt.write(' w{:<2} = 0x{:064x}\n'.format(idx, value))
+            tgt.write(" w{:<2} = 0x{:064x}\n".format(idx, value))

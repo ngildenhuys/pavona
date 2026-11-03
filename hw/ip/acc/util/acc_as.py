@@ -10,7 +10,7 @@
 # (https://eprint.iacr.org/2025/2028)
 # Copyright Ruben Niederhagen and Hoang Nguyen Hien Pham.
 
-'''A wrapper around riscv32-unknown-elf-as for ACC
+"""A wrapper around riscv32-unknown-elf-as for ACC
 
 Partial support:
 
@@ -22,7 +22,7 @@ Partial support:
   - Operands may not have embedded spaces or commas. Complicated immediate
     expressions are not currently supported.
 
-'''
+"""
 
 import os
 import re
@@ -39,7 +39,7 @@ from shared.toolchain import find_tool
 
 
 class RVFmt:
-    '''A simple representation of a format supported by .insn
+    """A simple representation of a format supported by .insn
 
     The internal representation has the list of operand names (self.operands).
     These are keys for self.op_data, whose entries are tuples (fmt, shift,
@@ -72,10 +72,9 @@ class RVFmt:
     syntax N gets encoded as N >> S), the shift can be specified by a <<n
     suffix.
 
-    '''
+    """
 
-    def __init__(self, name: str, bitfields: List[str],
-                 syntax: List[str]) -> None:
+    def __init__(self, name: str, bitfields: List[str], syntax: List[str]) -> None:
         self.name = name
         self.operands = syntax
         self.op_data = {}  # type: Dict[str, Tuple[str, int, BitRanges]]
@@ -86,10 +85,10 @@ class RVFmt:
         name_to_triple = {}
         msb = 31
         for field in bitfields:
-            name, fmt_width = field.split(':')
+            name, fmt_width = field.split(":")
             fmt = fmt_width[0]
-            assert fmt in ['f', 'r', 'i', 'u']
-            width = 5 if fmt == 'r' else int(fmt_width[1:])
+            assert fmt in ["f", "r", "i", "u"]
+            width = 5 if fmt == "r" else int(fmt_width[1:])
 
             assert name not in name_to_triple
             lsb = msb - width + 1
@@ -107,16 +106,16 @@ class RVFmt:
             op_ranges = []
 
             op_shift = 0
-            shift_idx = operand.find('<<')
+            shift_idx = operand.find("<<")
             unshifted_name = operand
             if shift_idx >= 0:
-                op_shift = int(operand[shift_idx + 2:])
+                op_shift = int(operand[shift_idx + 2 :])
                 unshifted_name = operand[:shift_idx]
 
             # Work through the fields LSB-first (so that we can figure out the
             # shifts despite not knowing the width of the operand in advance).
             field_lsb = 0
-            for field_name in reversed(unshifted_name.split('|')):
+            for field_name in reversed(unshifted_name.split("|")):
                 assert field_name not in fields_used
                 fields_used.add(field_name)
                 assert field_name in name_to_triple
@@ -140,8 +139,7 @@ class RVFmt:
 
             assert operand not in self.op_data
             assert op_fmt is not None
-            self.op_data[operand] = (op_fmt, op_shift,
-                                     BitRanges.from_list(op_ranges))
+            self.op_data[operand] = (op_fmt, op_shift, BitRanges.from_list(op_ranges))
 
         assert len(b2o_dict) == 32
 
@@ -154,12 +152,12 @@ class RVFmt:
 
 
 def rv_render(fmt: str, num: int) -> str:
-    '''Render a number as expected by a RISC-V .insn field'''
-    if fmt in ['f', 'i', 'u']:
-        return '{:#x}'.format(num)
+    """Render a number as expected by a RISC-V .insn field"""
+    if fmt in ["f", "i", "u"]:
+        return "{:#x}".format(num)
 
-    assert fmt == 'r'
-    return 'x{}'.format(num)
+    assert fmt == "r"
+    return "x{}".format(num)
 
 
 # A _PartFieldEncoding is a list with items:
@@ -173,16 +171,21 @@ _PartFieldEncoding = List[Tuple[Tuple[int, int], str, int]]
 
 
 class RVEncoding:
-    '''A mapping from an Encoding to a RVFmt
+    """A mapping from an Encoding to a RVFmt
 
     If we have one of these, we can use it to express the use of an instruction
     that has the given encoding as a .insn line (with the given RVFmt).
 
-    '''
+    """
 
-    def __init__(self, encoding: Encoding, rvfmt: RVFmt,
-                 rv_masks: Dict[str, int], rv_to_full_op: Dict[str, str],
-                 part_field_to_rv: Dict[str, _PartFieldEncoding]) -> None:
+    def __init__(
+        self,
+        encoding: Encoding,
+        rvfmt: RVFmt,
+        rv_masks: Dict[str, int],
+        rv_to_full_op: Dict[str, str],
+        part_field_to_rv: Dict[str, _PartFieldEncoding],
+    ) -> None:
         self.encoding = encoding
         self.rvfmt = rvfmt
         self.rv_masks = rv_masks
@@ -191,37 +194,59 @@ class RVEncoding:
 
 
 RISCV_FORMATS = [
-    RVFmt('r', ['func7:f7', 'rs2:r', 'rs1:r', 'func3:f3', 'rd:r', 'opcode:f7'],
-          ['opcode', 'func3', 'func7', 'rd', 'rs1', 'rs2']),
-    RVFmt('r4', [
-        'rs3:r', 'func2:f2', 'rs2:r', 'rs1:r', 'func3:f3', 'rd:r', 'opcode:f7'
-    ], ['opcode', 'func3', 'func2', 'rd', 'rs1', 'rs2', 'rs3']),
-    RVFmt('i', ['simm12:i12', 'rs1:r', 'func3:f3', 'rd:r', 'opcode:f7'],
-          ['opcode', 'func3', 'rd', 'rs1', 'simm12']),
-    RVFmt('s',
-          ['imm0:i7', 'rs2:r', 'rs1:r', 'func3:f3', 'imm1:i5', 'opcode:f7'],
-          ['opcode', 'func3', 'rs2', 'rs1', 'imm0|imm1']),
-    RVFmt('sb', [
-        'imm12:i1', 'imm105:i6', 'rs2:r', 'rs1:r', 'func3:f3', 'imm41:i4',
-        'imm11:i1', 'opcode:f7'
-    ], ['opcode', 'func3', 'rs2', 'rs1', 'imm12|imm11|imm105|imm41<<1']),
-
+    RVFmt(
+        "r",
+        ["func7:f7", "rs2:r", "rs1:r", "func3:f3", "rd:r", "opcode:f7"],
+        ["opcode", "func3", "func7", "rd", "rs1", "rs2"],
+    ),
+    RVFmt(
+        "r4",
+        ["rs3:r", "func2:f2", "rs2:r", "rs1:r", "func3:f3", "rd:r", "opcode:f7"],
+        ["opcode", "func3", "func2", "rd", "rs1", "rs2", "rs3"],
+    ),
+    RVFmt(
+        "i",
+        ["simm12:i12", "rs1:r", "func3:f3", "rd:r", "opcode:f7"],
+        ["opcode", "func3", "rd", "rs1", "simm12"],
+    ),
+    RVFmt(
+        "s",
+        ["imm0:i7", "rs2:r", "rs1:r", "func3:f3", "imm1:i5", "opcode:f7"],
+        ["opcode", "func3", "rs2", "rs1", "imm0|imm1"],
+    ),
+    RVFmt(
+        "sb",
+        [
+            "imm12:i1",
+            "imm105:i6",
+            "rs2:r",
+            "rs1:r",
+            "func3:f3",
+            "imm41:i4",
+            "imm11:i1",
+            "opcode:f7",
+        ],
+        ["opcode", "func3", "rs2", "rs1", "imm12|imm11|imm105|imm41<<1"],
+    ),
     # The "U" format is used for LUI. The immediate operand gives imm[31:12]
     # for some imm. Confusingly, the spec implies that this is a signed
     # immediate, probably because it *is* sign-extended for the 64-bit
     # architecture. For a 32-bit architecture, the top bit is the sign, so
     # there is no sign extension to be done. The binutils assembler rejects
     # things like "lui x1, -1", treating the immediate as unsigned.
-    RVFmt('u', ['imm20:u20', 'rd:r', 'opcode:f7'], ['opcode', 'rd', 'imm20']),
-    RVFmt('j',
-          ['i20:i1', 'i101:i10', 'i11:i1', 'i1912:i8', 'rd:r', 'opcode:f7'],
-          ['opcode', 'rd', 'i20|i1912|i11|i101<<1'])
+    RVFmt("u", ["imm20:u20", "rd:r", "opcode:f7"], ["opcode", "rd", "imm20"]),
+    RVFmt(
+        "j",
+        ["i20:i1", "i101:i10", "i11:i1", "i1912:i8", "rd:r", "opcode:f7"],
+        ["opcode", "rd", "i20|i1912|i11|i101<<1"],
+    ),
 ]
 
 
-def find_rv_encoding(enc: Encoding, name_to_operand: Dict[str, Operand],
-                     rvfmt: RVFmt) -> Optional[RVEncoding]:
-    '''Try to find an RVEncoding that expresses enc with rvfmt'''
+def find_rv_encoding(
+    enc: Encoding, name_to_operand: Dict[str, Operand], rvfmt: RVFmt
+) -> Optional[RVEncoding]:
+    """Try to find an RVEncoding that expresses enc with rvfmt"""
 
     # A map from RV field to operand name. It holds operands that fit
     # completely in a field and don't need any recoding.
@@ -266,7 +291,7 @@ def find_rv_encoding(enc: Encoding, name_to_operand: Dict[str, Operand],
         # those in the encoding field.
         match = None
         for rv_name, (fmt, shift, rv_bits) in rvfmt.op_data.items():
-            if fmt == 'f':
+            if fmt == "f":
                 continue
             if field.scheme_field.bits == rv_bits:
                 match = (fmt, shift)
@@ -282,10 +307,10 @@ def find_rv_encoding(enc: Encoding, name_to_operand: Dict[str, Operand],
         # the correct shift and sign.
         if shift != op_type.shift:
             return None
-        if fmt == 'i':
+        if fmt == "i":
             if not op_type.signed:
                 return None
-        elif fmt == 'u':
+        elif fmt == "u":
             if op_type.signed:
                 return None
         else:
@@ -369,17 +394,16 @@ def find_rv_encoding(enc: Encoding, name_to_operand: Dict[str, Operand],
 
         for (field_msb, field_lsb), rv_name, rv_lsb in pf_data:
             for field_bit in range(field_lsb, field_msb + 1):
-                is_one = field.value.char_for_bit(field_bit) == '1'
+                is_one = field.value.char_for_bit(field_bit) == "1"
                 if is_one:
                     rv_bit = field_bit - field_lsb + rv_lsb
                     rv_masks[rv_name] |= 1 << rv_bit
 
-    return RVEncoding(enc, rvfmt, rv_masks, rv_field_to_op,
-                      part_field_to_rv_field)
+    return RVEncoding(enc, rvfmt, rv_masks, rv_field_to_op, part_field_to_rv_field)
 
 
 def find_insn_schemes(mnem_to_insn: Dict[str, Insn]) -> Dict[str, RVEncoding]:
-    '''Try to find a .insn scheme for each instruction'''
+    """Try to find a .insn scheme for each instruction"""
     ret = {}
     for mnem, insn in mnem_to_insn.items():
         # We definitely aren't going to manage it if we have no encoding
@@ -394,9 +418,8 @@ def find_insn_schemes(mnem_to_insn: Dict[str, Insn]) -> Dict[str, RVEncoding]:
     return ret
 
 
-def parse_positionals(
-        argv: List[str]) -> Tuple[List[str], List[str], Set[str]]:
-    '''A partial argument parser that extracts positional arguments'''
+def parse_positionals(argv: List[str]) -> Tuple[List[str], List[str], Set[str]]:
+    """A partial argument parser that extracts positional arguments"""
 
     # The only arguments we actually need to parse from as are the input files:
     # we'll pass anything else straight through. Unfortunately, we can't use
@@ -408,10 +431,10 @@ def parse_positionals(
     # The switches listed in the as manual that can be specified as "--foo bar"
     # (we need to know them so that we don't think that "bar" is a positional
     # argument).
-    space_args = ['--debug-prefix-map', '--defsym', '-I', '-o']
+    space_args = ["--debug-prefix-map", "--defsym", "-I", "-o"]
 
     # ACC-specific flags
-    acc_flags = ['--acc-translate']
+    acc_flags = ["--acc-translate"]
 
     flags = set()
 
@@ -430,80 +453,92 @@ def parse_positionals(
             expecting_arg = True
             continue
 
-        if arg.startswith('-'):
+        if arg.startswith("-"):
             others.append(arg)
             continue
 
         positionals.append(arg)
 
-    if '-h' in others or '--help' in others:
-        print('acc_as.py:\n\n'
-              'A wrapper around riscv32-unknown-elf-as for ACC.\n'
-              'Most arguments are passed through: see "man as" '
-              'for more information.\n'
-              '\n'
-              '  --acc-translate: Translate the input and dump to '
-              'stdout rather than calling as.\n')
+    if "-h" in others or "--help" in others:
+        print(
+            "acc_as.py:\n\n"
+            "A wrapper around riscv32-unknown-elf-as for ACC.\n"
+            'Most arguments are passed through: see "man as" '
+            "for more information.\n"
+            "\n"
+            "  --acc-translate: Translate the input and dump to "
+            "stdout rather than calling as.\n"
+        )
         sys.exit(0)
 
     return (positionals, others, flags)
 
 
-def _unpack_lx(where: str, mnemonic: str,
-               op_to_expr: Dict[str, Optional[str]]) -> Tuple[str, str]:
-    '''Unpack the arguments to li or la'''
-    if set(op_to_expr.keys()) != {'grd', 'imm'}:
+def _unpack_lx(where: str, mnemonic: str, op_to_expr: Dict[str, Optional[str]]) -> Tuple[str, str]:
+    """Unpack the arguments to li or la"""
+    if set(op_to_expr.keys()) != {"grd", "imm"}:
         umnem = mnemonic.upper()
         keys_list = list(op_to_expr.keys())
-        raise RuntimeError(f'When expanding {umnem}, got wrong op_to_expr '
-                           f'keys ({keys_list}). This is a mismatch between '
-                           f'expand_{mnemonic} in acc_as.py and the operands '
-                           f'for {umnem} in insns.yml.')
+        raise RuntimeError(
+            f"When expanding {umnem}, got wrong op_to_expr "
+            f"keys ({keys_list}). This is a mismatch between "
+            f"expand_{mnemonic} in acc_as.py and the operands "
+            f"for {umnem} in insns.yml."
+        )
 
-    grd = op_to_expr['grd']
-    imm = op_to_expr['imm']
+    grd = op_to_expr["grd"]
+    imm = op_to_expr["imm"]
     if grd is None:
-        raise RuntimeError('When expanding LI, got <grd> = None. Is the '
-                           '<grd> operand wrongly marked as optional in '
-                           'insns.yml?')
+        raise RuntimeError(
+            "When expanding LI, got <grd> = None. Is the "
+            "<grd> operand wrongly marked as optional in "
+            "insns.yml?"
+        )
     if imm is None:
-        raise RuntimeError('When expanding LI, got <imm> = None. Is the '
-                           '<imm> operand wrongly marked as optional in '
-                           'insns.yml?')
+        raise RuntimeError(
+            "When expanding LI, got <imm> = None. Is the "
+            "<imm> operand wrongly marked as optional in "
+            "insns.yml?"
+        )
 
     try:
-        gpr_type = RegOperandType('gpr', False, True)
+        gpr_type = RegOperandType("gpr", False, True)
         grd_op_val = gpr_type.str_to_op_val(grd)
         assert grd_op_val is not None
     except ValueError as err:
-        raise RuntimeError('{}: When parsing LI instruction, <grd> '
-                           'operand is wrong: {}'.format(where, err))
+        raise RuntimeError(
+            "{}: When parsing LI instruction, <grd> operand is wrong: {}".format(where, err)
+        )
 
     grd_txt = gpr_type.op_val_to_str(grd_op_val, None)
     return (grd_txt, imm)
 
 
 def expand_li(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
-    '''Expand the li pseudo-op'''
+    """Expand the li pseudo-op"""
 
     # This logic is slightly complicated so it has some associated tests in the
     # ISS testsuite (where we can run the results). If adding more cleverness
     # to this or fixing bugs, we should also add a check at
     # hw/ip/acc/dv/accsim/test/simple/pseudos/li.s.
 
-    grd_txt, imm = _unpack_lx(where, 'li', op_to_expr)
+    grd_txt, imm = _unpack_lx(where, "li", op_to_expr)
     try:
         imm_int = int(imm, 0)
     except ValueError:
-        raise RuntimeError('{}: Cannot parse {!r}, the immediate for an LI '
-                           'instruction, as an integer.'.format(where, imm))
+        raise RuntimeError(
+            "{}: Cannot parse {!r}, the immediate for an LI instruction, as an integer.".format(
+                where, imm
+            )
+        )
 
     # We allow immediates in the range [-2^31, 2^31-1] (the i32 range), plus
     # [2^31, 2^32-1] (to allow any u32 constant).
     if not (-(1 << 31) <= imm_int <= (1 << 32) - 1):
-        raise RuntimeError('{}: The immediate for an LI instruction is {}, '
-                           'which does not fit in a 32-bit integer.'.format(
-                               where, imm))
+        raise RuntimeError(
+            "{}: The immediate for an LI instruction is {}, "
+            "which does not fit in a 32-bit integer.".format(where, imm)
+        )
 
     # Convert any large positive constants to negative ones, so imm_int ends up
     # in the range [-2^31, 2^31-1].
@@ -514,7 +549,7 @@ def expand_li(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
 
     # If imm_int is representable as an i12, we can just generate an addi
     if -(1 << 11) <= imm_int < (1 << 11):
-        return ['addi {}, x0, {}'.format(grd_txt, imm_int)]
+        return ["addi {}, x0, {}".format(grd_txt, imm_int)]
 
     imm_uint = imm_int if imm_int > 0 else (1 << 32) + imm_int
     assert imm_uint >= 0
@@ -529,25 +564,25 @@ def expand_li(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
 
     if imm_12 == 0:
         # We can just generate an LUI here
-        return ['lui {}, {:#x}'.format(grd_txt, imm_uint >> 12)]
+        return ["lui {}, {:#x}".format(grd_txt, imm_uint >> 12)]
 
     if imm_12 > 0:
         # LUI; ADDI with a positive constant
         return [
-            'lui {}, {:#x}'.format(grd_txt, imm_uint >> 12),
-            'addi {}, {}, {:#x}'.format(grd_txt, grd_txt, imm_12)
+            "lui {}, {:#x}".format(grd_txt, imm_uint >> 12),
+            "addi {}, {}, {:#x}".format(grd_txt, grd_txt, imm_12),
         ]
 
     # LUI; ADDI with a negative constant. Add 1 to the upper immediate to
     # subtract from it.
     return [
-        'lui {}, {:#x}'.format(grd_txt, 1 + (imm_uint >> 12)),
-        'addi {}, {}, {}'.format(grd_txt, grd_txt, imm_12)
+        "lui {}, {:#x}".format(grd_txt, 1 + (imm_uint >> 12)),
+        "addi {}, {}, {}".format(grd_txt, grd_txt, imm_12),
     ]
 
 
 def expand_la(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
-    '''Expand the la pseudo-op'''
+    """Expand the la pseudo-op"""
 
     # For RISC-V, "la rd, symbol" expands to two instructions:
     #
@@ -562,34 +597,30 @@ def expand_la(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
     #    addi rd, x0, %lo(symbol)
     #
     # Much easier!
-    grd_txt, imm = _unpack_lx(where, 'la', op_to_expr)
+    grd_txt, imm = _unpack_lx(where, "la", op_to_expr)
     return [
-        'lui {}, %hi({})'.format(grd_txt, imm),
-        'addi {}, {}, %lo({})'.format(grd_txt, grd_txt, imm)
+        "lui {}, %hi({})".format(grd_txt, imm),
+        "addi {}, {}, %lo({})".format(grd_txt, grd_txt, imm),
     ]
 
 
-def expand_endloop(where: str,
-                   op_to_expr: Dict[str, Optional[str]]) -> List[str]:
-    '''Pseudo-op assembler for endloop.
+def expand_endloop(where: str, op_to_expr: Dict[str, Optional[str]]) -> List[str]:
+    """Pseudo-op assembler for endloop.
 
     endloop emits no instruction; it is handled specially in
     Transformer.gen_line, which emits the as-side loop-body size check. This
     only exists so endloop can be marked python-pseudo-op.
-    '''
+    """
     if op_to_expr:
-        raise RuntimeError('{}: endloop does not take any operands.'
-                           .format(where))
+        raise RuntimeError("{}: endloop does not take any operands.".format(where))
     return []
 
 
-_PSEUDO_OP_ASSEMBLERS = {'li': expand_li,
-                         'la': expand_la,
-                         'endloop': expand_endloop}
+_PSEUDO_OP_ASSEMBLERS = {"li": expand_li, "la": expand_la, "endloop": expand_endloop}
 
 
 class Transformer:
-    '''A simple parser/transformer for ACC input files
+    """A simple parser/transformer for ACC input files
 
     We have to do some basic tokenization to understand things like comments
     and strings (which can contain embedded newlines). We don't want to perturb
@@ -636,11 +667,17 @@ class Transformer:
     Note that, while we don't need to understand the labels themselves, we do
     need to spot them in order to find the key-sym.
 
-    '''
+    """
 
-    def __init__(self, out_handle: TextIO, in_path: str, in_idx: int,
-                 insns_file: InsnsFile, glued_insns_dec_len: List[Insn],
-                 mnem_to_rve: Dict[str, RVEncoding]) -> None:
+    def __init__(
+        self,
+        out_handle: TextIO,
+        in_path: str,
+        in_idx: int,
+        insns_file: InsnsFile,
+        glued_insns_dec_len: List[Insn],
+        mnem_to_rve: Dict[str, RVEncoding],
+    ) -> None:
         self.out_handle = out_handle
         self.in_path = in_path
         self.in_idx = in_idx
@@ -657,7 +694,7 @@ class Transformer:
         self.loop_stack = []  # type: List[Tuple[int, str, Optional[str]]]
 
         # Strings that should be spat out verbatim
-        self.acc = []   # type: List[str]
+        self.acc = []  # type: List[str]
         self.macros = []  # type: List[str]
         self.symbol_table = {}  # type: Dict[str, List[str]]
         # The key symbol for this statement
@@ -676,23 +713,22 @@ class Transformer:
         # relaxed sequences (e.g. an out-of-range conditional branch becoming
         # an inverted branch plus jal) that the assembler may otherwise
         # substitute. Out-of-range branches become errors instead.
-        out_handle.write('.option exact\n')
+        out_handle.write(".option exact\n")
 
         # Write .file and .line directives to tell the assembler where the code
         # came from.
         out_handle.write(f'.file 1 "{in_path}"\n')
-        out_handle.write('.loc 1 0\n')
+        out_handle.write(".loc 1 0\n")
         out_handle.write(f'.file "{in_path}"\n')
-        out_handle.write('.line 1\n')
+        out_handle.write(".line 1\n")
 
-    def mk_raw_line(self, insn: Insn, op_to_expr: Dict[str,
-                                                       Optional[str]]) -> str:
-        '''Generate a .word-style raw line
+    def mk_raw_line(self, insn: Insn, op_to_expr: Dict[str, Optional[str]]) -> str:
+        """Generate a .word-style raw line
 
         insn must have an encoding and op_to_expr should map the operand names
         of insn to their string expressions from the assembly file.
 
-        '''
+        """
         assert insn.encoding is not None
 
         # Generate a mapping from operand name to an encoded value. Note that
@@ -702,48 +738,45 @@ class Transformer:
         for op_name, expr in op_to_expr.items():
             op_type = insn.name_to_operand[op_name].op_type
             try:
-                op_val = (0 if expr is None else op_type.str_to_op_val(
-                    expr.strip()))
+                op_val = 0 if expr is None else op_type.str_to_op_val(expr.strip())
             except ValueError as err:
-                raise RuntimeError('{}:{}: {}'.format(self.in_path,
-                                                      self.line_number,
-                                                      err)) from None
+                raise RuntimeError(
+                    "{}:{}: {}".format(self.in_path, self.line_number, err)
+                ) from None
             if op_val is None:
-                raise RuntimeError('{}:{}: Cannot resolve operand expression '
-                                   '{!r} to an index and the instruction {!r} '
-                                   'has an encoding incompatible with rv32i '
-                                   '.insn lines.'.format(
-                                       self.in_path, self.line_number, expr,
-                                       insn.mnemonic)) from None
+                raise RuntimeError(
+                    "{}:{}: Cannot resolve operand expression "
+                    "{!r} to an index and the instruction {!r} "
+                    "has an encoding incompatible with rv32i "
+                    ".insn lines.".format(self.in_path, self.line_number, expr, insn.mnemonic)
+                ) from None
 
             try:
                 enc_val = op_type.op_val_to_enc_val(op_val, None)
             except ValueError as err:
-                raise RuntimeError('{}:{}: {}'.format(self.in_path,
-                                                      self.line_number,
-                                                      err)) from None
+                raise RuntimeError(
+                    "{}:{}: {}".format(self.in_path, self.line_number, err)
+                ) from None
 
             if enc_val is None:
                 raise RuntimeError(
-                    '{}:{}: Cannot encode {!r} operand for '
-                    '{!r} instruction without a current PC '
-                    '(which is not known to acc_as.py).'.format(
-                        self.in_path, self.line_number, expr,
-                        insn.mnemonic)) from None
+                    "{}:{}: Cannot encode {!r} operand for "
+                    "{!r} instruction without a current PC "
+                    "(which is not known to acc_as.py).".format(
+                        self.in_path, self.line_number, expr, insn.mnemonic
+                    )
+                ) from None
 
             op_to_idx[op_name] = enc_val
 
         try:
             word_val = insn.encoding.assemble(op_to_idx)
         except ValueError as err:
-            raise RuntimeError('{}:{}: {}'.format(self.in_path,
-                                                  self.line_number,
-                                                  err)) from None
+            raise RuntimeError("{}:{}: {}".format(self.in_path, self.line_number, err)) from None
 
-        return '.word {:#010x}'.format(word_val)
+        return ".word {:#010x}".format(word_val)
 
-    def mk_rve_line(self, insn: Insn, rve: RVEncoding,
-                    op_to_expr: Dict[str, Optional[str]]) -> str:
+    def mk_rve_line(self, insn: Insn, rve: RVEncoding, op_to_expr: Dict[str, Optional[str]]) -> str:
 
         # Take a copy of the fixed fields
         rv_nums = rve.rv_masks.copy()
@@ -765,9 +798,9 @@ class Transformer:
                 enc_val = op_type.op_val_to_enc_val(op_val, None)
                 assert enc_val is not None
             except ValueError as err:
-                raise RuntimeError('{}:{}: {}'.format(self.in_path,
-                                                      self.line_number,
-                                                      err)) from None
+                raise RuntimeError(
+                    "{}:{}: {}".format(self.in_path, self.line_number, err)
+                ) from None
 
             # read_index should always return a non-None result if
             # syntax_determines_value() returned false.
@@ -803,37 +836,37 @@ class Transformer:
         for rv_name in rve.rvfmt.operands:
             rv_str_list.append(rv_strings[rv_name])
 
-        return '.insn {} {}'.format(rve.rvfmt.name, ', '.join(rv_str_list))
+        return ".insn {} {}".format(rve.rvfmt.name, ", ".join(rv_str_list))
 
-    def _open_loop(self, insn: Insn,
-                   op_to_expr: Dict[str, Optional[str]]) -> None:
-        '''Emit a body-start label after a loop/loopi and record the frame.'''
+    def _open_loop(self, insn: Insn, op_to_expr: Dict[str, Optional[str]]) -> None:
+        """Emit a body-start label after a loop/loopi and record the frame."""
         self.loop_id += 1
         # Numeric local label: redefinable, so it works inside .rept/.macro.
         label = (self.in_idx + 1) * 1000000 + self.loop_id
-        self.out_handle.write(f'{label}:\n')
-        self.loop_stack.append((label, insn.mnemonic, op_to_expr.get('bodysize')))
+        self.out_handle.write(f"{label}:\n")
+        self.loop_stack.append((label, insn.mnemonic, op_to_expr.get("bodysize")))
 
     def _emit_endloop_check(self) -> None:
-        '''Turn an endloop marker into an as-side loop-body size check.'''
+        """Turn an endloop marker into an as-side loop-body size check."""
         if not self.loop_stack:
-            raise RuntimeError('{}:{}: endloop with no open loop.'
-                               .format(self.in_path, self.line_number))
+            raise RuntimeError(
+                "{}:{}: endloop with no open loop.".format(self.in_path, self.line_number)
+            )
         label, mnem, bodysize = self.loop_stack.pop()
         self.out_handle.write(
-            f'.if (. - {label}b) != (({bodysize}) * 4)\n'
+            f".if (. - {label}b) != (({bodysize}) * 4)\n"
             f'.error "{mnem}: loop body size does not match declared '
             f'bodysize ({bodysize})"\n'
-            '.endif\n')
+            ".endif\n"
+        )
 
-    def gen_line(self, insn: Insn, op_to_expr: Dict[str,
-                                                    Optional[str]]) -> None:
-        '''Build and write out a line for this instruction'''
+    def gen_line(self, insn: Insn, op_to_expr: Dict[str, Optional[str]]) -> None:
+        """Build and write out a line for this instruction"""
         assert self.key_sym is not None
 
         # endloop is an assembler-only marker: it emits no instruction, just an
         # as-side check that the preceding loop body had the declared size.
-        if insn.mnemonic == 'endloop':
+        if insn.mnemonic == "endloop":
             self._emit_endloop_check()
             return
 
@@ -848,20 +881,19 @@ class Transformer:
         # checked when loading our instruction definitions that if the
         # instruction claims to have a special-case assembler, it really does.
         if insn.python_pseudo_op:
-            where = '{}:{}'.format(self.in_path, self.line_number)
+            where = "{}:{}".format(self.in_path, self.line_number)
             po_assembler = _PSEUDO_OP_ASSEMBLERS[insn.mnemonic]
             expansion = po_assembler(where, op_to_expr)
 
-        reconstructed = self.key_sym + ''.join(self.acc).rstrip()
-        assert '\n' not in reconstructed
+        reconstructed = self.key_sym + "".join(self.acc).rstrip()
+        assert "\n" not in reconstructed
 
         if expansion is not None:
-            self.out_handle.write(
-                '# pseudo-expansion for: {}\n'.format(reconstructed))
+            self.out_handle.write("# pseudo-expansion for: {}\n".format(reconstructed))
             for entry in expansion:
-                self.out_handle.write(f'.line {self.line_number - 1}\n')
-                self.out_handle.write(f'.loc {self.in_idx + 1} {self.line_number}\n')
-                self.out_handle.write(f'{entry}\n')
+                self.out_handle.write(f".line {self.line_number - 1}\n")
+                self.out_handle.write(f".loc {self.in_idx + 1} {self.line_number}\n")
+                self.out_handle.write(f"{entry}\n")
             return
 
         # If this instruction comes from the rv32i instruction set, we can just
@@ -870,17 +902,19 @@ class Transformer:
         # part of the rv32i instruction set, but we want to do some work to
         # resolve CSR names.
         if insn.rv32i and not insn.uses_isr:
-            self.out_handle.write(f'.line {self.line_number - 1}\n')
-            self.out_handle.write(f'.loc {self.in_idx + 1} {self.line_number}\n')
-            self.out_handle.write(f'{reconstructed}\n')
+            self.out_handle.write(f".line {self.line_number - 1}\n")
+            self.out_handle.write(f".loc {self.in_idx + 1} {self.line_number}\n")
+            self.out_handle.write(f"{reconstructed}\n")
             return
 
         # If we don't know an encoding for this instruction, we're not going to
         # have much chance.
         if insn.encoding is None:
             raise RuntimeError(
-                '{}:{}: Instruction {!r} has no encoding.'.format(
-                    self.in_path, self.line_number, insn.mnemonic))
+                "{}:{}: Instruction {!r} has no encoding.".format(
+                    self.in_path, self.line_number, insn.mnemonic
+                )
+            )
 
         # A custom instruction. We have two possible approaches.
         #
@@ -904,25 +938,25 @@ class Transformer:
         else:
             line = self.mk_raw_line(insn, op_to_expr)
 
-        self.out_handle.write(f'# {reconstructed}\n')
-        self.out_handle.write(f'.line {self.line_number - 1}\n')
-        self.out_handle.write(f'.loc {self.in_idx + 1} {self.line_number}\n')
-        self.out_handle.write(f'{line}\n')
+        self.out_handle.write(f"# {reconstructed}\n")
+        self.out_handle.write(f".line {self.line_number - 1}\n")
+        self.out_handle.write(f".loc {self.in_idx + 1} {self.line_number}\n")
+        self.out_handle.write(f"{line}\n")
 
         # After a loop/loopi, drop the body-start label for the endloop check.
-        if insn.mnemonic in ('loop', 'loopi'):
+        if insn.mnemonic in ("loop", "loopi"):
             self._open_loop(insn, op_to_expr)
 
     def _continue_block_comment(self, line: str, pos: int) -> int:
-        '''Continue whitespace matching in a block comment
+        """Continue whitespace matching in a block comment
 
         Return end pos. Clear self.in_comment if we get to the end before EOL.
 
-        '''
+        """
         assert self.in_comment
 
         # Search from pos for */
-        idx = line.find('*/', pos)
+        idx = line.find("*/", pos)
 
         # If there is no such index, return EOL (and leave self.in_comment
         # set). Don't eat the \n at the end of the line: that will be added by
@@ -938,7 +972,7 @@ class Transformer:
         return self._eat_ws(line, idx + 2)
 
     def _continue_string(self, line: str, pos: int) -> int:
-        '''Continue reading a string'''
+        """Continue reading a string"""
         assert self.in_string
         assert self.state == 1
         while True:
@@ -954,23 +988,23 @@ class Transformer:
 
             if quot_idx < 0:
                 # No " before EOL, but there is a \". Eat that and keep going.
-                self.acc.append(line[pos:esc_quot_idx + 2])
+                self.acc.append(line[pos : esc_quot_idx + 2])
                 pos = esc_quot_idx + 2
                 continue
 
             if esc_quot_idx < 0 or quot_idx < esc_quot_idx:
                 # Either no \" or " comes first anyway
-                self.acc.append(line[pos:quot_idx + 1])
+                self.acc.append(line[pos : quot_idx + 1])
                 self.in_string = False
                 return quot_idx + 1
 
     def _eat_ws(self, line: str, pos: int) -> int:
-        '''Consume whitespace, updating FSM state if necessary'''
+        """Consume whitespace, updating FSM state if necessary"""
         # Eat any blanks
-        match = re.match(r'[\t ]+', line[pos:])
+        match = re.match(r"[\t ]+", line[pos:])
         if match:
             end = match.end()
-            self.acc.append(' ')
+            self.acc.append(" ")
             pos += end
 
         # Return if at EOL
@@ -978,26 +1012,26 @@ class Transformer:
             return pos
 
         # Spot a line comment ('#'). In that case, eat to EOL and return.
-        if line[pos] == '#':
+        if line[pos] == "#":
             return len(line) - 1
 
         # The other possibility is a block comment ('/*'). If we're not looking
         # at that, we can return the current position.
-        if line[pos:pos + 2] != '/*':
+        if line[pos : pos + 2] != "/*":
             return pos
 
         # Otherwise, eat the /* and switch to reading block comments. Add a
         # single space to acc to make sure we tokenize properly in examples
         # like "foo/* xxx */bar"
         self.in_comment = True
-        self.acc.append(' ')
+        self.acc.append(" ")
 
         return self._continue_block_comment(line, pos + 2)
 
     def _eat_optional_label(self, line: str, pos: int) -> Tuple[int, bool]:
-        '''Consume an optional label'''
+        """Consume an optional label"""
         assert self.state == 0
-        match = re.match(r'[0-9a-zA-Z_$.]+:', line[pos:])
+        match = re.match(r"[0-9a-zA-Z_$.]+:", line[pos:])
         if match is None:
             return (pos, False)
 
@@ -1006,7 +1040,7 @@ class Transformer:
         return (self._eat_ws(line, end), True)
 
     def _eat_labels(self, line: str, pos: int) -> int:
-        '''Consume zero or more labels'''
+        """Consume zero or more labels"""
         assert self.state == 0
         found = True
         while found:
@@ -1014,7 +1048,7 @@ class Transformer:
         return pos
 
     def _eat_optional_token(self, line: str, pos: int) -> int:
-        '''Consume an optional token'''
+        """Consume an optional token"""
         assert self.state == 1
         assert self.key_sym is not None
         # assert not self.in_comment
@@ -1033,7 +1067,7 @@ class Transformer:
         return self._eat_ws(line, end)
 
     def _insn_for_keysym(self) -> Insn:
-        '''Find an instruction for the current key symbol'''
+        """Find an instruction for the current key symbol"""
         assert self.key_sym is not None
 
         # Most of the time, we'd hope the key sym appears in mnemonic_to_insn
@@ -1049,11 +1083,12 @@ class Transformer:
             if low_key_sym.startswith(insn.mnemonic):
                 return insn
 
-        raise RuntimeError('{}:{}: Unknown mnemonic: {!r}.'.format(
-            self.in_path, self.line_number, self.key_sym))
+        raise RuntimeError(
+            "{}:{}: Unknown mnemonic: {!r}.".format(self.in_path, self.line_number, self.key_sym)
+        )
 
     def _end_stmt_line(self) -> None:
-        '''Called at end of a stmt line to deal with any completed statement'''
+        """Called at end of a stmt line to deal with any completed statement"""
         assert self.state == 1
         assert self.key_sym is not None
 
@@ -1066,9 +1101,9 @@ class Transformer:
 
         # If key_sym is a directive (starts with '.'), we can just pass it
         # straight through. Also applies for macros.
-        if self.key_sym.startswith('.') or self.key_sym in self.macros:
+        if self.key_sym.startswith(".") or self.key_sym in self.macros:
             self.out_handle.write(self.key_sym)
-            self.out_handle.write(''.join(self.acc))
+            self.out_handle.write("".join(self.acc))
             self.acc = []
             self.key_sym = None
             return
@@ -1077,14 +1112,15 @@ class Transformer:
 
         # Gather up everything after the mnemonic (possibly including some
         # glued operands) as a string.
-        operands_str = self.key_sym[len(insn.mnemonic):] + ''.join(self.acc)
+        operands_str = self.key_sym[len(insn.mnemonic) :] + "".join(self.acc)
 
         match = insn.asm_pattern.match(operands_str.rstrip())
         if match is None:
             raise RuntimeError(
-                '{}:{}: Cannot match syntax for {!r} ({!r}).'.format(
-                    self.in_path, self.line_number, self.key_sym,
-                    insn.syntax.render_doc()))
+                "{}:{}: Cannot match syntax for {!r} ({!r}).".format(
+                    self.in_path, self.line_number, self.key_sym, insn.syntax.render_doc()
+                )
+            )
 
         op_to_val = {}  # type: Dict[str, Optional[str]]
         for op, grp in insn.pattern_op_to_grp.items():
@@ -1096,7 +1132,7 @@ class Transformer:
         return
 
     def _continue_stmt(self, line: str, pos: int) -> None:
-        '''Continue reading statement, up to EOL'''
+        """Continue reading statement, up to EOL"""
         assert self.state == 1
         assert self.key_sym is not None
         assert not self.in_comment
@@ -1109,16 +1145,18 @@ class Transformer:
         self._end_stmt_line()
 
     def _take_stmt_body(self, line: str, pos: int) -> None:
-        '''Read the body of a statement'''
+        """Read the body of a statement"""
         assert self.state == 0
         assert self.key_sym is None
         assert pos < len(line)
 
-        match = re.match(r'[0-9a-zA-Z_$.]+', line[pos:])
+        match = re.match(r"[0-9a-zA-Z_$.]+", line[pos:])
         if match is None:
             raise RuntimeError(
-                '{}:{}:{}: Expected key symbol, but found {!r}.'.format(
-                    self.in_path, self.line_number, pos, line[pos:]))
+                "{}:{}:{}: Expected key symbol, but found {!r}.".format(
+                    self.in_path, self.line_number, pos, line[pos:]
+                )
+            )
 
         self.key_sym = match.group(0)
         self.state = 1
@@ -1131,12 +1169,11 @@ class Transformer:
         def perform_replacement(line: str, symbol_table: Dict[str, List[str]]) -> str:
             # Blank out single-line comments. The length must be preserved:
             # the caller resumes parsing at an offset into this line.
-            line_new = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)),
-                              line)
+            line_new = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group(0)), line)
             # Check if the token is a symbol in the symbol table
             for sym in symbol_table:
                 # Replace the token with the value from the most recent definition
-                line_new = re.sub(fr"(?!\w\s){sym}(?!\w)", str(symbol_table[sym][-1]), line_new)
+                line_new = re.sub(rf"(?!\w\s){sym}(?!\w)", str(symbol_table[sym][-1]), line_new)
 
             return line_new
 
@@ -1151,7 +1188,7 @@ class Transformer:
                 else:
                     symbol_table[search.group(2)] = [search.group(1)]
 
-        if '.equ' in line:
+        if ".equ" in line:
             process_equ_directive(line, self.symbol_table)
         else:
             line = perform_replacement(line, self.symbol_table) + "\n"
@@ -1162,14 +1199,14 @@ class Transformer:
         return
 
     def take_line(self, line: str) -> None:
-        '''Consume a single line from the input'''
+        """Consume a single line from the input"""
         pos = 0
         self.line_number += 1
 
         # Append a newline if the line doesn't have one. In practice, this just
         # happens with the last line of a file that doesn't end with a newline.
-        if line and line[-1] != '\n':
-            line = line + '\n'
+        if line and line[-1] != "\n":
+            line = line + "\n"
 
         # Finish up any block comment
         if self.in_comment:
@@ -1178,7 +1215,7 @@ class Transformer:
 
             pos = self._continue_block_comment(line, pos)
             if self.in_comment:
-                self.acc.append('\n')
+                self.acc.append("\n")
                 return
 
         # Finish up any nested string
@@ -1195,20 +1232,20 @@ class Transformer:
 
             pos = self._eat_ws(line, pos)
             # If we're at EOL, we're done (degenerate statement or block comment)
-            if line[pos] == '\n':
-                self.acc.append('\n')
+            if line[pos] == "\n":
+                self.acc.append("\n")
                 return
 
             pos = self._eat_labels(line, pos)
             # If we're at EOL, we're done (degenerate statement)
-            if line[pos] == '\n':
-                self.acc.append('\n')
+            if line[pos] == "\n":
+                self.acc.append("\n")
                 return
 
             # Flush acc and then take the rest of the statement body. This
             # always consumes the rest of the line (but might not finish the
             # statement)
-            self.out_handle.write(''.join(self.acc))
+            self.out_handle.write("".join(self.acc))
             self.acc = []
             self._take_stmt_body(line, pos)
 
@@ -1221,48 +1258,65 @@ class Transformer:
             assert 0
 
     def at_eof(self) -> None:
-        '''Finish any tidy-up at EOF'''
+        """Finish any tidy-up at EOF"""
         if self.in_comment:
-            raise RuntimeError('Reached EOF while still in a comment.')
+            raise RuntimeError("Reached EOF while still in a comment.")
         if self.in_string:
-            raise RuntimeError('Reached EOF while still in a string.')
+            raise RuntimeError("Reached EOF while still in a string.")
 
 
-def transform_input(out_handle: TextIO, in_path: str, in_handle: TextIO,
-                    in_idx: int, insns_file: InsnsFile,
-                    glued_insns_dec_len: List[Insn],
-                    mnem_to_rve: Dict[str, RVEncoding]) -> None:
-    '''Transform an input file to make it suitable for riscv as'''
-    transformer = Transformer(out_handle, in_path, in_idx, insns_file,
-                              glued_insns_dec_len, mnem_to_rve)
+def transform_input(
+    out_handle: TextIO,
+    in_path: str,
+    in_handle: TextIO,
+    in_idx: int,
+    insns_file: InsnsFile,
+    glued_insns_dec_len: List[Insn],
+    mnem_to_rve: Dict[str, RVEncoding],
+) -> None:
+    """Transform an input file to make it suitable for riscv as"""
+    transformer = Transformer(
+        out_handle, in_path, in_idx, insns_file, glued_insns_dec_len, mnem_to_rve
+    )
     for line in in_handle:
         transformer.take_line(line)
     transformer.at_eof()
 
 
-def transform_inputs(out_dir: str, inputs: List[str], insns_file: InsnsFile,
-                     mnem_to_rve: Dict[str, RVEncoding],
-                     glued_insns_dec_len: List[Insn],
-                     just_translate: bool) -> List[str]:
-    '''Transform inputs to make them suitable for riscv as'''
+def transform_inputs(
+    out_dir: str,
+    inputs: List[str],
+    insns_file: InsnsFile,
+    mnem_to_rve: Dict[str, RVEncoding],
+    glued_insns_dec_len: List[Insn],
+    just_translate: bool,
+) -> List[str]:
+    """Transform inputs to make them suitable for riscv as"""
     out_paths = []
     for idx, in_path in enumerate(inputs):
-        out_path = os.path.join(out_dir, str(idx) + '.s')
+        out_path = os.path.join(out_dir, str(idx) + ".s")
         out_paths.append(out_path)
 
         in_handle = sys.stdin
-        pretty_in_path = 'stdin'
+        pretty_in_path = "stdin"
         out_handle = sys.stdout
         try:
-            if in_path != '--':
-                in_handle = open(in_path, 'r')
+            if in_path != "--":
+                in_handle = open(in_path, "r")
                 pretty_in_path = in_path
 
             if not just_translate:
-                out_handle = open(out_path, 'w')
+                out_handle = open(out_path, "w")
 
-            transform_input(out_handle, pretty_in_path, in_handle, idx, insns_file,
-                            glued_insns_dec_len, mnem_to_rve)
+            transform_input(
+                out_handle,
+                pretty_in_path,
+                in_handle,
+                idx,
+                insns_file,
+                glued_insns_dec_len,
+                mnem_to_rve,
+            )
 
         finally:
             if in_handle is not sys.stdin and in_handle is not None:
@@ -1276,18 +1330,14 @@ def transform_inputs(out_dir: str, inputs: List[str], insns_file: InsnsFile,
 def run_c_preprocessor(out_dir: str, inputs: List[str], copts: List[str]) -> List[str]:
     inputs_pre = []
     for idx, in_path in enumerate(inputs):
-        out_path = os.path.join(out_dir, str(idx) + '.s')
+        out_path = os.path.join(out_dir, str(idx) + ".s")
         inputs_pre.append(out_path)
 
-        gcc_name = find_tool('gcc')
+        gcc_name = find_tool("gcc")
         default_args = ["-E"]
         default_args += copts
 
-        default_args += [
-            "-CC",
-            "-x", "assembler-with-cpp",
-            "-o", out_path
-        ]
+        default_args += ["-CC", "-x", "assembler-with-cpp", "-o", out_path]
 
         cmd = [gcc_name] + default_args + [in_path]
 
@@ -1308,45 +1358,45 @@ def run_c_preprocessor(out_dir: str, inputs: List[str], copts: List[str]) -> Lis
 
 
 def run_binutils_as(other_args: List[str], inputs: List[str]) -> int:
-    '''Run binutils' as on transformed inputs
+    """Run binutils' as on transformed inputs
 
     Performs no output redirection and returns the process's exit code.
 
-    '''
-    as_name = find_tool('as')
+    """
+    as_name = find_tool("as")
 
     default_args = [
         # Perform partial linking between one or more assembly files into a
         # single relocatable object file that can be itself linked into a larger
         # binary.
-        '-r',
-        '-fuse-ld=lld',
+        "-r",
+        "-fuse-ld=lld",
         # Don't ask the linker to do relaxation because, in some cases, this
         # might generate a GP-relative load. ACC doesn't treat x3 (gp)
         # specially, so this won't work.
-        '-mno-relax',
+        "-mno-relax",
         # ACC is based on RV32I without any hard float support.
-        '--target=riscv32-unknown-elf',
-        '-march=rv32i',
-        '-mabi=ilp32',
+        "--target=riscv32-unknown-elf",
+        "-march=rv32i",
+        "-mabi=ilp32",
         # Do not include the standard library.
-        '-nostdlib',
+        "-nostdlib",
         # Produce debug info for source line mapping.
-        '-g',
+        "-g",
     ]
 
     cmd = [as_name] + default_args + other_args + inputs
     try:
         return subprocess.run(cmd).returncode
     except FileNotFoundError:
-        sys.stderr.write('Unknown command: {!r}.\n'.format(as_name))
+        sys.stderr.write("Unknown command: {!r}.\n".format(as_name))
         return 127
 
 
 def main(argv: List[str]) -> int:
     files, other_args, flags = parse_positionals(argv)
-    files = files or ['--']
-    just_translate = '--acc-translate' in flags
+    files = files or ["--"]
+    just_translate = "--acc-translate" in flags
 
     copts = []
     for arg in other_args:
@@ -1358,17 +1408,17 @@ def main(argv: List[str]) -> int:
 
     # files is now a nonempty list of input files. Rather unusually, '--'
     # (rather than '-') denotes standard input.
-    with tempfile.TemporaryDirectory(suffix='.acc-gcc') as tmpdir:
+    with tempfile.TemporaryDirectory(suffix=".acc-gcc") as tmpdir:
         try:
             files = run_c_preprocessor(tmpdir, files, copts)  # add copts = -D for preprocessor
         except RuntimeError as err:
-            sys.stderr.write('{}\n'.format(err))
+            sys.stderr.write("{}\n".format(err))
             return 1
 
         try:
             insns_file = load_insns_yaml()
         except RuntimeError as err:
-            sys.stderr.write('{}\n'.format(err))
+            sys.stderr.write("{}\n".format(err))
             return 1
 
         # A list of instructions that have "glued operations" (which means their
@@ -1390,20 +1440,21 @@ def main(argv: List[str]) -> int:
                     sys.stderr.write(
                         "Instruction {!r} has python-pseudo-op true, "
                         "but acc_as.py doesn't have a custom assembler "
-                        "for it.\n".format(insn.mnemonic))
+                        "for it.\n".format(insn.mnemonic)
+                    )
                     return 1
 
         # Try to match up ACC instruction encodings with .insn schemes (as stored
         # in RISCV_FORMATS).
         mnem_to_rve = find_insn_schemes(insns_file.mnemonic_to_insn)
 
-        with tempfile.TemporaryDirectory(suffix='.acc-as') as tmpdir:
+        with tempfile.TemporaryDirectory(suffix=".acc-as") as tmpdir:
             try:
-                transformed = transform_inputs(tmpdir, files, insns_file,
-                                               mnem_to_rve, glued_insns_dec_len,
-                                               just_translate)
+                transformed = transform_inputs(
+                    tmpdir, files, insns_file, mnem_to_rve, glued_insns_dec_len, just_translate
+                )
             except RuntimeError as err:
-                sys.stderr.write('{}\n'.format(err))
+                sys.stderr.write("{}\n".format(err))
                 return 1
 
             if just_translate:
@@ -1414,5 +1465,5 @@ def main(argv: List[str]) -> int:
             return run_binutils_as(transformed, other_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

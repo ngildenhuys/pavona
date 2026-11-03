@@ -7,7 +7,7 @@ from sw.host.penetrationtests.python.sca.communication.sca_prng_commands import 
 from sw.host.penetrationtests.python.sca.communication.sca_trigger_commands import OTTRIGGER
 
 
-def char_sha3_single_absorb(target, iterations, fpga, masking, text, reset = False):
+def char_sha3_single_absorb(target, iterations, fpga, masking, text, reset=False):
     sha3sca = OTSHA3(target)
     if reset:
         target.reset_target()
@@ -32,7 +32,7 @@ def char_sha3_single_absorb(target, iterations, fpga, masking, text, reset = Fal
     return response
 
 
-def char_sha3_batch_absorb(target, iterations, num_segments, fpga, masking, text, reset = False):
+def char_sha3_batch_absorb(target, iterations, num_segments, fpga, masking, text, reset=False):
     sha3sca = OTSHA3(target)
     if reset:
         target.reset_target()

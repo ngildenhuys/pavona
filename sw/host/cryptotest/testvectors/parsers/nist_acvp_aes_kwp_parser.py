@@ -38,9 +38,7 @@ def apply_expected(test_vectors, path):
     if path is None:
         return
     expected = load_vector_set(path)
-    answers = {test["tcId"]: test
-               for group in expected["testGroups"]
-               for test in group["tests"]}
+    answers = {test["tcId"]: test for group in expected["testGroups"] for test in group["tests"]}
     for vector in test_vectors:
         answer = answers.get(vector["test_case_id"], {})
         if "ct" in answer:
@@ -81,16 +79,19 @@ def parse_kwp(data, skip_unsupported):
             else:
                 vector["ciphertext"] = list(bytes.fromhex(test["ct"]))
             test_vectors.append(vector)
-    report_skipped("parse_kwp", {
-        "the inverse cipher is not implemented": skipped_inverse,
-        "payloads of at most 64 bits are not implemented": skipped_short,
-    }, skip_unsupported)
+    report_skipped(
+        "parse_kwp",
+        {
+            "the inverse cipher is not implemented": skipped_inverse,
+            "payloads of at most 64 bits are not implemented": skipped_short,
+        },
+        skip_unsupported,
+    )
     return test_vectors
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Parsing utility for ACVP AES-KWP prompts.")
+    parser = argparse.ArgumentParser(description="Parsing utility for ACVP AES-KWP prompts.")
     parser.add_argument(
         "--src",
         type=str,
@@ -122,8 +123,7 @@ def main() -> int:
     parser.add_argument(
         "--skip-unsupported",
         action="store_true",
-        help="Skip test cases this cryptolib cannot answer instead of "
-        "failing on the first one.",
+        help="Skip test cases this cryptolib cannot answer instead of failing on the first one.",
     )
     args = parser.parse_args()
 

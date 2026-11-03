@@ -14,20 +14,21 @@ from reggen.gen_dv import gen_core_file
 from .top import Top
 
 
-def sv_base_addr(top: Top, if_name: Tuple[str, Optional[str]],
-                 asid: str) -> str:
-    '''Get the base address of a device interface in SV syntax'''
+def sv_base_addr(top: Top, if_name: Tuple[str, Optional[str]], asid: str) -> str:
+    """Get the base address of a device interface in SV syntax"""
     return "{}'h{:x}".format(top.regwidth, top.if_addrs[if_name][asid])
 
 
 def gen_dv(top: Top, dv_base_names: List[str], outdir: str) -> int:
-    '''Generate DV RAL model for a Top'''
+    """Generate DV RAL model for a Top"""
     # Read template
-    lookup = TemplateLookup(directories=[
-        str(importlib.resources.files('topgen')),
-        str(importlib.resources.files('reggen'))
-    ])
-    uvm_reg_tpl = lookup.get_template('top_uvm_reg.sv.tpl')
+    lookup = TemplateLookup(
+        directories=[
+            str(importlib.resources.files("topgen")),
+            str(importlib.resources.files("reggen")),
+        ]
+    )
+    uvm_reg_tpl = lookup.get_template("top_uvm_reg.sv.tpl")
 
     # Expand template
     try:
@@ -37,10 +38,10 @@ def gen_dv(top: Top, dv_base_names: List[str], outdir: str) -> int:
         return 1
 
     # Dump to output file
-    dest_path = '{}/chip_ral_pkg.sv'.format(outdir)
-    with open(dest_path, 'w') as fout:
+    dest_path = "{}/chip_ral_pkg.sv".format(outdir)
+    with open(dest_path, "w") as fout:
         fout.write(to_write)
 
-    gen_core_file(outdir, 'chip', dv_base_names, ['chip_ral_pkg.sv'])
+    gen_core_file(outdir, "chip", dv_base_names, ["chip_ral_pkg.sv"])
 
     return 0

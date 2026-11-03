@@ -8,6 +8,7 @@ Collects IP and top-level sim cfg files and generates batch hjson files.
 Usage:
     ./gen_ip_collection.py --flow sim_dv --tops top_egret top_dragonfly
 """
+
 import argparse
 import glob
 import hjson
@@ -22,9 +23,7 @@ LICENSE_LINES = """\
 // SPDX-License-Identifier: Apache-2.0"""
 
 COPYRIGHT_HEADER_SOLO = f"{ZERORISC_COPYRIGHT_LINE}\n{LICENSE_LINES}"
-COPYRIGHT_HEADER_JOINT = (
-    f"{LOWRISC_COPYRIGHT_LINE}\n{ZERORISC_COPYRIGHT_LINE}\n{LICENSE_LINES}"
-)
+COPYRIGHT_HEADER_JOINT = f"{LOWRISC_COPYRIGHT_LINE}\n{ZERORISC_COPYRIGHT_LINE}\n{LICENSE_LINES}"
 WARNHDR = """//
 // ------------------- W A R N I N G: A U T O - G E N E R A T E D   C O D E !! -------------------//
 // PLEASE DO NOT HAND-EDIT THIS FILE. IT HAS BEEN AUTO-GENERATED WITH THE FOLLOWING COMMAND:
@@ -33,9 +32,8 @@ WARNHDR = """//
 
 def get_copyright_header(path, flow, tops):
     """Return the appropriate copyright header for this file."""
-    tops_str = ' '.join(tops)
-    GENCMD = (f"// util/gen_ip_collection.py --flow {flow}\n"
-              f"//                --tops {tops_str}\n")
+    tops_str = " ".join(tops)
+    GENCMD = f"// util/gen_ip_collection.py --flow {flow}\n//                --tops {tops_str}\n"
     if os.path.exists(path):
         try:
             with open(path) as f:
@@ -50,6 +48,7 @@ def get_copyright_header(path, flow, tops):
 # =============================
 #   Specific to sim_dv flow
 # =============================
+
 
 def collect_sim_dv(tops):
     """
@@ -172,8 +171,10 @@ def generate_hjson(ip_cfgs, top_cfgs, tops, copyright_header, top_specific=False
     for top in tops:
         cfgs = top_cfgs[top]
         top_sections = [
-            (f"{top} autogen IPs.", [c for c in cfgs if f"hw/{top}/ip_autogen/" in c
-                                     or f"hw/{top}/ip/" in c]),
+            (
+                f"{top} autogen IPs.",
+                [c for c in cfgs if f"hw/{top}/ip_autogen/" in c or f"hw/{top}/ip/" in c],
+            ),
             (f"{top} chip.", [c for c in cfgs if f"hw/{top}/dv/" in c]),
         ]
         sections.append(format_block(top, top_sections, nested=not top_specific))
@@ -223,7 +224,7 @@ def write_file(path, content, dry_run):
     if dry_run:
         print(f"\n{'=' * 60}")
         print(f"Would write: {path}")
-        print('=' * 60)
+        print("=" * 60)
         print(content)
     else:
         try:
@@ -232,8 +233,7 @@ def write_file(path, content, dry_run):
                 f.write(content)
             print(f"Written: {path}")
         except OSError as e:
-            print("Failed to create output directory {}: \n{}."
-                  .format(os.path.dirname(path), e))
+            print("Failed to create output directory {}: \n{}.".format(os.path.dirname(path), e))
 
 
 def run_sim_dv(tops, dry_run, flow):

@@ -38,9 +38,11 @@ from pathlib import Path
 import logging as log
 import hjson
 
-LICENSE_HEADER = ("Copyright zeroRISC Inc.\n"
-                  "Licensed under the Apache License, Version 2.0, see LICENSE for details.\n"
-                  "SPDX-License-Identifier: Apache-2.0\n")
+LICENSE_HEADER = (
+    "Copyright zeroRISC Inc.\n"
+    "Licensed under the Apache License, Version 2.0, see LICENSE for details.\n"
+    "SPDX-License-Identifier: Apache-2.0\n"
+)
 
 
 def discover_units(root: Path):
@@ -61,10 +63,16 @@ def run_urg_grade(unit: str, merged: Path, report: Path, dry_run: bool) -> tuple
     for the corresponding merged.vdb passed.
     """
     cmd = [
-        "urg", "-full64",
-        "-dir", str(merged),
-        "-grade", "testfile", "cost", "cputime",
-        "-report", str(report),
+        "urg",
+        "-full64",
+        "-dir",
+        str(merged),
+        "-grade",
+        "testfile",
+        "cost",
+        "cputime",
+        "-report",
+        str(report),
     ]
     if dry_run:
         log.info(f"[{unit}] would run: {' '.join(cmd)}")
@@ -92,9 +100,9 @@ def run_urg_grade(unit: str, merged: Path, report: Path, dry_run: bool) -> tuple
     return proc.returncode, time.time() - start
 
 
-def parse_test_file(tests_file: Path,
-                    seed_map: dict[tuple[str, str], str]
-                    ) -> tuple[Counter, dict[str, list[str]]]:
+def parse_test_file(
+    tests_file: Path, seed_map: dict[tuple[str, str], str]
+) -> tuple[Counter, dict[str, list[str]]]:
     """Parse the corresponding graded/unique tests file.
 
     Returns (counts, seeds), where seeds maps test_name -> list of full
@@ -129,15 +137,19 @@ def parse_test_file(tests_file: Path,
 
                 long_seed = seed_map.get((run_idx, name))
                 if long_seed is None:
-                    log.error("No seed manifest entry for %s.%s.%s",
-                              run_idx, name, short_seed)
+                    log.error("No seed manifest entry for %s.%s.%s", run_idx, name, short_seed)
                     sys.exit(1)
 
                 # Cross-check: the manifest's 256-bit seed truncated to 32
                 # bits must match the SV seed reported by URG.
                 if (int(long_seed) & 0xFFFFFFFF) != (int(short_seed) & 0xFFFFFFFF):
-                    log.error("Seed mismatch for %s.%s: manifest %s vs URG %s",
-                              run_idx, name, long_seed, short_seed)
+                    log.error(
+                        "Seed mismatch for %s.%s: manifest %s vs URG %s",
+                        run_idx,
+                        name,
+                        long_seed,
+                        short_seed,
+                    )
                     sys.exit(1)
 
                 if int(long_seed).bit_count() < 16:
@@ -188,8 +200,12 @@ def parse_seed_manifest(seeds_file: Path) -> dict[tuple[str, str], str]:
 
                 key = (run_idx, test_name)
                 if key in mapping and mapping[key] != long_seed:
-                    log.error("Duplicate manifest key %s with different seeds "
-                              "(%s vs %s)", key, mapping[key], long_seed)
+                    log.error(
+                        "Duplicate manifest key %s with different seeds (%s vs %s)",
+                        key,
+                        mapping[key],
+                        long_seed,
+                    )
                     sys.exit(1)
                 mapping[key] = long_seed
     except OSError as e:
@@ -212,18 +228,21 @@ def compute_targetcount(graded: int, unique: int, A: float, basecount: int) -> i
 
 
 def read_block_identity(sim_dir: Path, unit: str) -> tuple[str, str | None]:
-    '''Return the (name, variant) dvsim recorded for this unit.
+    """Return the (name, variant) dvsim recorded for this unit.
 
     Read from block_name/block_variant in <unit>-sim-<tool>/reports/latest/
     report.json, the cfg's declared identity. Falls back to (unit, None).
-    '''
+    """
     report_json = sim_dir / "reports" / "latest" / "report.json"
     try:
         data = json.loads(report_json.read_text())
     except (OSError, ValueError):
-        log.warning("No results JSON for %s (%s); emitting without variant. "
-                    "Reseed matching may fail for variant cfgs.",
-                    unit, report_json)
+        log.warning(
+            "No results JSON for %s (%s); emitting without variant. "
+            "Reseed matching may fail for variant cfgs.",
+            unit,
+            report_json,
+        )
         return unit, None
     return data.get("block_name") or unit, data.get("block_variant") or None
 
@@ -246,8 +265,7 @@ def run_urg_phase(args) -> None:
             continue
         todo.append((unit, merged, report))
 
-    log.info(f"Found {len(todo)} unit(s) to grade "
-             f"(skipped {len(no_vdb)} without merged.vdb)")
+    log.info(f"Found {len(todo)} unit(s) to grade (skipped {len(no_vdb)} without merged.vdb)")
 
     failed = []
 
@@ -305,8 +323,10 @@ def aggregate_units(args) -> tuple[list, list, list, list]:
         # Sanity check: uniquecount must be <= gradedcount
         for test in unique:
             if unique[test] > graded.get(test, 0):
-                log.error(f"{unit}:{test} uniquecount ({unique[test]}) > "
-                          f"gradedcount ({graded.get(test, 0)})")
+                log.error(
+                    f"{unit}:{test} uniquecount ({unique[test]}) > "
+                    f"gradedcount ({graded.get(test, 0)})"
+                )
                 sys.exit(1)
             elif graded.get(test, 0) == 0:
                 log.warning(f"{unit}:{test} gradedcount has 0 seeds")
@@ -321,22 +341,29 @@ def aggregate_units(args) -> tuple[list, list, list, list]:
             if variant:
                 entry["variant"] = variant
             hjson_entries.append(entry)
-            rows.append({
-                "unit": unit, "test": test,
-                "gradedcount": g, "uniquecount": u, "targetcount": t,
-            })
+            rows.append(
+                {
+                    "unit": unit,
+                    "test": test,
+                    "gradedcount": g,
+                    "uniquecount": u,
+                    "targetcount": t,
+                }
+            )
 
-        per_unit_summary.append({
-            "unit": unit,
-            "num_tests": len(graded),
-            "num_unique_contributors": sum(1 for t in graded if unique.get(t, 0) > 0),
-            "total_graded_runs": sum(graded.values()),
-            "total_unique_runs": sum(unique.values()),
-            "total_target_runs": sum(
-                compute_targetcount(graded[t], unique.get(t, 0), args.A, args.basecount)
-                for t in graded
-            ),
-        })
+        per_unit_summary.append(
+            {
+                "unit": unit,
+                "num_tests": len(graded),
+                "num_unique_contributors": sum(1 for t in graded if unique.get(t, 0) > 0),
+                "total_graded_runs": sum(graded.values()),
+                "total_unique_runs": sum(unique.values()),
+                "total_target_runs": sum(
+                    compute_targetcount(graded[t], unique.get(t, 0), args.A, args.basecount)
+                    for t in graded
+                ),
+            }
+        )
 
     return rows, per_unit_summary, missing, hjson_entries
 
@@ -352,8 +379,9 @@ def write_csv_outputs(args, rows: list, per_unit_summary: list) -> None:
         with csv_path.open("w", newline="") as fh:
             for line in LICENSE_HEADER.splitlines():
                 fh.write(f"# {line}\n")
-            w = csv.DictWriter(fh, fieldnames=["unit", "test", "gradedcount",
-                                               "uniquecount", "targetcount"])
+            w = csv.DictWriter(
+                fh, fieldnames=["unit", "test", "gradedcount", "uniquecount", "targetcount"]
+            )
             w.writeheader()
             w.writerows(rows)
 
@@ -362,10 +390,17 @@ def write_csv_outputs(args, rows: list, per_unit_summary: list) -> None:
         with summary_path.open("w", newline="") as fh:
             for line in LICENSE_HEADER.splitlines():
                 fh.write(f"# {line}\n")
-            w = csv.DictWriter(fh, fieldnames=[
-                "unit", "num_tests", "num_unique_contributors",
-                "total_graded_runs", "total_unique_runs", "total_target_runs",
-            ])
+            w = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "unit",
+                    "num_tests",
+                    "num_unique_contributors",
+                    "total_graded_runs",
+                    "total_unique_runs",
+                    "total_target_runs",
+                ],
+            )
             w.writeheader()
             w.writerows(per_unit_summary)
         log.info(f"  combined report : {csv_path}")
@@ -399,16 +434,26 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ap.add_argument("root", type=Path, help="Regression root (contains <unit>-sim-vcs dirs)")
-    ap.add_argument("-o", "--output", type=Path, default=Path("grading_report.hjson"),
-                    help="Combined Hjson output path (default: grading_report.hjson)")
+    ap.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path("grading_report.hjson"),
+        help="Combined Hjson output path (default: grading_report.hjson)",
+    )
     ap.add_argument("-A", type=float, default=0.5, help="Multiplier coefficient A (default: 0.5)")
     ap.add_argument("-b", "--basecount", type=int, default=2, help="Base count (default: 2)")
-    ap.add_argument("--force", action="store_true",
-                    help="Re-run urg even if grade_report/ or cov_report/ already exists")
-    ap.add_argument("--skip-csv", action="store_true",
-                    help="Do not generate CSV outputs")
-    ap.add_argument("--dry-run", action="store_true",
-                    help="Print urg commands without executing; skip aggregation")
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-run urg even if grade_report/ or cov_report/ already exists",
+    )
+    ap.add_argument("--skip-csv", action="store_true", help="Do not generate CSV outputs")
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print urg commands without executing; skip aggregation",
+    )
     args = ap.parse_args()
 
     log.basicConfig(format="%(levelname)s: %(message)s", level=log.INFO)

@@ -6,14 +6,7 @@ from sw.host.penetrationtests.python.sca.communication.sca_acc_commands import O
 
 
 def char_combi_operations_batch(
-    target,
-    iterations,
-    num_segments,
-    fixed_data1,
-    fixed_data2,
-    print_flag,
-    trigger,
-    reset = False
+    target, iterations, num_segments, fixed_data1, fixed_data2, print_flag, trigger, reset=False
 ):
     accsca = OTACC(target)
     if reset:
@@ -23,8 +16,6 @@ def char_combi_operations_batch(
     # Initialize our chip and catch its output
     device_id, owner_page, boot_log, boot_measurements, version = accsca.init()
     for _ in range(iterations):
-        accsca.start_combi_ops_batch(
-            num_segments, fixed_data1, fixed_data2, print_flag, trigger
-        )
+        accsca.start_combi_ops_batch(num_segments, fixed_data1, fixed_data2, print_flag, trigger)
         response = target.read_response()
     return response

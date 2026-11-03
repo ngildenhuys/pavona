@@ -14,18 +14,18 @@ from reggen.reg_base import RegBase
 from reggen.register import Register
 
 
-MULTIREG_VALIDATOR = create_validator('urn:reggen:multiregister')
+MULTIREG_VALIDATOR = create_validator("urn:reggen:multiregister")
 
 
 class EmptyMultiRegException(Exception):
-    '''A MultiRegister was requested without a positive count.'''
+    """A MultiRegister was requested without a positive count."""
+
     def __init__(self, name: str, count: int):
         self.name = name
         self.count = count
 
     def __str__(self) -> str:
-        return (f"Multireg {self.name} has a count of {self.count}, "
-                "which isn't positive.")
+        return f"Multireg {self.name} has a count of {self.count}, which isn't positive."
 
 
 class MultiRegister(RegBase):
@@ -65,18 +65,20 @@ class MultiRegister(RegBase):
                    multi-register needs a q-enable signal.
     """
 
-    def __init__(self,
-                 name: str,
-                 offset: int,
-                 count: int,
-                 stride: int,
-                 alias_target: Optional[str],
-                 pregs: List[Register],
-                 cname: str,
-                 regwen_multi: bool,
-                 compact: bool,
-                 dv_compact: bool,
-                 cregs: List[Register]):
+    def __init__(
+        self,
+        name: str,
+        offset: int,
+        count: int,
+        stride: int,
+        alias_target: Optional[str],
+        pregs: List[Register],
+        cname: str,
+        regwen_multi: bool,
+        compact: bool,
+        dv_compact: bool,
+        cregs: List[Register],
+    ):
 
         # There should be at least one preg and creg. This will be checked in
         # the caller, so we can just assert it here.
@@ -104,8 +106,7 @@ class MultiRegister(RegBase):
             assert preg.is_homogeneous() == homogeneous
             needs_qe |= preg.needs_qe()
 
-        super().__init__(name, offset,
-                         pregs[0].async_clk, pregs[0].sync_clk, alias_target)
+        super().__init__(name, offset, pregs[0].async_clk, pregs[0].sync_clk, alias_target)
         self.count = count
         self.stride = stride
         self.pregs = pregs
@@ -117,9 +118,16 @@ class MultiRegister(RegBase):
         self._needs_qe = needs_qe
 
     @staticmethod
-    def from_raw(raw: object, reg_width: int, offset: int, addrsep: int,
-                 params: ReggenParams, clocks: Clocking, is_alias: bool) -> 'MultiRegister':
-        '''Create a MultiRegister object from a dictionary.
+    def from_raw(
+        raw: object,
+        reg_width: int,
+        offset: int,
+        addrsep: int,
+        params: ReggenParams,
+        clocks: Clocking,
+        is_alias: bool,
+    ) -> "MultiRegister":
+        """Create a MultiRegister object from a dictionary.
 
         The underlying register block has registers with reg_width bits and the
         first concrete register in the expanded multi-register should be at the
@@ -132,21 +140,21 @@ class MultiRegister(RegBase):
         If is_alias is true then this is supposed to alias some
         (multi-)register and we expect the dictionary in raw to define
         alias_target.
-        '''
+        """
 
         # Check the raw object is a dictionary that has the right keys to
         # describe a MultiRegister.
         if not isinstance(raw, dict):
-            raise TypeError('must instantiate multiregister from dict')
+            raise TypeError("must instantiate multiregister from dict")
         MULTIREG_VALIDATOR.validate(cast_hjson_values(raw))
 
-        name = check_name(raw['name'], 'name of multi-register')
+        name = check_name(raw["name"], "name of multi-register")
 
-        if isinstance(raw['count'], int):
-            count = raw['count']
+        if isinstance(raw["count"], int):
+            count = raw["count"]
         else:
-            count_str = check_str(raw['count'], f'count field of multireg {name}')
-            count = params.expand(count_str, f'count field of multireg {name}')
+            count_str = check_str(raw["count"], f"count field of multireg {name}")
+            count = params.expand(count_str, f"count field of multireg {name}")
 
         if count <= 0:
             raise EmptyMultiRegException(name, count)
@@ -157,36 +165,37 @@ class MultiRegister(RegBase):
         # method.
         reg_schema = REPO_TOP / "util" / "reggen" / "schemas" / "register.hjson"
         reg_allowed_keys = import_hjson(reg_schema)["properties"].keys()
-        reg_raw = {
-            key: value
-            for key, value in raw.items() if key in reg_allowed_keys
-        }
+        reg_raw = {key: value for key, value in raw.items() if key in reg_allowed_keys}
 
         # Parse the dictionary multiple times, passing in a value for
         # "multireg_idx". Collect up the resulting parsed pseudo-registers into
         # a pregs list.
-        pregs = [Register.from_raw(reg_width, offset, params, reg_raw, clocks,
-                                   is_alias, multireg_idx)
-                 for multireg_idx in range(count)]
+        pregs = [
+            Register.from_raw(reg_width, offset, params, reg_raw, clocks, is_alias, multireg_idx)
+            for multireg_idx in range(count)
+        ]
 
         alias_target = None
         if is_alias:
-            if 'alias_target' in raw:
-                alias_target = check_name(raw['alias_target'],
-                                          'name of alias target multiregister')
+            if "alias_target" in raw:
+                alias_target = check_name(raw["alias_target"], "name of alias target multiregister")
             else:
-                raise ValueError(f'alias multiregister {name} does not define '
-                                 f'the alias_target key.')
+                raise ValueError(
+                    f"alias multiregister {name} does not define the alias_target key."
+                )
         else:
-            if 'alias_target' in raw:
-                if raw['alias_target'] is not None:
-                    raise ValueError(f'Illegal alias_target key in '
-                                     f'multiregister {name} (this is not an '
-                                     f'alias register block).')
+            if "alias_target" in raw:
+                if raw["alias_target"] is not None:
+                    raise ValueError(
+                        f"Illegal alias_target key in "
+                        f"multiregister {name} (this is not an "
+                        f"alias register block)."
+                    )
 
-        cname = check_name(raw['cname'], f'cname field of multireg {name}')
-        regwen_multi = check_bool(raw.get('regwen_multi', False),
-                                  f'regwen_multi field of multireg {name}')
+        cname = check_name(raw["cname"], f"cname field of multireg {name}")
+        regwen_multi = check_bool(
+            raw.get("regwen_multi", False), f"regwen_multi field of multireg {name}"
+        )
 
         # Check whether every preg has just one field, and compute the maximum
         # preg width. That maximum width only matters if single_field_per_preg
@@ -212,15 +221,14 @@ class MultiRegister(RegBase):
         # in the other direction.
 
         default_compact = single_field_per_preg and not regwen_multi
-        compact = check_bool(raw.get('compact', default_compact),
-                             f'compact field of multireg {name}')
+        compact = check_bool(
+            raw.get("compact", default_compact), f"compact field of multireg {name}"
+        )
 
         if compact and not single_field_per_preg:
-            raise ValueError(f'Multireg {name} sets the compact flag '
-                             'but has multiple fields.')
+            raise ValueError(f"Multireg {name} sets the compact flag but has multiple fields.")
         if compact and regwen_multi:
-            raise ValueError(f'Multireg {name} sets the compact flag '
-                             'but has regwen_multi set.')
+            raise ValueError(f"Multireg {name} sets the compact flag but has regwen_multi set.")
 
         # The checks above should have checked that we cannot "turn on" being
         # compact with the config file. Make sure of this explicitly.
@@ -242,13 +250,11 @@ class MultiRegister(RegBase):
             max_reg_idx = min(min_reg_idx + regs_per_creg, count) - 1
             creg_offset = offset + creg_idx * addrsep
 
-            pregs_for_creg = [(pregs[i], i)
-                              for i in range(min_reg_idx, max_reg_idx + 1)]
+            pregs_for_creg = [(pregs[i], i) for i in range(min_reg_idx, max_reg_idx + 1)]
             preg0 = pregs_for_creg[0][0]
 
-            creg_suff = f'_{creg_idx}' if creg_count > 1 else ''
-            alias_target = (alias_target + creg_suff
-                            if alias_target is not None else None)
+            creg_suff = f"_{creg_idx}" if creg_count > 1 else ""
+            alias_target = alias_target + creg_suff if alias_target is not None else None
 
             if regwen_multi and preg0.regwen is not None and creg_count > 1:
                 merged_regwen = preg0.regwen + creg_suff  # type: Optional[str]
@@ -258,16 +264,18 @@ class MultiRegister(RegBase):
             field_desc_override = None
             strip_field = False
             if creg_idx > 0:
-                field_desc_override = f'For {cname}{creg_idx}'
+                field_desc_override = f"For {cname}{creg_idx}"
                 strip_field = True
 
-            creg = Register.collect_registers(creg_offset,
-                                              preg0.name + creg_suff,
-                                              pregs_for_creg,
-                                              alias_target,
-                                              merged_regwen,
-                                              field_desc_override,
-                                              strip_field)
+            creg = Register.collect_registers(
+                creg_offset,
+                preg0.name + creg_suff,
+                pregs_for_creg,
+                alias_target,
+                merged_regwen,
+                field_desc_override,
+                strip_field,
+            )
 
             # Check that we haven't overflowed the register width. This
             # shouldn't happen (because of how we calculate regs_per_creg).
@@ -277,10 +285,21 @@ class MultiRegister(RegBase):
 
         # dv_compact is true if the multireg can be equally divided, and we can
         # pack them as an array
-        dv_compact = (count < regs_per_creg or (count % regs_per_creg) == 0)
+        dv_compact = count < regs_per_creg or (count % regs_per_creg) == 0
 
-        return MultiRegister(name, offset, count, addrsep, alias_target, pregs, cname,
-                             regwen_multi, compact, dv_compact, cregs)
+        return MultiRegister(
+            name,
+            offset,
+            count,
+            addrsep,
+            alias_target,
+            pregs,
+            cname,
+            regwen_multi,
+            compact,
+            dv_compact,
+            cregs,
+        )
 
     def next_offset(self, addrsep: int) -> int:
         return self.offset + len(self.cregs) * addrsep
@@ -310,32 +329,31 @@ class MultiRegister(RegBase):
         # representations.
         assert self.pregs
         rd = self.pregs[0]._asdict()
-        rd['count'] = str(len(self.pregs))
-        rd['cname'] = self.cname
-        rd['regwen_multi'] = str(self.regwen_multi)
-        rd['compact'] = str(self.compact)
+        rd["count"] = str(len(self.pregs))
+        rd["cname"] = self.cname
+        rd["regwen_multi"] = str(self.regwen_multi)
+        rd["compact"] = str(self.compact)
 
         if self.alias_target is not None:
-            rd['alias_target'] = self.alias_target
+            rd["alias_target"] = self.alias_target
 
-        return {'multireg': rd}
+        return {"multireg": rd}
 
-    def apply_alias(self, alias_reg: 'MultiRegister', where: str) -> None:
-        '''Compare all attributes and replace overridable values.
+    def apply_alias(self, alias_reg: "MultiRegister", where: str) -> None:
+        """Compare all attributes and replace overridable values.
 
         This ensures both registers are identical up to the overridable
         attributes like 'name', 'desc', 'resval' and 'tags'.
-        '''
+        """
         # Attributes to be crosschecked
-        attrs = [
-            'async_clk', 'sync_clk', 'count', 'regwen_multi', 'compact'
-        ]
+        attrs = ["async_clk", "sync_clk", "count", "regwen_multi", "compact"]
         for attr in attrs:
             if getattr(self, attr) != getattr(alias_reg, attr):
                 raise ValueError(
-                    f'Value mismatch for attribute {attr} between alias '
-                    f'multireg {self.name} and multireg {alias_reg.name} in '
-                    f'{where}.')
+                    f"Value mismatch for attribute {attr} between alias "
+                    f"multireg {self.name} and multireg {alias_reg.name} in "
+                    f"{where}."
+                )
 
         # These attributes can be overridden by the aliasing mechanism.
         self.name = alias_reg.name
@@ -348,30 +366,32 @@ class MultiRegister(RegBase):
         # Update each pseudo-register with the corresponding pseudo-register
         # from alias_reg.
         if len(alias_reg.pregs) != len(self.pregs):
-            raise ValueError(f'Aliasing multireg has {len(alias_reg.pregs)} '
-                             f'pseudo-registers but {self.name} only has '
-                             f'{len(self.pregs)} in {where}.')
+            raise ValueError(
+                f"Aliasing multireg has {len(alias_reg.pregs)} "
+                f"pseudo-registers but {self.name} only has "
+                f"{len(self.pregs)} in {where}."
+            )
         for preg, alias_preg in zip(self.pregs, alias_reg.pregs):
             preg.apply_alias(alias_preg, where)
 
         # Since the multireg structures must be identical, both generic and
         # alias reg must have the same amount of expanded regs at this point.
-        assert (len(self.cregs) == len(alias_reg.cregs))
+        assert len(self.cregs) == len(alias_reg.cregs)
         # Finally, iterate over expanded regs and update them as well.
         for creg, alias_creg in zip(self.cregs, alias_reg.cregs):
             creg.apply_alias(alias_creg, where)
 
     def scrub_alias(self, where: str) -> None:
-        '''Replaces sensitive fields in multiregister with generic names
+        """Replaces sensitive fields in multiregister with generic names
 
         This function can be used to create the generic register descriptions
         from full alias hjson definitions. It will only work on registers
         where the alias_target keys are defined, and otherwise throw an error.
-        '''
+        """
         # These attributes are scrubbed in the multireg.
         assert self.alias_target is not None
         self.name = self.alias_target
-        self.cname = 'creg'
+        self.cname = "creg"
         self.alias_target = None
 
         #  Update each pseudo-register.

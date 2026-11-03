@@ -24,29 +24,29 @@ def genout(outfile, msg):
 
 STAGE_STRINGS = {
     # Life Stages
-    'L0': 'Specification',
-    'L1': 'Development',
-    'L2': 'Signed Off',
+    "L0": "Specification",
+    "L1": "Development",
+    "L2": "Signed Off",
     # Design Stages
-    'D0': 'Initial Work',
-    'D1': 'Functional',
-    'D2': 'Feature Complete',
-    'D2S': 'Security Countermeasures Complete',
-    'D3': 'Design Complete',
+    "D0": "Initial Work",
+    "D1": "Functional",
+    "D2": "Feature Complete",
+    "D2S": "Security Countermeasures Complete",
+    "D3": "Design Complete",
     # Verification Stages
-    'V0': 'Initial Work',
-    'V1': 'Under Test',
-    'V2': 'Testing Complete',
-    'V2S': 'Testing Complete, With Security Countermeasures Verified',
-    'V3': 'Verification Complete',
+    "V0": "Initial Work",
+    "V1": "Under Test",
+    "V2": "Testing Complete",
+    "V2S": "Testing Complete, With Security Countermeasures Verified",
+    "V3": "Verification Complete",
     # DIF Stages (S for Software)
-    'S0': 'Initial Work',
-    'S1': 'Functional',
-    'S2': 'Complete',
-    'S3': 'Stable',
+    "S0": "Initial Work",
+    "S1": "Functional",
+    "S2": "Complete",
+    "S3": "Stable",
     # In case certain development stages do not apply
     # (e.g. verification handled at the top-level).
-    'N/A': 'Not Applicable'
+    "N/A": "Not Applicable",
 }
 
 
@@ -55,37 +55,35 @@ def convert_stage(stagestr):
 
 
 def get_doc_url(base, url):
-    """ Produce a URL to a document.
+    """Produce a URL to a document.
 
     Relative `url`s are relative to `base`, absolute `url`s are relative to the
     repository root.
     """
     assert isinstance(url, str) and len(url) > 0
-    if url[0] == '/':
-        return '/book' + url
+    if url[0] == "/":
+        return "/book" + url
     else:
-        return '/book/' + base + '/' + url
+        return "/book/" + base + "/" + url
 
 
 # Link module name with its design spec doc.
 def get_linked_design_spec(obj):
     result = ""
-    if 'design_spec' in obj:
-        design_spec_url = get_doc_url(
-            obj['_ip_desc_hjson_dir'], obj['design_spec']) + "/.."
+    if "design_spec" in obj:
+        design_spec_url = get_doc_url(obj["_ip_desc_hjson_dir"], obj["design_spec"]) + "/.."
         result = f"<span title='Design Spec'><a href='{design_spec_url}'>"
         result += f"<code>{html.escape(obj['name'])}</code></a></span>"
     else:
-        result = html.escape(obj['name'])
+        result = html.escape(obj["name"])
 
     return result
 
 
 # Provide the link to the DV document.
 def get_linked_dv_doc(obj):
-    if 'dv_doc' in obj:
-        url = (get_doc_url(obj['_ip_desc_hjson_dir'], obj['dv_doc']) +
-               "/../../dv")
+    if "dv_doc" in obj:
+        url = get_doc_url(obj["_ip_desc_hjson_dir"], obj["dv_doc"]) + "/../../dv"
         return f"<span title='DV Document'><a href=\"{url}\">DV</a></span>"
     else:
         return ""
@@ -93,8 +91,8 @@ def get_linked_dv_doc(obj):
 
 # Link the version to the commit id (if available).
 def get_linked_version(rev):
-    version = html.escape(rev['version'])
-    tree = 'main'
+    version = html.escape(rev["version"])
+    tree = "main"
     url = f"https://github.com/pavona/pavona/tree/{tree}"
     return f"<span title='{tree}'><a href=\"{url}\">{version}</a></span>"
 
@@ -115,14 +113,13 @@ def get_linked_checklist(obj, rev, stage, is_latest_rev=True):
     # Else, if checklist is available, then link to the current version of the
     # checklist html.
     # Else, link to the template.
-    if 'hw_checklist' in obj and 'commit_id' in rev and not is_latest_rev:
+    if "hw_checklist" in obj and "commit_id" in rev and not is_latest_rev:
         relpath = str(
-            (REPO_TOP / obj['_ip_desc_hjson_dir'] / obj['hw_checklist']).relative_to(REPO_TOP))
-        url = (f"https://github.com/pavona/pavona/tree/{'main'}/"
-               f"{relpath}.md{in_page_ref}")
-    elif 'hw_checklist' in obj:
-        url = get_doc_url(obj['_ip_desc_hjson_dir'],
-                          obj['hw_checklist'] + ".html" + in_page_ref)
+            (REPO_TOP / obj["_ip_desc_hjson_dir"] / obj["hw_checklist"]).relative_to(REPO_TOP)
+        )
+        url = f"https://github.com/pavona/pavona/tree/{'main'}/{relpath}.md{in_page_ref}"
+    elif "hw_checklist" in obj:
+        url = get_doc_url(obj["_ip_desc_hjson_dir"], obj["hw_checklist"] + ".html" + in_page_ref)
     else:
         # There is no checklist available, so point to the template.
         # doc/project/hw_checklist.md.tpl is a symlink to ip_checklist.md.tpl,
@@ -131,7 +128,7 @@ def get_linked_checklist(obj, rev, stage, is_latest_rev=True):
         url = "https://github.com/pavona/pavona/tree/main/"
         url += "util/uvmdvgen/checklist.md.tpl"
 
-    return "<a href=\"{}\">{}</a>".format(url, html.escape(rev[stage]))
+    return '<a href="{}">{}</a>'.format(url, html.escape(rev[stage]))
 
 
 # Link S stages with the checklist table.
@@ -150,18 +147,18 @@ def get_linked_sw_checklist(obj, rev, stage, is_latest_rev=True):
     # Else, if checklist is available, then link to the current version of the
     # checklist html.
     # Else, link to the template.
-    if 'sw_checklist' in obj and 'commit_id' in rev and not is_latest_rev:
+    if "sw_checklist" in obj and "commit_id" in rev and not is_latest_rev:
         url = "https://github.com/pavona/pavona/tree/{}/{}.md{}".format(
-            'main', obj['sw_checklist'], in_page_ref)
-    elif 'sw_checklist' in obj:
-        url = get_doc_url(obj['_ip_desc_hjson_dir'],
-                          obj['sw_checklist'] + ".html" + in_page_ref)
+            "main", obj["sw_checklist"], in_page_ref
+        )
+    elif "sw_checklist" in obj:
+        url = get_doc_url(obj["_ip_desc_hjson_dir"], obj["sw_checklist"] + ".html" + in_page_ref)
     else:
         # There is no checklist available, so point to the template.
         url = "https://github.com/pavona/pavona/tree/main/"
         url += "doc/contributing/hw/sw_checklist.md.tpl"
 
-    return "<a href=\"{}\">{}</a>".format(url, html.escape(rev[stage]))
+    return '<a href="{}">{}</a>'.format(url, html.escape(rev[stage]))
 
 
 # Link development stages in "L# : D# : V# : S#" format.
@@ -171,44 +168,43 @@ def get_development_stage(obj, rev, is_latest_rev=True):
     if "life_stage" not in rev:
         return "&nbsp;"
 
-    life_stage = rev['life_stage']
+    life_stage = rev["life_stage"]
     life_stage_html = "<span title='{}'>{}</span>".format(
-        html.escape(convert_stage(life_stage)), html.escape(life_stage))
+        html.escape(convert_stage(life_stage)), html.escape(life_stage)
+    )
 
-    if life_stage != 'L0' and 'design_stage' in rev:
-        design_stage = rev['design_stage']
+    if life_stage != "L0" and "design_stage" in rev:
+        design_stage = rev["design_stage"]
         design_stage_html = "<span title='{}'>{}</span>".format(
             html.escape(convert_stage(design_stage)),
-            get_linked_checklist(obj, rev, 'design_stage', is_latest_rev))
+            get_linked_checklist(obj, rev, "design_stage", is_latest_rev),
+        )
     else:
         design_stage_html = "-"
 
-    if life_stage != 'L0' and 'verification_stage' in rev:
-        verification_stage = rev['verification_stage']
+    if life_stage != "L0" and "verification_stage" in rev:
+        verification_stage = rev["verification_stage"]
         verification_stage_html = "<span title='{}'>{}</span>".format(
             html.escape(convert_stage(verification_stage)),
-            get_linked_checklist(obj, rev, 'verification_stage',
-                                 is_latest_rev))
+            get_linked_checklist(obj, rev, "verification_stage", is_latest_rev),
+        )
     else:
         verification_stage_html = "-"
 
-    if life_stage != 'L0' and 'dif_stage' in rev:
-        dif_stage = rev['dif_stage']
+    if life_stage != "L0" and "dif_stage" in rev:
+        dif_stage = rev["dif_stage"]
         dif_stage_html = "<span title='{}'>{}</span>".format(
             html.escape(convert_stage(dif_stage)),
-            get_linked_sw_checklist(obj, rev, 'dif_stage', is_latest_rev))
+            get_linked_sw_checklist(obj, rev, "dif_stage", is_latest_rev),
+        )
     else:
         dif_stage_html = "-"
 
-    return [
-        life_stage_html, design_stage_html, verification_stage_html,
-        dif_stage_html
-    ]
+    return [life_stage_html, design_stage_html, verification_stage_html, dif_stage_html]
 
 
 # Create dashboard of hardware IP development status
-def gen_dashboard_row_html(config: Union[Path, Tuple[Path, Path]],
-                           outfile: TextIO):
+def gen_dashboard_row_html(config: Union[Path, Tuple[Path, Path]], outfile: TextIO):
     """Generate summary HTML table row from an IP block's configuration data.
 
     Parameters
@@ -243,7 +239,7 @@ def gen_dashboard_row_html(config: Union[Path, Tuple[Path, Path]],
         log.error("Error opening file %s: %s", hjson_path, e)
         return
 
-    if hjson_path.suffixes == ['.prj', '.hjson']:
+    if hjson_path.suffixes == [".prj", ".hjson"]:
         is_comportable_spec = False
     else:
         is_comportable_spec = True
@@ -253,7 +249,7 @@ def gen_dashboard_row_html(config: Union[Path, Tuple[Path, Path]],
     else:
         log.error(f"hjson file import failed for {hjson_path}")
 
-    obj['_ip_desc_hjson_dir'] = ip_desc_hjson_dir
+    obj["_ip_desc_hjson_dir"] = ip_desc_hjson_dir
 
     # If `revisions` field doesn't exist, the tool assumes the Hjson
     # as the previous project format, which has only one version entry.
@@ -306,15 +302,13 @@ def print_multiversion_format(obj, outfile):
             outstr += get_linked_dv_doc(obj) + "</td>\n"
         # Print out the module name in the first entry only
         elif i == 0:
-            outstr += "        <td class='fixleft' rowspan='{}'>".format(
-                len(revisions))
+            outstr += "        <td class='fixleft' rowspan='{}'>".format(len(revisions))
             outstr += get_linked_design_spec(obj) + "</td>\n"
-            outstr += "        <td class='hw-stage' rowspan='{}'>".format(
-                len(revisions))
+            outstr += "        <td class='hw-stage' rowspan='{}'>".format(len(revisions))
             outstr += get_linked_dv_doc(obj) + "</td>\n"
 
         # Version
-        outstr += "        <td class=\"version\">"
+        outstr += '        <td class="version">'
         outstr += get_linked_version(rev) + "</td>\n"
 
         # Development Stage
@@ -324,9 +318,8 @@ def print_multiversion_format(obj, outfile):
             outstr += "</span></td>\n"
 
         # Notes
-        if 'notes' in rev and rev['notes'] != '':
-            outstr += "        <td>" + mk.markdown(
-                rev['notes']).rstrip() + "</td>\n"
+        if "notes" in rev and rev["notes"] != "":
+            outstr += "        <td>" + mk.markdown(rev["notes"]).rstrip() + "</td>\n"
         else:
             outstr += "        <td><p>&nbsp;</p></td>\n"
         outstr += "      </tr>\n"

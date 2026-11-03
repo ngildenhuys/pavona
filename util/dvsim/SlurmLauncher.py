@@ -28,7 +28,7 @@ def _parse_size_mb(text: str) -> Union[float, None]:
     if not text:
         return None
 
-    scale = {'K': 1 / 1024, 'M': 1.0, 'G': 1024.0, 'T': 1024.0 * 1024}
+    scale = {"K": 1 / 1024, "M": 1.0, "G": 1024.0, "T": 1024.0 * 1024}
     factor = 1 / (1024 * 1024)
     if text[-1].upper() in scale:
         factor = scale[text[-1].upper()]
@@ -56,18 +56,18 @@ class SlurmLauncher(Launcher):
     mem_poll_interval_secs = 30
 
     def __init__(self, deploy):
-        '''Initialize common class members.'''
+        """Initialize common class members."""
 
         super().__init__(deploy)
 
         # Popen object when launching the job.
         self.process = None
-        self.slurm_log_file = Path(self.deploy.get_log_path() + '.slurm')
+        self.slurm_log_file = Path(self.deploy.get_log_path() + ".slurm")
         self.slurm_script_file = None
 
         # Where the job writes its own Slurm job id, so that the peak memory
         # can be asked for without having to search the queue for the job.
-        self.slurm_jobid_file = Path(f'{self.slurm_log_file}.jobid')
+        self.slurm_jobid_file = Path(f"{self.slurm_log_file}.jobid")
         self._slurm_job_id = None
         self._last_mem_poll = None
 
@@ -81,8 +81,8 @@ class SlurmLauncher(Launcher):
         # level to the next. Here, self.cmd is a call to Make but it's
         # logically a top-level invocation: we don't want to pollute the flow's
         # Makefile with Make variables from any wrapper that called dvsim.
-        if 'MAKEFLAGS' in exports:
-            del exports['MAKEFLAGS']
+        if "MAKEFLAGS" in exports:
+            del exports["MAKEFLAGS"]
         self._dump_env_vars(exports)
 
         # Write command to a script on shared storage to avoid quoting issues
@@ -91,69 +91,72 @@ class SlurmLauncher(Launcher):
         try:
             script_dir.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            raise LauncherError(f'File Error: {e}\n'
-                                f'Could not create the job directory {script_dir}')
+            raise LauncherError(f"File Error: {e}\nCould not create the job directory {script_dir}")
 
         # The job reports its own id, which is the cheapest way for the
         # launcher to learn it: srun does not hand it back, and searching the
         # queue for the job by name costs a round trip per job.
-        script_body = '#!/bin/bash\n'
+        script_body = "#!/bin/bash\n"
         script_body += f'echo "${{SLURM_JOB_ID}}" > {self.slurm_jobid_file}\n'
         if SLURM_SETUP_CMD:
-            script_body += f'{SLURM_SETUP_CMD}\n'
-        script_body += f'{self.deploy.cmd}\n'
+            script_body += f"{SLURM_SETUP_CMD}\n"
+        script_body += f"{self.deploy.cmd}\n"
 
         try:
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.sh',
-                                             dir=script_dir, delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".sh", dir=script_dir, delete=False
+            ) as f:
                 f.write(script_body)
                 self.slurm_script_file = Path(f.name)
             self.slurm_script_file.chmod(0o755)
         except OSError as e:
-            raise LauncherError(f'File Error: {e}\n'
-                                f'Could not write the job script in {script_dir}')
+            raise LauncherError(f"File Error: {e}\nCould not write the job script in {script_dir}")
 
         # Encapsulate the run command with the slurm invocation. srun forwards
         # its standard input to the job by default, so every concurrent job
         # would contend for the terminal that dvsim was started from and stall
         # until that terminal delivered input.
-        slurm_cmd = (f'srun -p {SLURM_QUEUE} --mem={SLURM_MEM} --mincpus={SLURM_MINCPUS} '
-                     f'--time={SLURM_TIMEOUT} --cpus-per-task={SLURM_CPUS_PER_TASK} '
-                     f'--job-name={shlex.quote(self.deploy.full_name)} '
-                     f'--input=none {self.slurm_script_file}')
+        slurm_cmd = (
+            f"srun -p {SLURM_QUEUE} --mem={SLURM_MEM} --mincpus={SLURM_MINCPUS} "
+            f"--time={SLURM_TIMEOUT} --cpus-per-task={SLURM_CPUS_PER_TASK} "
+            f"--job-name={shlex.quote(self.deploy.full_name)} "
+            f"--input=none {self.slurm_script_file}"
+        )
 
         try:
-            with self.slurm_log_file.open('w') as out_file:
+            with self.slurm_log_file.open("w") as out_file:
                 out_file.write("[Executing]:\n{}\n\n".format(self.deploy.cmd))
                 out_file.flush()
 
-                log.log(VERBOSE, 'Executing slurm command: %s', slurm_cmd)
-                log.log(VERBOSE, 'Job script:\n%s', script_body)
-                self.process = subprocess.Popen(shlex.split(slurm_cmd),
-                                                bufsize=4096,
-                                                universal_newlines=True,
-                                                stdin=subprocess.DEVNULL,
-                                                stdout=out_file,
-                                                stderr=out_file,
-                                                env=exports)
+                log.log(VERBOSE, "Executing slurm command: %s", slurm_cmd)
+                log.log(VERBOSE, "Job script:\n%s", script_body)
+                self.process = subprocess.Popen(
+                    shlex.split(slurm_cmd),
+                    bufsize=4096,
+                    universal_newlines=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=out_file,
+                    stderr=out_file,
+                    env=exports,
+                )
         except IOError as e:
-            raise LauncherError(f'File Error: {e}\nError while handling {self.slurm_log_file}')
+            raise LauncherError(f"File Error: {e}\nError while handling {self.slurm_log_file}")
         except subprocess.SubprocessError as e:
-            raise LauncherError(f'IO Error: {e}\nSee {self.deploy.get_log_path()}')
+            raise LauncherError(f"IO Error: {e}\nSee {self.deploy.get_log_path()}")
         finally:
             self._close_process()
 
         self._link_odir("D")
 
     def poll(self):
-        '''Check status of the running process
+        """Check status of the running process
 
         This returns 'D', 'P' or 'F'. If 'D', the job is still running. If 'P',
         the job finished successfully. If 'F', the job finished with an error.
 
         This function must only be called after running self.dispatch_cmd() and
         must not be called again once it has returned 'P' or 'F'.
-        '''
+        """
 
         assert self.process is not None
         self._tick_runtime()
@@ -161,24 +164,25 @@ class SlurmLauncher(Launcher):
             reason = self._limit_exceeded()
             if reason is not None:
                 self._kill_with_reason(reason)
-                return 'K'
+                return "K"
 
-            return 'D'
+            return "D"
 
         # Copy slurm job results to log file
         if self.slurm_log_file.exists():
             try:
-                with self.slurm_log_file.open('r') as slurm_file:
+                with self.slurm_log_file.open("r") as slurm_file:
                     try:
-                        with open(self.deploy.get_log_path(), 'a') as out_file:
+                        with open(self.deploy.get_log_path(), "a") as out_file:
                             shutil.copyfileobj(slurm_file, out_file)
                     except IOError as e:
-                        raise LauncherError(f'File Error: {e} when handling '
-                                            f'{self.deploy.get_log_path()}')
+                        raise LauncherError(
+                            f"File Error: {e} when handling {self.deploy.get_log_path()}"
+                        )
                 # Remove the temporary file from the slurm process
                 self.slurm_log_file.unlink()
             except IOError as e:
-                raise LauncherError(f'File Error: {e} when handling {self.slurm_log_file}')
+                raise LauncherError(f"File Error: {e} when handling {self.slurm_log_file}")
 
         self.exit_code = self.process.returncode
         status, err_msg = self._check_status()
@@ -186,15 +190,13 @@ class SlurmLauncher(Launcher):
         return status
 
     def kill(self):
-        '''Kill the running process.
+        """Kill the running process.
 
         This must be called between dispatching and reaping the process (the
         same window as poll()).
-        '''
+        """
         self._kill()
-        self._post_finish(
-            'K',
-            ErrorMessage(line_number=None, message='Job killed!', context=[]))
+        self._post_finish("K", ErrorMessage(line_number=None, message="Job killed!", context=[]))
 
     def _job_id(self) -> Union[str, None]:
         """Return the job's Slurm id, or None before the job has reported it.
@@ -223,15 +225,20 @@ class SlurmLauncher(Launcher):
             return self.deploy.job_peak_rss
 
         now = time.monotonic()
-        if (self._last_mem_poll is not None and
-                now - self._last_mem_poll < self.mem_poll_interval_secs):
+        if (
+            self._last_mem_poll is not None
+            and now - self._last_mem_poll < self.mem_poll_interval_secs
+        ):
             return self.deploy.job_peak_rss
         self._last_mem_poll = now
 
         try:
             result = subprocess.run(
-                ['sstat', '-a', '-n', '-P', '-j', job_id, '-o', 'MaxRSS'],
-                capture_output=True, text=True, timeout=30)
+                ["sstat", "-a", "-n", "-P", "-j", job_id, "-o", "MaxRSS"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
         except (OSError, subprocess.SubprocessError):
             return self.deploy.job_peak_rss
 
@@ -266,17 +273,18 @@ class SlurmLauncher(Launcher):
             self.process.poll()
 
         self._post_finish(
-            'K',
-            ErrorMessage(line_number=None,
-                         message='Job force-killed when dvsim was force-quit.',
-                         context=[]))
+            "K",
+            ErrorMessage(
+                line_number=None, message="Job force-killed when dvsim was force-quit.", context=[]
+            ),
+        )
 
     def _kill(self) -> None:
-        '''Cancel the job by terminating the srun that holds it.
+        """Cancel the job by terminating the srun that holds it.
 
         srun forwards the signal to the job and releases the allocation, so
         there is no need to reach for scancel.
-        '''
+        """
         if self.process is None:
             return
 
@@ -301,7 +309,7 @@ class SlurmLauncher(Launcher):
         self.process = None
 
     def _close_process(self):
-        '''Close the file descriptors associated with the process.'''
+        """Close the file descriptors associated with the process."""
 
         assert self.process
         if self.process.stdout:

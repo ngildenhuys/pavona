@@ -5,6 +5,7 @@
 This contains a class to access the rstmgr's configuration from its ipconfig
 files.
 """
+
 from typing import List, Dict
 
 

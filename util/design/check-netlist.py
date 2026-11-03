@@ -22,35 +22,49 @@ class Parser:
     # List of patterns we want to use for finding size_only constraints.
     size_only_patterns = [
         "u_size_only",
-        "u_size_only_xor", "u_size_only_xnor", "u_size_only_and",
-        "u_size_only_mux", "u_size_only_flop", "u_size_only_buf",
-        "u_size_only_tie", "u_size_only_clock_gate"
+        "u_size_only_xor",
+        "u_size_only_xnor",
+        "u_size_only_and",
+        "u_size_only_mux",
+        "u_size_only_flop",
+        "u_size_only_buf",
+        "u_size_only_tie",
+        "u_size_only_clock_gate",
     ]
 
     # Regex to find ".lc_en_i, ( ... )" and capture the content
-    pattern_lc_in = re.compile(r'\.lc_en_i \((.*?)\)')
+    pattern_lc_in = re.compile(r"\.lc_en_i \((.*?)\)")
 
     # Regex to find ".mubi_i, ( ... )" and capture the content
-    pattern_mubi_in = re.compile(r'\.mubi_i \((.*?)\)')
+    pattern_mubi_in = re.compile(r"\.mubi_i \((.*?)\)")
 
     # Regex to find "assign mubi_o[*] = " const"
-    pattern_mubi_const = re.compile(r'assign\s+([^=\s]*mubi_o[^=\s]*)\s*'
-                                    r'=\s*(.*?)\'b[01]+;')
+    pattern_mubi_const = re.compile(
+        r"assign\s+([^=\s]*mubi_o[^=\s]*)\s*"
+        r"=\s*(.*?)\'b[01]+;"
+    )
 
     # Regex to find "assign test*_o[*] = " const"
-    pattern_test_const = re.compile(r'assign\s+(test_.*_o.*?)\s*='
-                                    r'\s*(.*?)\'b[01]+;')
+    pattern_test_const = re.compile(
+        r"assign\s+(test_.*_o.*?)\s*="
+        r"\s*(.*?)\'b[01]+;"
+    )
 
     # tie low/high pattern
     pattern_tie_low_high = re.compile(r"\'b[01]")
 
     # pattern to find a module name
-    pattern_module = re.compile(r'^\s*module\s+([a-zA-Z_][a-zA-Z0-9_]*)')
+    pattern_module = re.compile(r"^\s*module\s+([a-zA-Z_][a-zA-Z0-9_]*)")
 
     # valid mubi4, mubi8, mubi12 patterns
-    mubi_allowed_patterns = ["12'b100101101001", "12'b11010010110",
-                             "8'b1101001", "8'b10010110",
-                             "4'b110", "4'b1001"]
+    mubi_allowed_patterns = [
+        "12'b100101101001",
+        "12'b11010010110",
+        "8'b1101001",
+        "8'b10010110",
+        "4'b110",
+        "4'b1001",
+    ]
 
     # valid lc patterns
     lc_allowed_patterns = ["4'b101", "4'b1010"]
@@ -69,18 +83,15 @@ class Parser:
     error_modules: set[str] = set()
 
     def describe_module(self) -> str:
-        return ('unknown module' if self.module_name is None
-                else f'module {self.module_name}')
+        return "unknown module" if self.module_name is None else f"module {self.module_name}"
 
-    def on_error(self,
-                 linenum: int, line: str,
-                 desc: str, bad_match: str | None) -> None:
+    def on_error(self, linenum: int, line: str, desc: str, bad_match: str | None) -> None:
         print(f"Error: {desc} in {self.describe_module()}, line {linenum}:")
         print(f"  Full line: {line.strip()}")
         if bad_match is not None:
             print(f"  Content parsed: {bad_match}")
 
-        hr('-')
+        hr("-")
 
         self.errors += 1
         if self.module_name is not None:
@@ -98,8 +109,7 @@ class Parser:
             content = lc_match.group(1).strip()
             if Parser.pattern_tie_low_high.search(content):
                 if content not in Parser.lc_allowed_patterns:
-                    self.on_error(line_number, line,
-                                  'invalid constant lc_en_i', content)
+                    self.on_error(line_number, line, "invalid constant lc_en_i", content)
 
         # check for constant mubi_i signals
         mubi_i_match = Parser.pattern_mubi_in.search(line)
@@ -107,17 +117,15 @@ class Parser:
             content = mubi_i_match.group(1).strip()
             if Parser.pattern_tie_low_high.search(content):
                 if content not in Parser.mubi_allowed_patterns:
-                    self.on_error(line_number, line,
-                                  'invalid constant mubi_i', content)
+                    self.on_error(line_number, line, "invalid constant mubi_i", content)
 
         # check for constant mubi_o signals
         if Parser.pattern_mubi_const.search(line):
-            self.on_error(line_number, line, 'tied low/high mubi bit', None)
+            self.on_error(line_number, line, "tied low/high mubi bit", None)
 
         # check for constant test-outputs in prim_sdc_example
-        if ((self.module_name == "prim_sdc_example" and
-             Parser.pattern_test_const.search(line))):
-            self.on_error(line_number, line, 'tied low/high test*_o*', None)
+        if self.module_name == "prim_sdc_example" and Parser.pattern_test_const.search(line):
+            self.on_error(line_number, line, "tied low/high test*_o*", None)
 
         # Count size_only instances
         for i, pattern in enumerate(Parser.size_only_patterns):
@@ -125,11 +133,11 @@ class Parser:
                 self.size_only_count[i] += 1
 
     def report(self) -> None:
-        hr('=')
+        hr("=")
         print("Final Summary:")
-        hr('-')
+        hr("-")
         print("Found the following size_only instances:")
-        hr('-')
+        hr("-")
 
         # Print the number of specific size_only matches that we have seen
         # (with a suffix from _xor, _xnor, _only_and, ...)
@@ -145,22 +153,23 @@ class Parser:
         other_count = self.size_only_count[0] - specific_count
         print(f"{'others':<30}{other_count}")
 
-        hr('-')
+        hr("-")
 
         # Since we know that every match for a specific case will also match
         # the first pattern, the number of lines that match equals
         # size_only_count[0]
         print(f"{'Total':<30}{self.size_only_count[0]}")
-        hr('=')
+        hr("=")
 
-        print(f"Found {self.errors} potential netlist problems "
-              f"in {len(self.error_modules)} modules!")
-        hr('=')
+        print(
+            f"Found {self.errors} potential netlist problems in {len(self.error_modules)} modules!"
+        )
+        hr("=")
 
 
 def parse_expressions(filename):
     try:
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             lines = list(file)
     except FileNotFoundError:
         print(f"Error: The file '{filename}' was not found.")
@@ -175,31 +184,32 @@ def parse_expressions(filename):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
-        description = "Parses a synthesized netlist for suspicious constructs and counts all"
-                      "size_only instances",
-        epilog = "Note: This script does not guarantee that there are no issues in the netlist (!)"
+        description="Parses a synthesized netlist for suspicious constructs and counts all"
+        "size_only instances",
+        epilog="Note: This script does not guarantee that there are no issues in the netlist (!)",
     )
 
     parser.add_argument(
         "netlist_filename",
         type=str,
-        help="The path to the netlist file (e.g., netlist.v) to be parsed."
+        help="The path to the netlist file (e.g., netlist.v) to be parsed.",
     )
 
     args = parser.parse_args()
-    hr('=')
-    print("DISCLAIMER:\n"
-          "This script parses a synthesized netlist for suspicious constructs.\n"
-          "It does not guarantee that there are no issues in the netlist(!)")
-    hr('=')
-    print('\n')
+    hr("=")
+    print(
+        "DISCLAIMER:\n"
+        "This script parses a synthesized netlist for suspicious constructs.\n"
+        "It does not guarantee that there are no issues in the netlist(!)"
+    )
+    hr("=")
+    print("\n")
 
     file_to_parse = args.netlist_filename
     errors = parse_expressions(file_to_parse)
 
-    if (errors > 0):
+    if errors > 0:
         sys.exit(1)
     else:
         sys.exit(0)

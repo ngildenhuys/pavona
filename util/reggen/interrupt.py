@@ -17,62 +17,70 @@ class IntrType(JsonEnum):
     Status = 2
 
 
-_intr_type_map = {'event': IntrType.Event, 'status': IntrType.Status}
+_intr_type_map = {"event": IntrType.Event, "status": IntrType.Status}
 
 
-INTERRUPT_VALIDATOR = create_validator('urn:reggen:interrupt')
+INTERRUPT_VALIDATOR = create_validator("urn:reggen:interrupt")
 
 
 class Interrupt(Signal):
-
-    def __init__(self, name: str, desc: str, bits: Bits, auto_split: bool,
-                 intr_type: IntrType, default_val: bool):
+    def __init__(
+        self,
+        name: str,
+        desc: str,
+        bits: Bits,
+        auto_split: bool,
+        intr_type: IntrType,
+        default_val: bool,
+    ):
         super().__init__(name, desc, bits)
         self.intr_type = intr_type
         self.auto_split = auto_split
         self.default_val = default_val
 
     @staticmethod
-    def from_raw(what: str, lsb: int, raw: object) -> 'Interrupt':
+    def from_raw(what: str, lsb: int, raw: object) -> "Interrupt":
         if not isinstance(raw, dict):
-            raise TypeError('interrupt must be instantiated from dict: interrupt of ' + what)
+            raise TypeError("interrupt must be instantiated from dict: interrupt of " + what)
         INTERRUPT_VALIDATOR.validate(cast_hjson_values(raw))
 
-        name = check_name(raw['name'], 'name field of ' + what)
-        desc = check_str(raw['desc'], 'desc field of ' + what)
-        width = check_int(raw.get('width', 1), 'width field of ' + what)
-        default_val = check_bool(raw.get('default', False),
-                                 'default field of ' + what)
+        name = check_name(raw["name"], "name field of " + what)
+        desc = check_str(raw["desc"], "desc field of " + what)
+        width = check_int(raw.get("width", 1), "width field of " + what)
+        default_val = check_bool(raw.get("default", False), "default field of " + what)
         if width <= 0:
-            raise ValueError('The width field of signal {} ({}) '
-                             'has value {}, but should be positive.'.format(
-                                 name, what, width))
+            raise ValueError(
+                "The width field of signal {} ({}) has value {}, but should be positive.".format(
+                    name, what, width
+                )
+            )
         bits = Bits(lsb + width - 1, lsb)
-        intr_type_str = check_str(raw.get('type', 'event'),
-                                  'intr_type field of ' + what)
-        auto_split = check_bool(raw.get('auto_split', False),
-                                'auto_split of ' + what)
+        intr_type_str = check_str(raw.get("type", "event"), "intr_type field of " + what)
+        auto_split = check_bool(raw.get("auto_split", False), "auto_split of " + what)
 
         try:
             intr_type = _intr_type_map[intr_type_str.lower()]
         except KeyError:
             raise ValueError(
-                'The intr_type field of signal {} ({}) '
-                'has value {}, but should be either event or status.'.format(
-                    name, what, intr_type_str))
+                "The intr_type field of signal {} ({}) "
+                "has value {}, but should be either event or status.".format(
+                    name, what, intr_type_str
+                )
+            )
 
         if intr_type == IntrType.Event and default_val:
-            raise RuntimeError('Interrupt {} is of Event type and cannot '
-                               'have a nonzero default'.format(name))
+            raise RuntimeError(
+                "Interrupt {} is of Event type and cannot have a nonzero default".format(name)
+            )
 
         return Interrupt(name, desc, bits, auto_split, intr_type, default_val)
 
     @staticmethod
-    def from_raw_list(what: str, raw: object) -> Sequence['Interrupt']:
+    def from_raw_list(what: str, raw: object) -> Sequence["Interrupt"]:
         lsb = 0
         ret = []
         for idx, entry in enumerate(check_list(raw, what)):
-            entry_what = 'entry {} of {}'.format(idx, what)
+            entry_what = "entry {} of {}".format(idx, what)
             interrupt = Interrupt.from_raw(entry_what, lsb, entry)
             ret.append(interrupt)
             lsb += interrupt.bits.width()

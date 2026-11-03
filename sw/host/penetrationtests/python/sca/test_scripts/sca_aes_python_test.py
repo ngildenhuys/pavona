@@ -36,7 +36,6 @@ BOOTSTRAP = args.bootstrap
 
 
 class AesScaTest(unittest.TestCase):
-
     def test_init(self):
         aessca = OTAES(target)
         device_id, owner_page, boot_log, boot_measurements, version = aessca.init(fpga)
@@ -101,9 +100,7 @@ class AesScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -130,9 +127,7 @@ class AesScaTest(unittest.TestCase):
         expected_result = [x for x in cipher_gen.encrypt(bytes(text))]
 
         expected_result_json = {"ciphertext": expected_result, "ciphertext_length": 16}
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_aes_batch_daisy_chain(self):
         for num_segments in num_segments_list:
@@ -155,9 +150,7 @@ class AesScaTest(unittest.TestCase):
                 "ciphertext": chained_text,
                 "ciphertext_length": len(chained_text),
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_aes_batch_fvsr_data(self):
         for num_segments in num_segments_list:
@@ -191,9 +184,7 @@ class AesScaTest(unittest.TestCase):
                 "ciphertext": expected_result,
                 "ciphertext_length": len(expected_result),
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_aes_batch_fvsr_key(self):
         for num_segments in num_segments_list:
@@ -226,9 +217,7 @@ class AesScaTest(unittest.TestCase):
                 "ciphertext": expected_result,
                 "ciphertext_length": len(expected_result),
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_aes_batch_random(self):
         for num_segments in num_segments_list:
@@ -255,27 +244,19 @@ class AesScaTest(unittest.TestCase):
                 "ciphertext": expected_result,
                 "ciphertext_length": len(expected_result),
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
 
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:
-        bitstream_path = r.Rlocation(
-            "pavona_pavona/" + BITSTREAM
-        )
+        bitstream_path = r.Rlocation("pavona_pavona/" + BITSTREAM)
     # Get the firmware path.
-    firmware_path = r.Rlocation(
-        "pavona_pavona/" + BOOTSTRAP
-    )
+    firmware_path = r.Rlocation("pavona_pavona/" + BOOTSTRAP)
 
     if "fpga" in BOOTSTRAP:
         target_type = "fpga"
@@ -288,7 +269,7 @@ if __name__ == "__main__":
         fw_bin=firmware_path,
         opentitantool=opentitantool_path,
         bitstream=bitstream_path,
-        tool_args=config_args
+        tool_args=config_args,
     )
 
     target = targets.Target(target_cfg)

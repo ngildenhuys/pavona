@@ -15,9 +15,9 @@ from mako.template import Template
 REPO_TOP = Path(__file__).resolve().parent.parent.parent
 
 
-def gen_testutils(outdir: Path,
-                  completecfg: Dict[str, object],
-                  ips_with_difs: List[Ip]) -> List[Path]:
+def gen_testutils(
+    outdir: Path, completecfg: Dict[str, object], ips_with_difs: List[Ip]
+) -> List[Path]:
     """Generate testutils libraries that are rendered from Mako templates.
 
     Args:
@@ -40,8 +40,7 @@ def gen_testutils(outdir: Path,
     # Render templates.
     for testutils_template_path in testutils_templates_dir.iterdir():
         if testutils_template_path.suffix == ".tpl":
-            comment_syntax = "#" if testutils_template_path.stem.endswith(
-                ".build") else "//"
+            comment_syntax = "#" if testutils_template_path.stem.endswith(".build") else "//"
             # Read in template, render it, and write it to the output file.
             testutils_template = Template(testutils_template_path.read_text())
             testutils = outdir / testutils_template_path.stem
@@ -49,10 +48,9 @@ def gen_testutils(outdir: Path,
                 testutils_template.render(
                     ips_with_difs=ips_with_difs,
                     autogen_banner=get_autogen_banner(
-                        "util/autogen_testutils.py",
-                        comment=comment_syntax
+                        "util/autogen_testutils.py", comment=comment_syntax
                     ),
-                    top = completecfg,
+                    top=completecfg,
                 )
             )
             testutilses += [testutils]

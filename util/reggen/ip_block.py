@@ -1,7 +1,7 @@
 # Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-'''Code representing an IP block for reggen'''
+"""Code representing an IP block for reggen"""
 
 import logging as log
 from typing import Sequence, Optional
@@ -15,8 +15,7 @@ from reggen.countermeasure import CounterMeasure
 from reggen.feature import Feature
 from reggen.inter_signal import InterSignal
 from reggen.interrupt import Interrupt
-from reggen.lib import (check_bool, check_int, check_list,
-                        check_name)
+from reggen.lib import check_bool, check_int, check_list, check_name
 from reggen.memory import Memory
 from reggen.params import LocalParam, ReggenParams
 from reggen.reg_block import RegBlock
@@ -27,54 +26,54 @@ from basegen.validate import create_validator, IP_BLOCK_VALIDATOR
 
 # Known unique comportable IP names and associated CIP_IDs.
 KNOWN_CIP_IDS = {
-    1: 'adc_ctrl',
-    2: 'aes',
-    3: 'aon_timer',
-    4: 'clkmgr',
-    5: 'csrng',
-    6: 'edn',
-    7: 'entropy_src',
-    8: 'flash_ctrl',
-    9: 'gpio',
-    10: 'hmac',
-    11: 'i2c',
-    12: 'keymgr',
-    13: 'kmac',
-    14: 'lc_ctrl',
-    15: 'acc',
-    16: 'otp_ctrl',
-    17: 'pattgen',
-    18: 'pinmux',
-    19: 'pwm',
-    20: 'pwrmgr',
-    21: 'rom_ctrl',
-    22: 'rstmgr',
-    23: 'rv_core_ibex',
-    24: 'rv_dm',
-    25: 'rv_timer',
-    26: 'spi_device',
-    27: 'spi_host',
-    28: 'sram_ctrl',
-    29: 'sysrst_ctrl',
-    30: 'uart',
-    31: 'usbdev',
-    32: 'alert_handler',
-    33: 'rv_plic',
-    34: 'ast',
-    35: 'sensor_ctrl',
-    36: 'dma',
-    37: 'mbx',
-    38: 'soc_proxy',
-    39: 'keymgr_dpe',
-    40: 'ascon',
-    41: 'ac_range_check',
-    42: 'soc_dbg_ctrl',
-    43: 'racl_ctrl',
-    44: 'otp_macro',
+    1: "adc_ctrl",
+    2: "aes",
+    3: "aon_timer",
+    4: "clkmgr",
+    5: "csrng",
+    6: "edn",
+    7: "entropy_src",
+    8: "flash_ctrl",
+    9: "gpio",
+    10: "hmac",
+    11: "i2c",
+    12: "keymgr",
+    13: "kmac",
+    14: "lc_ctrl",
+    15: "acc",
+    16: "otp_ctrl",
+    17: "pattgen",
+    18: "pinmux",
+    19: "pwm",
+    20: "pwrmgr",
+    21: "rom_ctrl",
+    22: "rstmgr",
+    23: "rv_core_ibex",
+    24: "rv_dm",
+    25: "rv_timer",
+    26: "spi_device",
+    27: "spi_host",
+    28: "sram_ctrl",
+    29: "sysrst_ctrl",
+    30: "uart",
+    31: "usbdev",
+    32: "alert_handler",
+    33: "rv_plic",
+    34: "ast",
+    35: "sensor_ctrl",
+    36: "dma",
+    37: "mbx",
+    38: "soc_proxy",
+    39: "keymgr_dpe",
+    40: "ascon",
+    41: "ac_range_check",
+    42: "soc_dbg_ctrl",
+    43: "racl_ctrl",
+    44: "otp_macro",
 }
 
 
-ALIAS_VALIDATOR = create_validator('urn:reggen:alias')
+ALIAS_VALIDATOR = create_validator("urn:reggen:alias")
 
 
 @dataclass
@@ -102,7 +101,7 @@ class IpBlock:
     scan_en: bool
     countermeasures: list[CounterMeasure]
     features: list[Feature]
-    node: str = ''
+    node: str = ""
     alias_impl: str | None = None
 
     def __post_init__(self) -> None:
@@ -112,11 +111,8 @@ class IpBlock:
         # specific reg_block node.
         dev_if_names: list[str | None] = []
         if self.node:
-            dev_if_names += [
-                i for i in self.bus_interfaces.named_devices if i == self.node
-            ]
-            self.reg_blocks = {k: v for k, v in self.reg_blocks.items()
-                               if k == self.node}
+            dev_if_names += [i for i in self.bus_interfaces.named_devices if i == self.node]
+            self.reg_blocks = {k: v for k, v in self.reg_blocks.items() if k == self.node}
         else:
             dev_if_names += self.bus_interfaces.named_devices
 
@@ -125,58 +121,60 @@ class IpBlock:
         mem_names = self.memories.keys()
         # Check that register blocks and memories do not have conflicting names
         conflicts = set(reg_block_names).intersection(set(mem_names))
-        assert not conflicts, ("the following name(s) appears both in register blocks "
-                               f"and memories: {list(conflicts)}")
+        assert not conflicts, (
+            f"the following name(s) appears both in register blocks and memories: {list(conflicts)}"
+        )
         if self.bus_interfaces.has_unnamed_device:
             dev_if_names.append(None)
         assert set(reg_block_names) | set(mem_names) == set(dev_if_names)
 
     @staticmethod
-    def from_raw(param_defaults: list[tuple[str, str]],
-                 raw: object,
-                 where: str,
-                 node: str = '') -> 'IpBlock':
+    def from_raw(
+        param_defaults: list[tuple[str, str]], raw: object, where: str, node: str = ""
+    ) -> "IpBlock":
 
         if not isinstance(raw, dict):
-            raise TypeError('must instantiate IP block from dict: block at ' + where)
+            raise TypeError("must instantiate IP block from dict: block at " + where)
         IP_BLOCK_VALIDATOR.validate(cast_hjson_values(raw))
 
-        name = check_name(raw['name'], 'name of block at ' + where)
+        name = check_name(raw["name"], "name of block at " + where)
 
-        what = '{} block at {}'.format(name, where)
+        what = "{} block at {}".format(name, where)
 
-        r_regwidth = raw.get('regwidth')
+        r_regwidth = raw.get("regwidth")
         if r_regwidth is None:
             regwidth = 32
         else:
-            regwidth = check_int(r_regwidth, 'regwidth field of ' + what)
+            regwidth = check_int(r_regwidth, "regwidth field of " + what)
             if regwidth <= 0:
-                raise ValueError('Invalid regwidth field for {}: '
-                                 '{} is not positive.'.format(what, regwidth))
+                raise ValueError(
+                    "Invalid regwidth field for {}: {} is not positive.".format(what, regwidth)
+                )
 
-        params = ReggenParams.from_raw('parameter list for ' + what,
-                                       raw.get('param_list', []))
+        params = ReggenParams.from_raw("parameter list for " + what, raw.get("param_list", []))
         try:
             params.apply_defaults(param_defaults)
         except (ValueError, KeyError) as err:
-            raise ValueError(
-                'Failed to apply defaults to params: {}'.format(err)) from None
+            raise ValueError("Failed to apply defaults to params: {}".format(err)) from None
 
         init_block = RegBlock(regwidth, params)
 
         interrupts = Interrupt.from_raw_list(
-            'interrupt_list for block {}'.format(name),
-            raw.get('interrupt_list', []))
-        alerts = Alert.from_raw_list('alert_list for block {}'.format(name),
-                                     raw.get('alert_list', []))
+            "interrupt_list for block {}".format(name), raw.get("interrupt_list", [])
+        )
+        alerts = Alert.from_raw_list(
+            "alert_list for block {}".format(name), raw.get("alert_list", [])
+        )
         known_cms = {}
-        raw_cms = raw.get('countermeasures', [])
+        raw_cms = raw.get("countermeasures", [])
 
         countermeasures = CounterMeasure.from_raw_list(
-            'countermeasure list for block {}'.format(name), raw_cms)
+            "countermeasure list for block {}".format(name), raw_cms
+        )
 
         features = Feature.from_raw_list(
-            'feature list for block {}'.format(name), raw.get('features', []))
+            "feature list for block {}".format(name), raw.get("features", [])
+        )
 
         # Ensure that the countermeasures are unique
         for x in countermeasures:
@@ -185,38 +183,41 @@ class IpBlock:
             else:
                 known_cms.update({str(x): 1})
 
-        cip_id = check_int(raw.get('cip_id'), 'cip id for ' + what)
+        cip_id = check_int(raw.get("cip_id"), "cip id for " + what)
         # In case there are multiple past revisions of this IP, always pick the
         # newest one. Note: this revision list may be deprecated in the
         # future.
-        version = Version('0.0.0')
-        if 'revisions' in raw:
-            for rev in check_list(raw['revisions'], what):
+        version = Version("0.0.0")
+        if "revisions" in raw:
+            for rev in check_list(raw["revisions"], what):
                 try:
                     if not isinstance(rev, dict):
-                        raise TypeError('revision must be in form of dict: ' + what)
-                    ver = Version(rev['version'])
+                        raise TypeError("revision must be in form of dict: " + what)
+                    ver = Version(rev["version"])
                 except ValueError as err:
-                    raise RuntimeError(str(err) + ' in ' + what)
+                    raise RuntimeError(str(err) + " in " + what)
                 version = ver if ver >= version else version
         else:
             try:
-                version = Version(raw.get('version'))
+                version = Version(raw.get("version"))
             except ValueError as err:
-                raise RuntimeError(str(err) + ' in ' + what)
+                raise RuntimeError(str(err) + " in " + what)
 
-        no_auto_intr = check_bool(raw.get('no_auto_intr_regs', not interrupts),
-                                  'no_auto_intr_regs field of ' + what)
+        no_auto_intr = check_bool(
+            raw.get("no_auto_intr_regs", not interrupts), "no_auto_intr_regs field of " + what
+        )
 
-        no_auto_alert = check_bool(raw.get('no_auto_alert_regs', not alerts),
-                                   'no_auto_alert_regs field of ' + what)
+        no_auto_alert = check_bool(
+            raw.get("no_auto_alert_regs", not alerts), "no_auto_alert_regs field of " + what
+        )
 
         if interrupts and not no_auto_intr:
             if interrupts[-1].bits.msb >= regwidth:
-                raise ValueError("Too many interrupts defined for {}: "
-                                 "msb is {}, which doesn't fit with a "
-                                 "regwidth of {}.".format(
-                                     what, interrupts[-1].bits.msb, regwidth))
+                raise ValueError(
+                    "Too many interrupts defined for {}: "
+                    "msb is {}, which doesn't fit with a "
+                    "regwidth of {}.".format(what, interrupts[-1].bits.msb, regwidth)
+                )
             init_block.make_intr_regs(interrupts)
 
         if alerts:
@@ -225,77 +226,83 @@ class IpBlock:
                     raise ValueError(
                         "Too many alerts defined for {}: "
                         "{} alerts don't fit with a regwidth of {}.".format(
-                            what, len(alerts), regwidth))
+                            what, len(alerts), regwidth
+                        )
+                    )
                 init_block.make_alert_regs(alerts)
 
         # Generate a NumAlerts parameter
         if alerts:
-            existing_param = params.get('NumAlerts')
+            existing_param = params.get("NumAlerts")
             if existing_param is not None:
-                if ((not isinstance(existing_param, LocalParam) or
-                     existing_param.param_type != 'int' or
-                     existing_param.value != str(len(alerts)))):
-                    raise ValueError('Conflicting definition of NumAlerts '
-                                     f'parameter in {what}.')
+                if (
+                    not isinstance(existing_param, LocalParam)
+                    or existing_param.param_type != "int"
+                    or existing_param.value != str(len(alerts))
+                ):
+                    raise ValueError(f"Conflicting definition of NumAlerts parameter in {what}.")
             else:
                 params.add(
-                    LocalParam(name='NumAlerts',
-                               desc='Number of alerts',
-                               param_type='int',
-                               value=str(len(alerts)),
-                               unpacked_dimensions=None))
+                    LocalParam(
+                        name="NumAlerts",
+                        desc="Number of alerts",
+                        param_type="int",
+                        value=str(len(alerts)),
+                        unpacked_dimensions=None,
+                    )
+                )
 
-        scan = check_bool(raw.get('scan', False), 'scan field of ' + what)
+        scan = check_bool(raw.get("scan", False), "scan field of " + what)
 
-        r_inter_signals = check_list(raw.get('inter_signal_list', []),
-                                     'inter_signal_list field')
+        r_inter_signals = check_list(raw.get("inter_signal_list", []), "inter_signal_list field")
         inter_signals = [
             InterSignal.from_raw(
-                params,
-                f'entry {idx + 1} of the inter_signal_list field in {what}',
-                entry) for idx, entry in enumerate(r_inter_signals)
+                params, f"entry {idx + 1} of the inter_signal_list field in {what}", entry
+            )
+            for idx, entry in enumerate(r_inter_signals)
         ]
 
-        bus_interfaces = (BusInterfaces.from_raw(
-            raw['bus_interfaces'], 'bus_interfaces field of ' + where))
+        bus_interfaces = BusInterfaces.from_raw(
+            raw["bus_interfaces"], "bus_interfaces field of " + where
+        )
         inter_signals += bus_interfaces.inter_signals()
 
-        clocking = Clocking.from_raw(raw['clocking'],
-                                     'clocking field of ' + what)
+        clocking = Clocking.from_raw(raw["clocking"], "clocking field of " + what)
 
         # Build register block if IP really defined registers. IPs with an empty list of registers
         # but auto-generated registers should still be built.
         if "registers" in raw:
-            reg_blocks = RegBlock.build_blocks(init_block, raw["registers"],
-                                               bus_interfaces, clocking, False)
+            reg_blocks = RegBlock.build_blocks(
+                init_block, raw["registers"], bus_interfaces, clocking, False
+            )
         else:
             reg_blocks = {}
 
-        memories = {
-            name: Memory.from_raw(desc)
-            for (name, desc) in raw.get('memory', {}).items()
-        }
+        memories = {name: Memory.from_raw(desc) for (name, desc) in raw.get("memory", {}).items()}
 
-        xputs = (Signal.from_raw_list('available_inout_list for block ' + name,
-                                      raw.get('available_inout_list', [])),
-                 Signal.from_raw_list('available_input_list for block ' + name,
-                                      raw.get('available_input_list', [])),
-                 Signal.from_raw_list(
-                     'available_output_list for block ' + name,
-                     raw.get('available_output_list', [])))
-        wakeups = Signal.from_raw_list('wakeup_list for block ' + name,
-                                       raw.get('wakeup_list', []))
-        rst_reqs = Signal.from_raw_list('reset_request_list for block ' + name,
-                                        raw.get('reset_request_list', []))
+        xputs = (
+            Signal.from_raw_list(
+                "available_inout_list for block " + name, raw.get("available_inout_list", [])
+            ),
+            Signal.from_raw_list(
+                "available_input_list for block " + name, raw.get("available_input_list", [])
+            ),
+            Signal.from_raw_list(
+                "available_output_list for block " + name, raw.get("available_output_list", [])
+            ),
+        )
+        wakeups = Signal.from_raw_list("wakeup_list for block " + name, raw.get("wakeup_list", []))
+        rst_reqs = Signal.from_raw_list(
+            "reset_request_list for block " + name, raw.get("reset_request_list", [])
+        )
 
-        expose_reg_if = check_bool(raw.get('expose_reg_if', False),
-                                   'expose_reg_if field of ' + what)
+        expose_reg_if = check_bool(
+            raw.get("expose_reg_if", False), "expose_reg_if field of " + what
+        )
 
-        scan_reset = check_bool(raw.get('scan_reset', False),
-                                'scan_reset field of ' + what)
+        scan_reset = check_bool(raw.get("scan_reset", False), "scan_reset field of " + what)
 
-        scan_en = check_bool(raw.get('scan_en', False),
-                             'scan_en field of ' + what)
+        scan_en = check_bool(raw.get("scan_en", False), "scan_en field of " + what)
 
         # Check that register blocks are in bijection with device interfaces
         reg_block_names = reg_blocks.keys()
@@ -307,40 +314,59 @@ class IpBlock:
 
         conflicts = set(reg_block_names).intersection(set(mem_names))
         if conflicts:
-            raise ValueError(f"IP block {name} defines some register blocks "
-                             f"and memories with the name: {list(conflicts)}")
+            raise ValueError(
+                f"IP block {name} defines some register blocks "
+                f"and memories with the name: {list(conflicts)}"
+            )
         if set(reg_block_names) | set(mem_names) != set(dev_if_names):
-            raise ValueError("IP block {} defines device interfaces, named {} "
-                             "but its registers don't match (they are keyed "
-                             "by {}).".format(name, dev_if_names,
-                                              list(reg_block_names)))
+            raise ValueError(
+                "IP block {} defines device interfaces, named {} "
+                "but its registers don't match (they are keyed "
+                "by {}).".format(name, dev_if_names, list(reg_block_names))
+            )
 
-        return IpBlock(name, cip_id, version, regwidth, params, reg_blocks,
-                       memories, interrupts, no_auto_intr, alerts, no_auto_alert,
-                       scan, inter_signals, bus_interfaces, clocking, xputs,
-                       wakeups, rst_reqs, expose_reg_if, scan_reset, scan_en,
-                       countermeasures, features, node)
+        return IpBlock(
+            name,
+            cip_id,
+            version,
+            regwidth,
+            params,
+            reg_blocks,
+            memories,
+            interrupts,
+            no_auto_intr,
+            alerts,
+            no_auto_alert,
+            scan,
+            inter_signals,
+            bus_interfaces,
+            clocking,
+            xputs,
+            wakeups,
+            rst_reqs,
+            expose_reg_if,
+            scan_reset,
+            scan_en,
+            countermeasures,
+            features,
+            node,
+        )
 
     @staticmethod
-    def from_text(txt: str,
-                  param_defaults: list[tuple[str, str]],
-                  where: str,
-                  node: str = '') -> 'IpBlock':
-        '''Load an IpBlock from an hjson description in txt'''
-        return IpBlock.from_raw(param_defaults,
-                                hjson.loads(txt, use_decimal=True), where,
-                                node)
+    def from_text(
+        txt: str, param_defaults: list[tuple[str, str]], where: str, node: str = ""
+    ) -> "IpBlock":
+        """Load an IpBlock from an hjson description in txt"""
+        return IpBlock.from_raw(param_defaults, hjson.loads(txt, use_decimal=True), where, node)
 
     @staticmethod
-    def from_path(path: str,
-                  param_defaults: list[tuple[str, str]]) -> 'IpBlock':
-        '''Load an IpBlock from an hjson description in a file at path'''
-        with open(path, 'r', encoding='utf-8') as handle:
-            return IpBlock.from_text(handle.read(), param_defaults,
-                                     'file at {!r}'.format(path))
+    def from_path(path: str, param_defaults: list[tuple[str, str]]) -> "IpBlock":
+        """Load an IpBlock from an hjson description in a file at path"""
+        with open(path, "r", encoding="utf-8") as handle:
+            return IpBlock.from_text(handle.read(), param_defaults, "file at {!r}".format(path))
 
     def alias_from_raw(self, scrub: bool, raw: object, where: str) -> None:
-        '''Parses and validates an alias reg block and adds it to this IpBlock.
+        """Parses and validates an alias reg block and adds it to this IpBlock.
 
         The alias register definitions are compared with the corresponding
         generic register definitions in self.reg_blocks to ensure that the
@@ -364,64 +390,70 @@ class IpBlock:
         alias definition and replace the entire register block of the target
         interface with the scrubbed alias reg block. This is helpful to create
         the generic CSR structure matching the alias definition automatically.
-        '''
+        """
         if not isinstance(raw, dict):
-            raise TypeError('must instantiate alias registers from dict: block at ' + where)
+            raise TypeError("must instantiate alias registers from dict: block at " + where)
         ALIAS_VALIDATOR.validate(raw)
 
-        alias_bus_interfaces = (BusInterfaces.from_raw(
-            raw['bus_interfaces'], 'bus_interfaces of block at ' + where))
-        if ((alias_bus_interfaces.has_unnamed_host or
-             alias_bus_interfaces.named_hosts)):
-            raise ValueError("Alias registers cannot be defined for host "
-                             "interfaces (in block at {}).".format(where))
+        alias_bus_interfaces = BusInterfaces.from_raw(
+            raw["bus_interfaces"], "bus_interfaces of block at " + where
+        )
+        if alias_bus_interfaces.has_unnamed_host or alias_bus_interfaces.named_hosts:
+            raise ValueError(
+                "Alias registers cannot be defined for host interfaces (in block at {}).".format(
+                    where
+                )
+            )
         # Alias register definitions are only compatible with named devices.
-        if ((alias_bus_interfaces.has_unnamed_device or
-             self.bus_interfaces.has_unnamed_device)):
-            raise ValueError("Alias registers must use named devices "
-                             "(in block at {}).".format(where))
+        if alias_bus_interfaces.has_unnamed_device or self.bus_interfaces.has_unnamed_device:
+            raise ValueError(
+                "Alias registers must use named devices (in block at {}).".format(where)
+            )
 
         # Check that the device interface names are
         # a subset of the already defined register blocks
         bus_device_names = set(self.bus_interfaces.named_devices)
         alias_bus_device_names = set(alias_bus_interfaces.named_devices)
         if not alias_bus_device_names.issubset(bus_device_names):
-            raise ValueError("Alias file {} refers to device names {} that "
-                             "do not map to device names in {}.".format(
-                                 where, list(alias_bus_device_names),
-                                 self.name))
+            raise ValueError(
+                "Alias file {} refers to device names {} that "
+                "do not map to device names in {}.".format(
+                    where, list(alias_bus_device_names), self.name
+                )
+            )
 
-        self.alias_impl = check_name(raw['alias_impl'],
-                                     'alias_impl of block at ' + where)
+        self.alias_impl = check_name(raw["alias_impl"], "alias_impl of block at " + where)
 
-        alias_target = check_name(raw['alias_target'],
-                                  'alias_target of block at ' + where)
+        alias_target = check_name(raw["alias_target"], "alias_target of block at " + where)
 
         if alias_target != self.name:
-            raise ValueError("Alias target block name {} in {} "
-                             "does not match block name {}.".format(
-                                 alias_target, where, self.name))
+            raise ValueError(
+                "Alias target block name {} in {} does not match block name {}.".format(
+                    alias_target, where, self.name
+                )
+            )
 
         init_block = RegBlock(self.regwidth, self.params)
 
-        alias_reg_blocks = RegBlock.build_blocks(init_block, raw['registers'],
-                                                 self.bus_interfaces,
-                                                 self.clocking, True)
+        alias_reg_blocks = RegBlock.build_blocks(
+            init_block, raw["registers"], self.bus_interfaces, self.clocking, True
+        )
 
         # Check that alias register block names are
         # a subset of the already defined register blocks
         alias_reg_block_names = set(alias_reg_blocks.keys())
 
         if not alias_reg_block_names.issubset(set(self.reg_blocks.keys())):
-            raise ValueError("Alias file {} refers to register blocks {} that "
-                             "do not map to register blocks in {}.".format(
-                                 where, list(alias_reg_block_names),
-                                 self.name))
+            raise ValueError(
+                "Alias file {} refers to register blocks {} that "
+                "do not map to register blocks in {}.".format(
+                    where, list(alias_reg_block_names), self.name
+                )
+            )
 
         # Check that the alias bus interface names and register blocks match
         if alias_reg_block_names != alias_bus_device_names:
-            raise ValueError("Interface and register block names do not match "
-                             "in {}.".format(where))
+            raise ValueError("Interface and register block names do not match in {}.".format(where))
 
         # Validate alias registers against the generic reg blocks,
         # and enhance the information in the existing datastructures.
@@ -429,13 +461,18 @@ class IpBlock:
             # Double check the interface definition options
             if self.bus_interfaces.device_async:
                 if not alias_bus_interfaces.device_async:
-                    raise ValueError('Missing device_async key in alias '
-                                     'interface {} in {}'.format(
-                                         block_key, where))
-                if ((alias_bus_interfaces.device_async[block_key] !=
-                     self.bus_interfaces.device_async[block_key])):
-                    raise ValueError('Inconsistent configuration of interface '
-                                     '{} in {}'.format(block_key, where))
+                    raise ValueError(
+                        "Missing device_async key in alias interface {} in {}".format(
+                            block_key, where
+                        )
+                    )
+                if (
+                    alias_bus_interfaces.device_async[block_key]
+                    != self.bus_interfaces.device_async[block_key]
+                ):
+                    raise ValueError(
+                        "Inconsistent configuration of interface {} in {}".format(block_key, where)
+                    )
 
             if scrub:
                 # scrub alias definitions and replace the entire block.
@@ -450,53 +487,49 @@ class IpBlock:
                 self.reg_blocks[block_key].apply_alias(alias_block, where)
 
     def alias_from_text(self, scrub: bool, txt: str, where: str) -> None:
-        '''Load alias regblocks from an hjson description in txt'''
+        """Load alias regblocks from an hjson description in txt"""
         self.alias_from_raw(scrub, hjson.loads(txt, use_decimal=True), where)
 
     def alias_from_path(self, scrub: bool, path: str) -> None:
-        '''Load alias regblocks from an hjson description in a file at path'''
-        with open(path, 'r', encoding='utf-8') as handle:
-            self.alias_from_text(scrub, handle.read(),
-                                 'alias file at {!r}'.format(path))
+        """Load alias regblocks from an hjson description in a file at path"""
+        with open(path, "r", encoding="utf-8") as handle:
+            self.alias_from_text(scrub, handle.read(), "alias file at {!r}".format(path))
 
     def _asdict(self) -> dict[str, object]:
-        ret = {'name': self.name, 'regwidth': self.regwidth}
+        ret = {"name": self.name, "regwidth": self.regwidth}
         if len(self.reg_blocks) == 1 and None in self.reg_blocks:
-            ret['registers'] = self.reg_blocks[None].as_dicts()
+            ret["registers"] = self.reg_blocks[None].as_dicts()
         else:
-            ret['registers'] = {
-                k: v.as_dicts()
-                for k, v in self.reg_blocks.items()
-            }
+            ret["registers"] = {k: v.as_dicts() for k, v in self.reg_blocks.items()}
 
-        ret['param_list'] = self.params.as_dicts()
-        ret['cip_id'] = self.cip_id
-        ret['version'] = str(self.version)
-        ret['interrupt_list'] = self.interrupts
-        ret['no_auto_intr_regs'] = self.no_auto_intr
-        ret['alert_list'] = self.alerts
-        ret['no_auto_alert_regs'] = self.no_auto_alert
-        ret['scan'] = self.scan
-        ret['inter_signal_list'] = self.inter_signals
-        ret['bus_interfaces'] = self.bus_interfaces.as_dicts()
+        ret["param_list"] = self.params.as_dicts()
+        ret["cip_id"] = self.cip_id
+        ret["version"] = str(self.version)
+        ret["interrupt_list"] = self.interrupts
+        ret["no_auto_intr_regs"] = self.no_auto_intr
+        ret["alert_list"] = self.alerts
+        ret["no_auto_alert_regs"] = self.no_auto_alert
+        ret["scan"] = self.scan
+        ret["inter_signal_list"] = self.inter_signals
+        ret["bus_interfaces"] = self.bus_interfaces.as_dicts()
 
-        ret['clocking'] = self.clocking.items
+        ret["clocking"] = self.clocking.items
 
         inouts, inputs, outputs = self.xputs
         if inouts:
-            ret['available_inout_list'] = inouts
+            ret["available_inout_list"] = inouts
         if inputs:
-            ret['available_input_list'] = inputs
+            ret["available_input_list"] = inputs
         if outputs:
-            ret['available_output_list'] = outputs
+            ret["available_output_list"] = outputs
 
         if self.wakeups:
-            ret['wakeup_list'] = self.wakeups
+            ret["wakeup_list"] = self.wakeups
         if self.reset_requests:
-            ret['reset_request_list'] = self.reset_requests
+            ret["reset_request_list"] = self.reset_requests
 
-        ret['scan_reset'] = self.scan_reset
-        ret['scan_en'] = self.scan_en
+        ret["scan_reset"] = self.scan_reset
+        ret["scan_en"] = self.scan_en
 
         return ret
 
@@ -507,25 +540,24 @@ class IpBlock:
         return ret
 
     def get_signals_as_list_of_dicts(self) -> list[dict[str, object]]:
-        '''Look up and return signal by name'''
+        """Look up and return signal by name"""
         result = []
-        for iodir, xput in zip(('inout', 'input', 'output'), self.xputs):
+        for iodir, xput in zip(("inout", "input", "output"), self.xputs):
             for sig in xput:
                 result.append(sig.as_nwt_dict(iodir))
         return result
 
     def get_signal_by_name_as_dict(self, name: str) -> dict[str, object]:
-        '''Look up and return signal by name'''
+        """Look up and return signal by name"""
         sig_list = self.get_signals_as_list_of_dicts()
         for sig in sig_list:
-            if sig['name'] == name:
+            if sig["name"] == name:
                 return sig
         else:
-            raise ValueError("Signal {} does not exist in IP block {}".format(
-                name, self.name))
+            raise ValueError("Signal {} does not exist in IP block {}".format(name, self.name))
 
     def has_shadowed_reg(self) -> bool:
-        '''Return boolean indication whether reg block contains shadowed registers'''
+        """Return boolean indication whether reg block contains shadowed registers"""
 
         for rb in self.reg_blocks.values():
             if rb.has_shadowed_reg():
@@ -535,17 +567,18 @@ class IpBlock:
         return False
 
     def get_primary_clock(self) -> ClockingItem:
-        '''Return primary clock of an block'''
+        """Return primary clock of an block"""
 
         return self.clocking.primary
 
-    def check_cm_annotations(self, rtl_names: dict[str, list[tuple[str, int]]],
-                             hjson_path: str) -> bool:
-        '''Check RTL annotations against countermeasure list of this block'''
+    def check_cm_annotations(
+        self, rtl_names: dict[str, list[tuple[str, int]]], hjson_path: str
+    ) -> bool:
+        """Check RTL annotations against countermeasure list of this block"""
 
-        return CounterMeasure.check_annotation_list(self.name, hjson_path,
-                                                    rtl_names,
-                                                    self.countermeasures)
+        return CounterMeasure.check_annotation_list(
+            self.name, hjson_path, rtl_names, self.countermeasures
+        )
 
     def check_regwens(self) -> bool:
         """Checks all regwens are used in at least one other CSR
@@ -558,9 +591,7 @@ class IpBlock:
         for rb in self.reg_blocks.values():
             rb_name = rb.name if rb.name else "default"
             log.debug(f"Register block: {rb_name}")
-            regwen_names: list[str] = [
-                reg.name for reg in rb.registers if "REGWEN" in reg.name
-            ]
+            regwen_names: list[str] = [reg.name for reg in rb.registers if "REGWEN" in reg.name]
             unused_regwens: list[str] = []
             for regwen in regwen_names:
                 regwen_users = []
@@ -576,12 +607,15 @@ class IpBlock:
                 else:
                     log.debug(
                         f"Regwen {regwen} in {self.name}'s {rb_name} register "
-                        "block controls the following registers:")
+                        "block controls the following registers:"
+                    )
                     for r in regwen_users:
                         log.debug(f"  {r.name}")
             if unused_regwens:
-                log.error(f"Unused regwen(s) in {self.name} {rb_name} "
-                          f"register block: {', '.join(unused_regwens)}")
+                log.error(
+                    f"Unused regwen(s) in {self.name} {rb_name} "
+                    f"register block: {', '.join(unused_regwens)}"
+                )
                 status = False
         return status
 

@@ -56,14 +56,16 @@ def parse_keygen(data):
         param_set = PARAMETER_SETS[group["parameterSet"]]
         for test in group["tests"]:
             seed = bytes.fromhex(test["d"]) + bytes.fromhex(test["z"])
-            test_vectors.append({
-                **acvp_common(data, group),
-                "test_case_id": test["tcId"],
-                "operation": "keygen",
-                "parameter_set": param_set,
-                "seed": list(seed),
-                "result": True,
-            })
+            test_vectors.append(
+                {
+                    **acvp_common(data, group),
+                    "test_case_id": test["tcId"],
+                    "operation": "keygen",
+                    "parameter_set": param_set,
+                    "seed": list(seed),
+                    "result": True,
+                }
+            )
     return test_vectors
 
 
@@ -81,47 +83,55 @@ def parse_encap_decap(data):
         if function == "encapsulation":
             # Response: c and K.
             for test in group["tests"]:
-                test_vectors.append({
-                    **common,
-                    "test_case_id": test["tcId"],
-                    "operation": "encaps",
-                    "seed": list(bytes.fromhex(test["m"])),
-                    "ek": list(bytes.fromhex(test["ek"])),
-                    "result": True,
-                })
+                test_vectors.append(
+                    {
+                        **common,
+                        "test_case_id": test["tcId"],
+                        "operation": "encaps",
+                        "seed": list(bytes.fromhex(test["m"])),
+                        "ek": list(bytes.fromhex(test["ek"])),
+                        "result": True,
+                    }
+                )
         elif function == "decapsulation":
             # Response: K.
             for test in group["tests"]:
-                test_vectors.append({
-                    **common,
-                    "test_case_id": test["tcId"],
-                    "operation": "decaps",
-                    "dk": list(bytes.fromhex(test["dk"])),
-                    "c": list(bytes.fromhex(test["c"])),
-                    "result": True,
-                })
+                test_vectors.append(
+                    {
+                        **common,
+                        "test_case_id": test["tcId"],
+                        "operation": "decaps",
+                        "dk": list(bytes.fromhex(test["dk"])),
+                        "c": list(bytes.fromhex(test["c"])),
+                        "result": True,
+                    }
+                )
         elif function == "encapsulationKeyCheck":
             # Response: testPassed, taken from whether encapsulation succeeds.
             for test in group["tests"]:
-                test_vectors.append({
-                    **common,
-                    "test_case_id": test["tcId"],
-                    "operation": "encaps",
-                    "seed": [0] * 32,
-                    "ek": list(bytes.fromhex(test["ek"])),
-                })
+                test_vectors.append(
+                    {
+                        **common,
+                        "test_case_id": test["tcId"],
+                        "operation": "encaps",
+                        "seed": [0] * 32,
+                        "ek": list(bytes.fromhex(test["ek"])),
+                    }
+                )
         elif function == "decapsulationKeyCheck":
             # Response: testPassed, taken from whether decapsulation succeeds.
             ct_sizes = {512: 768, 768: 1088, 1024: 1568}
             dummy_ct = [0] * ct_sizes[param_set]
             for test in group["tests"]:
-                test_vectors.append({
-                    **common,
-                    "test_case_id": test["tcId"],
-                    "operation": "decaps",
-                    "dk": list(bytes.fromhex(test["dk"])),
-                    "c": dummy_ct,
-                })
+                test_vectors.append(
+                    {
+                        **common,
+                        "test_case_id": test["tcId"],
+                        "operation": "decaps",
+                        "dk": list(bytes.fromhex(test["dk"])),
+                        "c": dummy_ct,
+                    }
+                )
         else:
             raise ValueError(f"Unknown function: {function}")
 
@@ -129,8 +139,7 @@ def parse_encap_decap(data):
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Parsing utility for ACVP ML-KEM prompts.")
+    parser = argparse.ArgumentParser(description="Parsing utility for ACVP ML-KEM prompts.")
     parser.add_argument(
         "--src",
         type=str,

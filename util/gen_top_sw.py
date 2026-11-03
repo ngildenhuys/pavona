@@ -28,6 +28,7 @@ Bazel files generated (relative to <outdir>):
     - BUILD
     - defs.bzl
 """
+
 import argparse
 from pathlib import Path
 import logging as log
@@ -54,19 +55,19 @@ HEADER = """//
 // util/gen_top_sw.py -t {}"""
 
 
-def render_template(template_path: str, rendered_path: Path, topcfg: ConfigT,
-                    name_to_block: dict, **other_info):
+def render_template(
+    template_path: str, rendered_path: Path, topcfg: ConfigT, name_to_block: dict, **other_info
+):
     """Render template to file, optionally with secure permissions for sensitive files"""
-    template_contents = generate_top(topcfg, name_to_block,
-                                     str(template_path), **other_info)
+    template_contents = generate_top(topcfg, name_to_block, str(template_path), **other_info)
     rendered_path.parent.mkdir(exist_ok=True, parents=True)
     rendered_path.write_text(template_contents, encoding="UTF-8")
 
 
-def generate_top(top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str,
-                 **kwargs: dict[str, object]) -> None:
-    top_tpl = Template(filename=tpl_filename,
-                       lookup=TemplateLookup([TOPGEN_TEMPLATE_PATH, "/"]))
+def generate_top(
+    top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str, **kwargs: dict[str, object]
+) -> None:
+    top_tpl = Template(filename=tpl_filename, lookup=TemplateLookup([TOPGEN_TEMPLATE_PATH, "/"]))
 
     try:
         return top_tpl.render(top=top, name_to_block=name_to_block, **kwargs)
@@ -75,17 +76,19 @@ def generate_top(top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str,
         return ""
 
 
-def generate_rust(topname, topcfg, name_to_block, out_path, version_stamp,
-                  src_tree_top, topgen_template_path) -> None:
+def generate_rust(
+    topname, topcfg, name_to_block, out_path, version_stamp, src_tree_top, topgen_template_path
+) -> None:
     # Create Rust output directory
     rsformat_dir = out_path / "sw/autogen/chip/"
     rsformat_dir.mkdir(parents=True, exist_ok=True)
 
     # Generating Rust device description for external sw usage
-    render_template(topgen_template_path / 'toplevel_mod.rs.tpl',
-                    rsformat_dir / 'mod.rs', topcfg, name_to_block)
+    render_template(
+        topgen_template_path / "toplevel_mod.rs.tpl", rsformat_dir / "mod.rs", topcfg, name_to_block
+    )
 
-    for addr_space in topcfg['addr_spaces']:
+    for addr_space in topcfg["addr_spaces"]:
         addr_space_suffix = get_addr_space_suffix(addr_space)
 
         # The Rust file needs some complex information, so we initialize this
@@ -94,24 +97,31 @@ def generate_rust(topname, topcfg, name_to_block, out_path, version_stamp,
 
         # Generate Rust device-side files
         rsformat_dir = out_path / "sw/autogen/chip/"
-        render_template(topgen_template_path / 'toplevel.rs.tpl',
-                        rsformat_dir / f"top_{topname}{addr_space_suffix}.rs",
-                        topcfg, name_to_block,
-                        addr_space=addr_space['name'],
-                        helper=rs_helper)
+        render_template(
+            topgen_template_path / "toplevel.rs.tpl",
+            rsformat_dir / f"top_{topname}{addr_space_suffix}.rs",
+            topcfg,
+            name_to_block,
+            addr_space=addr_space["name"],
+            helper=rs_helper,
+        )
 
         # Generate Rust host-side files
-        rsformat_dir = src_tree_top / 'sw/host/ot_hal/src/top/autogen'
+        rsformat_dir = src_tree_top / "sw/host/ot_hal/src/top/autogen"
         rsformat_dir.mkdir(parents=True, exist_ok=True)
-        render_template(topgen_template_path / 'host_toplevel.rs.tpl',
-                        rsformat_dir / f"{topname}{addr_space_suffix}.rs",
-                        topcfg, name_to_block,
-                        addr_space=addr_space['name'],
-                        helper=rs_helper)
+        render_template(
+            topgen_template_path / "host_toplevel.rs.tpl",
+            rsformat_dir / f"{topname}{addr_space_suffix}.rs",
+            topcfg,
+            name_to_block,
+            addr_space=addr_space["name"],
+            helper=rs_helper,
+        )
 
 
-def generate_c(topcfg, name_to_block, root_paths, out_paths, c_helper, gencmd_c,
-               default_addr_space="hart"):
+def generate_c(
+    topcfg, name_to_block, root_paths, out_paths, c_helper, gencmd_c, default_addr_space="hart"
+):
     top_name = "top_" + topcfg["name"]
 
     for root, path in zip(root_paths, out_paths):
@@ -128,72 +138,86 @@ def generate_c(topcfg, name_to_block, root_paths, out_paths, c_helper, gencmd_c,
 
         # Save the header macro prefix into `c_helper`
         rel_header_dir = sw_dir.relative_to(root)
-        c_helper.header_macro_prefix = (
-            "OPENTITAN_" +
-            str(rel_header_dir).replace("/", "_").upper())
+        c_helper.header_macro_prefix = "OPENTITAN_" + str(rel_header_dir).replace("/", "_").upper()
 
-        for addr_space in topcfg['addr_spaces']:
+        for addr_space in topcfg["addr_spaces"]:
             addr_space_suffix = get_addr_space_suffix(addr_space, default=default_addr_space)
 
             # "toplevel.h.tpl" -> "sw/autogen/{top_name}{addr_space_suffix}.h"
             cheader_path = sw_dir / f"{top_name}{addr_space_suffix}.h"
-            render_template(TOPGEN_TEMPLATE_PATH / "toplevel.h.tpl",
-                            cheader_path,
-                            topcfg, name_to_block,
-                            addr_space=addr_space['name'],
-                            helper=c_helper,
-                            gencmd=gencmd_c)
+            render_template(
+                TOPGEN_TEMPLATE_PATH / "toplevel.h.tpl",
+                cheader_path,
+                topcfg,
+                name_to_block,
+                addr_space=addr_space["name"],
+                helper=c_helper,
+                gencmd=gencmd_c,
+            )
 
             # Save the relative header path into `c_helper`
             rel_header_path = cheader_path.relative_to(root)
             c_helper.header_path = str(rel_header_path)
 
             # "toplevel.c.tpl" -> "sw/autogen/{top_name}{addr_space_suffix}.c"
-            render_template(TOPGEN_TEMPLATE_PATH / "toplevel.c.tpl",
-                            sw_dir / f"{top_name}{addr_space_suffix}.c",
-                            topcfg, name_to_block,
-                            helper=c_helper,
-                            addr_space=addr_space['name'],
-                            gencmd=gencmd_c)
+            render_template(
+                TOPGEN_TEMPLATE_PATH / "toplevel.c.tpl",
+                sw_dir / f"{top_name}{addr_space_suffix}.c",
+                topcfg,
+                name_to_block,
+                helper=c_helper,
+                addr_space=addr_space["name"],
+                gencmd=gencmd_c,
+            )
 
             # "toplevel_memory.h.tpl" -> "sw/autogen/{top_name}{addr_space_suffix}_memory.h"
-            render_template(TOPGEN_TEMPLATE_PATH / "toplevel_memory.h.tpl",
-                            sw_dir / f"{top_name}{addr_space_suffix}_memory.h",
-                            topcfg, name_to_block,
-                            addr_space=addr_space['name'],
-                            helper=c_helper,
-                            gencmd=gencmd_c)
+            render_template(
+                TOPGEN_TEMPLATE_PATH / "toplevel_memory.h.tpl",
+                sw_dir / f"{top_name}{addr_space_suffix}_memory.h",
+                topcfg,
+                name_to_block,
+                addr_space=addr_space["name"],
+                helper=c_helper,
+                gencmd=gencmd_c,
+            )
 
         # "toplevel_memory.ld.tpl" -> "sw/autogen/{top_name}_memory.ld"
         render_template(
             TOPGEN_TEMPLATE_PATH / "toplevel_memory.ld.tpl",
             sw_dir / f"{top_name}_memory.ld",
-            topcfg, name_to_block,
+            topcfg,
+            name_to_block,
             addr_space=default_addr_space,
             helper=c_helper,
-            gencmd=gencmd_c)
+            gencmd=gencmd_c,
+        )
 
         render_template(
             TOPGEN_TEMPLATE_PATH / "plic_all_irqs_test.c.tpl",
             test_dir / "plic_all_irqs_test.c",
-            topcfg, name_to_block,
+            topcfg,
+            name_to_block,
             helper=c_helper,
             addr_space=default_addr_space,
-            gencmd=gencmd_c)
+            gencmd=gencmd_c,
+        )
 
         # Render alert tests only if there is really an alert handler
-        if find_module(topcfg['module'], 'alert_handler'):
+        if find_module(topcfg["module"], "alert_handler"):
             render_template(
                 TOPGEN_TEMPLATE_PATH / "alert_test.c.tpl",
                 test_dir / "alert_test.c",
-                topcfg, name_to_block,
+                topcfg,
+                name_to_block,
                 helper=c_helper,
                 addr_space=default_addr_space,
-                gencmd=gencmd_c)
+                gencmd=gencmd_c,
+            )
 
 
-def generate_bazel(topcfg, name_to_block, root_paths, out_paths, c_helper, gencmd_bzl,
-                   default_addr_space="hart"):
+def generate_bazel(
+    topcfg, name_to_block, root_paths, out_paths, c_helper, gencmd_bzl, default_addr_space="hart"
+):
     for path in out_paths:
         sw_dir = path / "sw" / "autogen"
         sw_dir.mkdir(parents=True, exist_ok=True)
@@ -202,61 +226,87 @@ def generate_bazel(topcfg, name_to_block, root_paths, out_paths, c_helper, gencm
         data_dir.mkdir(parents=True, exist_ok=True)
 
         # "toplevel_BUILD.tpl" -> "sw/autogen/BUILD"
-        render_template(TOPGEN_TEMPLATE_PATH / "toplevel_BUILD.tpl",
-                        sw_dir / "BUILD",
-                        topcfg, name_to_block,
-                        helper=c_helper,
-                        gencmd=gencmd_bzl)
+        render_template(
+            TOPGEN_TEMPLATE_PATH / "toplevel_BUILD.tpl",
+            sw_dir / "BUILD",
+            topcfg,
+            name_to_block,
+            helper=c_helper,
+            gencmd=gencmd_bzl,
+        )
 
         # "data_BUILD.h.tpl" -> "data/autogen/BUILD"
-        render_template(TOPGEN_TEMPLATE_PATH / "data_BUILD.tpl",
-                        data_dir / "BUILD",
-                        topcfg, name_to_block,
-                        gencmd=gencmd_bzl)
+        render_template(
+            TOPGEN_TEMPLATE_PATH / "data_BUILD.tpl",
+            data_dir / "BUILD",
+            topcfg,
+            name_to_block,
+            gencmd=gencmd_bzl,
+        )
 
         # "data_defs.bzl.tpl" -> "data/autogen/defs.bzl"
-        render_template(TOPGEN_TEMPLATE_PATH / "data_defs.bzl.tpl",
-                        data_dir / "defs.bzl",
-                        topcfg, name_to_block,
-                        gencmd=gencmd_bzl)
+        render_template(
+            TOPGEN_TEMPLATE_PATH / "data_defs.bzl.tpl",
+            data_dir / "defs.bzl",
+            topcfg,
+            name_to_block,
+            gencmd=gencmd_bzl,
+        )
 
         # "BUILD.tpl" -> "sw/autogen/tests" (autogenerate tests)
         render_template(
             TOPGEN_TEMPLATE_PATH / "BUILD.tpl",
             sw_dir / "tests" / "BUILD",
-            topcfg, name_to_block,
+            topcfg,
+            name_to_block,
             helper=c_helper,
             addr_space=default_addr_space,
-            gencmd=gencmd_bzl)
+            gencmd=gencmd_bzl,
+        )
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--completecfg", "-t",
-                        type=Path,
-                        required=True,
-                        help="Complete top level configuration Hjson.")
-    parser.add_argument("--sw", "-s",
-                        type=str,
-                        default="all",
-                        choices={"all", "c", "rust", "bazel"},
-                        help="Type of software to generate from/for top level. Must be one of:"
-                             " 'all', 'c', 'rust', 'bazel'.")
-    parser.add_argument("--outdir", "-o",
-                        type=Path,
-                        default=None,
-                        help="Target output directory. Defaults to $(dirname completecfg)/../..")
-    parser.add_argument("--version-stamp", "--vs",
-                        type=Path,
-                        default=None,
-                        help='If version stamping, the location of workspace version stamp file.')
-    parser.add_argument("--default-addr-space", "-d",
-                        type=str,
-                        default="hart",
-                        help="Default address space for C headers and tests. Defaults to 'hart'.")
-    parser.add_argument("--verbose", "-v",
-                        type=bool)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--completecfg",
+        "-t",
+        type=Path,
+        required=True,
+        help="Complete top level configuration Hjson.",
+    )
+    parser.add_argument(
+        "--sw",
+        "-s",
+        type=str,
+        default="all",
+        choices={"all", "c", "rust", "bazel"},
+        help="Type of software to generate from/for top level. Must be one of:"
+        " 'all', 'c', 'rust', 'bazel'.",
+    )
+    parser.add_argument(
+        "--outdir",
+        "-o",
+        type=Path,
+        default=None,
+        help="Target output directory. Defaults to $(dirname completecfg)/../..",
+    )
+    parser.add_argument(
+        "--version-stamp",
+        "--vs",
+        type=Path,
+        default=None,
+        help="If version stamping, the location of workspace version stamp file.",
+    )
+    parser.add_argument(
+        "--default-addr-space",
+        "-d",
+        type=str,
+        default="hart",
+        help="Default address space for C headers and tests. Defaults to 'hart'.",
+    )
+    parser.add_argument("--verbose", "-v", type=bool)
     args = parser.parse_args()
 
     completecfg = load_cfg(args.completecfg)
@@ -297,15 +347,36 @@ def main():
 
     if args.sw in ("c", "all"):
         gencmd_c = HEADER.format(args.completecfg.relative_to(REPO_TOP))
-        generate_c(completecfg, name_to_block, root_paths, out_paths, c_helper, gencmd_c,
-                   args.default_addr_space)
+        generate_c(
+            completecfg,
+            name_to_block,
+            root_paths,
+            out_paths,
+            c_helper,
+            gencmd_c,
+            args.default_addr_space,
+        )
     if args.sw in ("rust", "all"):
-        generate_rust(completecfg["name"], completecfg, name_to_block, outdir,
-                      version_stamp, REPO_TOP, TOPGEN_TEMPLATE_PATH)
+        generate_rust(
+            completecfg["name"],
+            completecfg,
+            name_to_block,
+            outdir,
+            version_stamp,
+            REPO_TOP,
+            TOPGEN_TEMPLATE_PATH,
+        )
     if args.sw in ("bazel", "all"):
         gencmd_bzl = HEADER.replace("//", "#").format(args.completecfg.relative_to(REPO_TOP))
-        generate_bazel(completecfg, name_to_block, root_paths, out_paths, c_helper, gencmd_bzl,
-                       args.default_addr_space)
+        generate_bazel(
+            completecfg,
+            name_to_block,
+            root_paths,
+            out_paths,
+            c_helper,
+            gencmd_bzl,
+            args.default_addr_space,
+        )
 
 
 if __name__ == "__main__":

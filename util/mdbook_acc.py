@@ -20,17 +20,17 @@ REPO_TOP = Path(__file__).resolve().parents[1]
 
 # We are looking to match on the following example strings
 # {{#acc-isa base }}
-ACC_ISA_BASE_PATTERN = re.compile(r'\{\{#acc-isa\s+base\s*\}\}')
-ACC_ISA_BASE_ENCODING_PATTERN = re.compile(r'\{\{#acc-isa\s+base_encoding\s*\}\}')
-ACC_ISA_BIGNUM_PATTERN = re.compile(r'\{\{#acc-isa\s+bignum\s*\}\}')
-ACC_ISA_BIGNUM_ENCODING_PATTERN = re.compile(r'\{\{#acc-isa\s+bignum_encoding\s*\}\}')
+ACC_ISA_BASE_PATTERN = re.compile(r"\{\{#acc-isa\s+base\s*\}\}")
+ACC_ISA_BASE_ENCODING_PATTERN = re.compile(r"\{\{#acc-isa\s+base_encoding\s*\}\}")
+ACC_ISA_BIGNUM_PATTERN = re.compile(r"\{\{#acc-isa\s+bignum\s*\}\}")
+ACC_ISA_BIGNUM_ENCODING_PATTERN = re.compile(r"\{\{#acc-isa\s+bignum_encoding\s*\}\}")
 
 # {{#acc-insn-ref insn }}
-ACC_INSNREF_PATTERN = re.compile(r'\{\{#acc-insn-ref\s+?(.+?)\s*?\}\}')
+ACC_INSNREF_PATTERN = re.compile(r"\{\{#acc-insn-ref\s+?(.+?)\s*?\}\}")
 
-ACC_SCRIPT = REPO_TOP / 'hw/ip/acc/util/yaml_to_doc.py'
-ACC_CFG = REPO_TOP / 'hw/ip/acc/data/insns.yml'
-ACC_IMPL = REPO_TOP / 'hw/ip/acc/dv/accsim/sim/insn.py'
+ACC_SCRIPT = REPO_TOP / "hw/ip/acc/util/yaml_to_doc.py"
+ACC_CFG = REPO_TOP / "hw/ip/acc/data/insns.yml"
+ACC_IMPL = REPO_TOP / "hw/ip/acc/dv/accsim/sim/insn.py"
 
 
 def main() -> None:
@@ -52,17 +52,20 @@ def main() -> None:
         if chapter["source_path"] is None:
             continue
 
-        if ((ACC_ISA_BASE_PATTERN.search(chapter["content"])
-             and ACC_ISA_BIGNUM_PATTERN.search(chapter["content"])
-             and ACC_ISA_BASE_ENCODING_PATTERN.search(chapter["content"])
-             and ACC_ISA_BIGNUM_ENCODING_PATTERN.search(chapter["content"]))):
-
+        if (
+            ACC_ISA_BASE_PATTERN.search(chapter["content"])
+            and ACC_ISA_BIGNUM_PATTERN.search(chapter["content"])
+            and ACC_ISA_BASE_ENCODING_PATTERN.search(chapter["content"])
+            and ACC_ISA_BIGNUM_ENCODING_PATTERN.search(chapter["content"])
+        ):
             chapter["content"] = ACC_ISA_BASE_PATTERN.sub(base_content, chapter["content"])
             chapter["content"] = ACC_ISA_BIGNUM_PATTERN.sub(bignum_content, chapter["content"])
-            chapter["content"] = ACC_ISA_BASE_ENCODING_PATTERN.sub(base_enc_content,
-                                                                    chapter["content"])
-            chapter["content"] = ACC_ISA_BIGNUM_ENCODING_PATTERN.sub(bignum_enc_content,
-                                                                      chapter["content"])
+            chapter["content"] = ACC_ISA_BASE_ENCODING_PATTERN.sub(
+                base_enc_content, chapter["content"]
+            )
+            chapter["content"] = ACC_ISA_BIGNUM_ENCODING_PATTERN.sub(
+                bignum_enc_content, chapter["content"]
+            )
 
             # Remember the path to this chapter to generate the instruction links
             isa_book_path = chapter["source_path"]
@@ -70,8 +73,10 @@ def main() -> None:
 
     # Abort if we cannot resolve the instruction links
     if isa_book_path is None:
-        sys.exit("No file was found with {{#acc-isa base}}, {{#acc-isa bignum}}, "
-                 "{{#acc-isa base_encoding}} and {{#acc-isa bignum_encoding}}")
+        sys.exit(
+            "No file was found with {{#acc-isa base}}, {{#acc-isa bignum}}, "
+            "{{#acc-isa base_encoding}} and {{#acc-isa bignum_encoding}}"
+        )
 
     def ref_to_link(m: re.Match):
         instr = m.group(1)
@@ -80,10 +85,9 @@ def main() -> None:
 
     # Resolve any links to an instruction in all chapters.
     for chapter in md_utils.chapters(book["sections"]):
-        chapter["content"] = \
-            ACC_INSNREF_PATTERN.sub(
-                ref_to_link,
-                chapter["content"],
+        chapter["content"] = ACC_INSNREF_PATTERN.sub(
+            ref_to_link,
+            chapter["content"],
         )
 
     # dump the book into stdout

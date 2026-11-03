@@ -30,7 +30,7 @@ class Name:
     internal representation into "ExampleName".
     """
 
-    def __add__(self, other: 'Name') -> 'Name':
+    def __add__(self, other: "Name") -> "Name":
         return Name(list(self._parts) + list(other._parts))
 
     def __repr__(self) -> str:
@@ -45,7 +45,7 @@ class Name:
         return self._parts == other._parts
 
     @staticmethod
-    def from_snake_case(input: str) -> 'Name':
+    def from_snake_case(input: str) -> "Name":
         return Name(input.split("_"))
 
     @staticmethod
@@ -105,6 +105,7 @@ class Name:
 ##################
 # HJSON HANDLING #
 ##################
+
 
 def cast_hjson_values(hjson_inp: Any) -> Any | dict[str, Any]:
     """Cast values from an Hjson file into their Python equivalents.

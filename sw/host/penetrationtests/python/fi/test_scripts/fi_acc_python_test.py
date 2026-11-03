@@ -41,11 +41,10 @@ def load_test_data(test_name):
 
 
 class AccFiTest(unittest.TestCase):
-
     def test_init(self):
         accfi = OTFIAcc(target)
-        device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-            accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+        device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+            alert_config=common_library.default_fpga_friendly_alert_config
         )
         device_id_json = json.loads(device_id)
         sensors_json = json.loads(sensors)

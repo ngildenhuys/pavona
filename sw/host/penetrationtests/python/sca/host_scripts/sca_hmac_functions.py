@@ -6,7 +6,7 @@ from sw.host.penetrationtests.python.sca.communication.sca_hmac_commands import 
 from sw.host.penetrationtests.python.sca.communication.sca_prng_commands import OTPRNG
 
 
-def char_hmac_single(target, iterations, trigger, key, text, reset = False):
+def char_hmac_single(target, iterations, trigger, key, text, reset=False):
     hmacsca = OTHMAC(target)
     if reset:
         target.reset_target()
@@ -21,7 +21,7 @@ def char_hmac_single(target, iterations, trigger, key, text, reset = False):
     return response
 
 
-def char_hmac_daisy_chain(target, iterations, num_segments, trigger, key, text, reset = False):
+def char_hmac_daisy_chain(target, iterations, num_segments, trigger, key, text, reset=False):
     hmacsca = OTHMAC(target)
     if reset:
         target.reset_target()
@@ -36,7 +36,7 @@ def char_hmac_daisy_chain(target, iterations, num_segments, trigger, key, text, 
     return response
 
 
-def char_hmac_random_batch(target, iterations, num_segments, trigger, reset = False):
+def char_hmac_random_batch(target, iterations, num_segments, trigger, reset=False):
     hmacsca = OTHMAC(target)
     if reset:
         target.reset_target()
@@ -55,7 +55,7 @@ def char_hmac_random_batch(target, iterations, num_segments, trigger, reset = Fa
     return response
 
 
-def char_hmac_fvsr_batch(target, iterations, num_segments, trigger, key, reset = False):
+def char_hmac_fvsr_batch(target, iterations, num_segments, trigger, key, reset=False):
     hmacsca = OTHMAC(target)
     if reset:
         target.reset_target()

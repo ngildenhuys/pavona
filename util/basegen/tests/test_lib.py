@@ -12,20 +12,12 @@ import pytest
 # test_cast_hjson_values
 MOCK_TO_CAST = {
     "null": ["item1", "2", "0xF"],
-    "2": {"3": "0b11", "yes": "true", "no": "False", "pie": "3.14"}
+    "2": {"3": "0b11", "yes": "true", "no": "False", "pie": "3.14"},
 }
-MOCK_CASTED = {
-    None: ["item1", 2, 15],
-    2: {3: 3, "yes": True, "no": False, "pie": 3.14}
-}
+MOCK_CASTED = {None: ["item1", 2, 15], 2: {3: 3, "yes": True, "no": False, "pie": 3.14}}
 
 # test_cast_hjson_values_ints
-MOCK_INT_CONVERSIONS = {
-    "1'b1": 1,
-    "12345": 12345,
-    "0xff": 255,
-    "0b1001_1101_0000": 2512
-}
+MOCK_INT_CONVERSIONS = {"1'b1": 1, "12345": 12345, "0xff": 255, "0b1001_1101_0000": 2512}
 
 # test_import_hjson
 MOCK_HJSON_TEXT = """{

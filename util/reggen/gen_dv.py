@@ -2,7 +2,7 @@
 # Copyright zeroRISC Inc.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-'''Generate DV code for an IP block'''
+"""Generate DV code for an IP block"""
 
 import logging as log
 import os
@@ -46,36 +46,34 @@ class DvBaseNames:
 
 
 def bcname(esc_if_name: str) -> str:
-    '''Get the name of the dv_base_reg_block subclass for this device interface'''
+    """Get the name of the dv_base_reg_block subclass for this device interface"""
     return esc_if_name + "_reg_block"
 
 
 def rcname(esc_if_name: str, r: Union[Register, MultiRegister]) -> str:
-    '''Get the name of the dv_base_reg subclass for this register'''
-    return '{}_reg_{}'.format(esc_if_name, r.name.lower())
+    """Get the name of the dv_base_reg subclass for this register"""
+    return "{}_reg_{}".format(esc_if_name, r.name.lower())
 
 
-def alias_rcname(esc_if_name: str, r: Union[Register,
-                                            MultiRegister]) -> Optional[str]:
-    '''Get the name of the dv_base_reg subclass for this alias register'''
+def alias_rcname(esc_if_name: str, r: Union[Register, MultiRegister]) -> Optional[str]:
+    """Get the name of the dv_base_reg subclass for this alias register"""
     if r.alias_target is not None:
-        return '{}_reg_{}'.format(esc_if_name, r.alias_target.lower())
+        return "{}_reg_{}".format(esc_if_name, r.alias_target.lower())
     else:
         return None
 
 
 def mcname(esc_if_name: str, m: Window) -> str:
-    '''Get the name of the dv_base_mem subclass for this memory'''
-    return '{}_mem_{}'.format(esc_if_name, m.name.lower())
+    """Get the name of the dv_base_mem subclass for this memory"""
+    return "{}_mem_{}".format(esc_if_name, m.name.lower())
 
 
 def miname(m: Window) -> str:
-    '''Get the lower-case name of a memory block'''
+    """Get the lower-case name of a memory block"""
     return m.name.lower()
 
 
-def gen_core_file(outdir: str, lblock: str, dv_base_names: List[str],
-                  paths: List[str]) -> None:
+def gen_core_file(outdir: str, lblock: str, dv_base_names: List[str], paths: List[str]) -> None:
     depends = ["lowrisc:dv:dv_base_reg"]
     blocks_base_names = get_dv_base_names_objects(dv_base_names)
 
@@ -89,35 +87,30 @@ def gen_core_file(outdir: str, lblock: str, dv_base_names: List[str],
     # Generate a fusesoc core file that points at the files we've just
     # generated.
     core_data = {
-        'name': f"pavona:dv:{lblock}_ral_pkg",
-        'filesets': {
-            'files_dv': {
-                'depend': depends,
-                'files': paths,
-                'file_type': 'systemVerilogSource'
-            },
+        "name": f"pavona:dv:{lblock}_ral_pkg",
+        "filesets": {
+            "files_dv": {"depend": depends, "files": paths, "file_type": "systemVerilogSource"},
         },
-        'targets': {
-            'default': {
-                'filesets': [
-                    'files_dv',
+        "targets": {
+            "default": {
+                "filesets": [
+                    "files_dv",
                 ],
             },
         },
     }
 
-    core_file_path = Path(outdir, lblock + '_ral_pkg.core')
+    core_file_path = Path(outdir, lblock + "_ral_pkg.core")
     try:
-        with core_file_path.open('w', encoding='utf-8') as core_file:
-            core_file.write('CAPI=2:\n')
-            yaml.dump(core_data, core_file, encoding='utf-8')
+        with core_file_path.open("w", encoding="utf-8") as core_file:
+            core_file.write("CAPI=2:\n")
+            yaml.dump(core_data, core_file, encoding="utf-8")
     except Exception:
         raise SystemExit(sys.exc_info()[1])
 
 
-def get_dv_base_names_objects(
-        dv_base_names: List[str]) -> Dict[str, DvBaseNames]:
-    '''Returns a dictionary mapping a `DvBaseNames` object to a block.
+def get_dv_base_names_objects(dv_base_names: List[str]) -> Dict[str, DvBaseNames]:
+    """Returns a dictionary mapping a `DvBaseNames` object to a block.
 
     `dv_base_names` is a list of base class entity names provided on the command-line, in the
     following format:
@@ -125,7 +118,7 @@ def get_dv_base_names_objects(
 
     This function creates a dictionary that wraps the provided base class overrides for each block
     within a `DvBaseNames` object and returns a dictionary mapping the object to the block.
-    '''
+    """
     if dv_base_names is None:
         return None
 
@@ -140,13 +133,12 @@ def get_dv_base_names_objects(
     return dv_base_names_dict
 
 
-def get_block_base_name(dv_base_names_map: Dict[str, DvBaseNames],
-                        block: str) -> DvBaseNames:
-    '''Return the item for `block` from a dictionary of `DvBaseNames`.
+def get_block_base_name(dv_base_names_map: Dict[str, DvBaseNames], block: str) -> DvBaseNames:
+    """Return the item for `block` from a dictionary of `DvBaseNames`.
 
     Return the default `DvBaseNames` if the given dictionary is empty, or
     the entry for `block` is not found.
-    '''
+    """
     if dv_base_names_map is None:
         return DvBaseNames()
     try:
@@ -156,11 +148,10 @@ def get_block_base_name(dv_base_names_map: Dict[str, DvBaseNames],
 
 
 def gen_dv(block: IpBlock, dv_base_names: List[str], outdir: str) -> int:
-    '''Generate DV files for an IpBlock'''
+    """Generate DV files for an IpBlock"""
 
-    lookup = TemplateLookup(
-        directories=[str(importlib.resources.files('reggen'))])
-    uvm_reg_tpl = lookup.get_template('uvm_reg.sv.tpl')
+    lookup = TemplateLookup(directories=[str(importlib.resources.files("reggen"))])
+    uvm_reg_tpl = lookup.get_template("uvm_reg.sv.tpl")
 
     # Generate the RAL package(s). For a device interface with no name we
     # generate the package "<block>_ral_pkg" (writing to <block>_ral_pkg.sv).
@@ -174,23 +165,25 @@ def gen_dv(block: IpBlock, dv_base_names: List[str], outdir: str) -> int:
     device_hier_paths = block.bus_interfaces.device_hier_paths
 
     for if_name, rb in block.reg_blocks.items():
-
         hier_path = device_hier_paths[if_name]
-        if_suffix = '' if if_name is None else '_' + if_name.lower()
+        if_suffix = "" if if_name is None else "_" + if_name.lower()
         mod_base = lblock + if_suffix
         reg_block_path = hier_path + if_suffix
 
-        file_name = mod_base + '_ral_pkg.sv'
+        file_name = mod_base + "_ral_pkg.sv"
         generated.append(file_name)
         reg_top_path = os.path.join(outdir, file_name)
-        with open(reg_top_path, 'w', encoding='UTF-8') as fout:
+        with open(reg_top_path, "w", encoding="UTF-8") as fout:
             try:
                 fout.write(
-                    uvm_reg_tpl.render(rb=rb,
-                                       block=block,
-                                       esc_if_name=mod_base,
-                                       reg_block_path=reg_block_path,
-                                       dv_base_names=block_dv_base_names))
+                    uvm_reg_tpl.render(
+                        rb=rb,
+                        block=block,
+                        esc_if_name=mod_base,
+                        reg_block_path=reg_block_path,
+                        dv_base_names=block_dv_base_names,
+                    )
+                )
             except:  # noqa F722 for template Exception handling
                 log.error(exceptions.text_error_template().render())
                 return 1

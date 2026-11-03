@@ -35,8 +35,7 @@ def edge_coeffs(gamma2):
     alpha = 2 * gamma2
     vals = {0, 1, Q - 1, Q - 2}
     for k in range(Q // alpha + 1):
-        vals.update(v for v in (k * alpha, k * alpha + gamma2,
-                                k * alpha + gamma2 + 1) if v < Q)
+        vals.update(v for v in (k * alpha, k * alpha + gamma2, k * alpha + gamma2 + 1) if v < Q)
     return sorted(vals)
 
 
@@ -59,14 +58,14 @@ def pack_arith_shares(share_vals):
     buf = bytearray()
     for s in range(NSHARES):
         for v in share_vals[s]:
-            buf += int(v).to_bytes(4, 'little')
+            buf += int(v).to_bytes(4, "little")
     return bytes(buf)
 
 
 def pack_canonical(vals):
     buf = bytearray()
     for v in vals:
-        buf += (int(v) % Q).to_bytes(4, 'little')
+        buf += (int(v) % Q).to_bytes(4, "little")
     return bytes(buf)
 
 
@@ -76,7 +75,7 @@ def decompose_poly(mldsa, special, pinned=None):
     fixed = special + [v for v in edge_coeffs(mldsa.gamma_2) if v not in special]
     fixed += [v for v in (pinned or {}) if v not in fixed]
     assert len(fixed) <= N_COEFS
-    w_vals[:len(fixed)] = fixed
+    w_vals[: len(fixed)] = fixed
     w1_ref, w0_ref = [], []
     for v in w_vals:
         r1, r0 = decompose(v, alpha, Q)
@@ -86,8 +85,8 @@ def decompose_poly(mldsa, special, pinned=None):
 
 
 def gen_secdecompose_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -95,27 +94,33 @@ def gen_secdecompose_test(
     sh35, w1_35, w0_35 = decompose_poly(ML_DSA_65, SPECIAL_L35)
     gamma2_35 = ML_DSA_65.gamma_2
 
-    write_test_data({
-        'w_in_l2': pack_arith_shares(sh2),
-        'w1_out_l2': b'\x00' * (N_COEFS * 4),
-        'w_in_l35': pack_arith_shares(sh35),
-        'w1_out_l35': b'\x00' * (N_COEFS * 4),
-    }, data_file)
+    write_test_data(
+        {
+            "w_in_l2": pack_arith_shares(sh2),
+            "w1_out_l2": b"\x00" * (N_COEFS * 4),
+            "w_in_l35": pack_arith_shares(sh35),
+            "w1_out_l35": b"\x00" * (N_COEFS * 4),
+        },
+        data_file,
+    )
     write_test_exp({}, exp_file)
-    write_test_dexp({
-        'w1_out_l2': pack_canonical(w1_2),
-        'w0_unmasked': pack_canonical(w0_2),
-        'w1_out_l35': pack_canonical(w1_35),
-        'u_unmasked': pack_canonical([gamma2_35 - a0 for a0 in w0_35]),
-    }, dexp_file)
+    write_test_dexp(
+        {
+            "w1_out_l2": pack_canonical(w1_2),
+            "w0_unmasked": pack_canonical(w0_2),
+            "w1_out_l35": pack_canonical(w1_35),
+            "u_unmasked": pack_canonical([gamma2_35 - a0 for a0 in w0_35]),
+        },
+        dexp_file,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_secdecompose_test(args.seed, args.data, args.exp, args.dexp)

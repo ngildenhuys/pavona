@@ -104,15 +104,17 @@ def parse_decaps(group, param_set):
     test_vectors = []
     for test in group["tests"]:
         result = test["result"] == "valid"
-        test_vectors.append({
-            "vendor": "wycheproof",
-            "test_case_id": test["tcId"],
-            "operation": "decaps",
-            "parameter_set": param_set,
-            "dk": list(bytes.fromhex(test["dk"])),
-            "c": list(bytes.fromhex(test["c"])),
-            "result": result,
-        })
+        test_vectors.append(
+            {
+                "vendor": "wycheproof",
+                "test_case_id": test["tcId"],
+                "operation": "decaps",
+                "parameter_set": param_set,
+                "dk": list(bytes.fromhex(test["dk"])),
+                "c": list(bytes.fromhex(test["c"])),
+                "result": result,
+            }
+        )
     return test_vectors
 
 
@@ -137,7 +139,8 @@ def parse_test_vectors(raw_data, test_type):
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Parsing utility for Wycheproof ML-KEM testvectors.")
+        description="Parsing utility for Wycheproof ML-KEM testvectors."
+    )
     parser.add_argument(
         "--src",
         type=argparse.FileType("r"),

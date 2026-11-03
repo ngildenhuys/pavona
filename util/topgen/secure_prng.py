@@ -23,7 +23,6 @@ from Crypto.Cipher import AES
 
 
 class SecurePrng:
-
     blocklen = 128
     keylen = 128
     ctr_len = blocklen
@@ -64,7 +63,7 @@ class SecurePrng:
         Described in NIST SP 800-90A, page 51
         For convenience, input provided_data is divided in two 128 bit chunks.
         """
-        cipher = AES.new(self.Key.to_bytes(16, 'big'), AES.MODE_ECB)
+        cipher = AES.new(self.Key.to_bytes(16, "big"), AES.MODE_ECB)
 
         # Steps 1 and 2
         # Loop in step 2 consists of only 2 iterations, it is unrolled here
@@ -72,13 +71,13 @@ class SecurePrng:
         # 2.1.1. and 2.1.2
         pt0 = (self.V + 1) % (1 << self.blocklen)
         pt1 = (self.V + 2) % (1 << self.blocklen)
-        ct0 = cipher.encrypt(pt0.to_bytes(16, 'big'))
-        ct1 = cipher.encrypt(pt1.to_bytes(16, 'big'))
+        ct0 = cipher.encrypt(pt0.to_bytes(16, "big"))
+        ct1 = cipher.encrypt(pt1.to_bytes(16, "big"))
 
         # Steps 3, 4, 5, 6 and 7
-        self.Key = int.from_bytes(ct0, 'big') ^ provided_data_0
-        self.V = int.from_bytes(ct1, 'big') ^ provided_data_1
-        del (cipher)
+        self.Key = int.from_bytes(ct0, "big") ^ provided_data_0
+        self.V = int.from_bytes(ct1, "big") ^ provided_data_1
+        del cipher
 
     def CTR_DRBG_Generate(self, requested_number_of_bits):
         """CTR_DRBG_Generate
@@ -93,15 +92,18 @@ class SecurePrng:
 
         # Checks if the PRNG was Instantiated before first use.
         if not self.reseed_counter:
-            log.error("Seed must be provided before requesting output. " +
-                      "Use SecurePrng.reseed()")
+            log.error(
+                "Seed must be provided before requesting output. " + "Use SecurePrng.reseed()"
+            )
             sys.exit(1)
 
         # Checks that the requested number of bits is allowed.
         if requested_number_of_bits > self.REQ_MAX:
             log.error(
-                "Maximal number of bits per request is %d, but %d was "
-                "requested", self.REQ_MAX, requested_number_of_bits)
+                "Maximal number of bits per request is %d, but %d was requested",
+                self.REQ_MAX,
+                requested_number_of_bits,
+            )
             sys.exit(1)
 
         # Step 1
@@ -120,7 +122,7 @@ class SecurePrng:
 
         # Number of iterations of the loop in step 4
         N_iterations = requested_number_of_bits // self.blocklen
-        cipher = AES.new(self.Key.to_bytes(16, 'big'), AES.MODE_ECB)
+        cipher = AES.new(self.Key.to_bytes(16, "big"), AES.MODE_ECB)
 
         for i in range(N_iterations):
             # Step 4.1
@@ -128,11 +130,11 @@ class SecurePrng:
             self.V = (self.V + 1) % (1 << self.blocklen)
             # Steps 4.2 and 4.3
             pt = self.V
-            ct = cipher.encrypt(pt.to_bytes(16, 'big'))
+            ct = cipher.encrypt(pt.to_bytes(16, "big"))
             # Step 4.3
             temp = temp + ct
 
-        del (cipher)
+        del cipher
 
         # Step 5 is not needed because requested_number_of_bits % 128 == 0
 
@@ -143,10 +145,10 @@ class SecurePrng:
         self.reseed_counter += 1
 
         # Step 8
-        return (temp)
+        return temp
 
     def CTR_DRBG_Instantiate(self, entropy_input):
-        """ CTR_DRBG_Instantiate
+        """CTR_DRBG_Instantiate
 
         CTR_DRBG Instantiate process, described in NIST SP 800-90A, page 52
         Section 10.2.1.3.1 Instantiation When a Derivation Function is not used
@@ -162,8 +164,8 @@ class SecurePrng:
         self.V = 0
         # Step 6. For convenience we split 256 bit seed_material into two 128b
         # integers.
-        L = int.from_bytes(seed_material[0:16], 'big')
-        R = int.from_bytes(seed_material[16:32], 'big')
+        L = int.from_bytes(seed_material[0:16], "big")
+        R = int.from_bytes(seed_material[16:32], "big")
         self.CTR_DRBG_Update(L, R)
         # Step 7
         self.reseed_counter = 1
@@ -183,18 +185,18 @@ class SecurePrng:
             # Warn, but don't fail, because the DV logic always passes in 32-bit
             # seeds and this can naturally happen about 1% of the time.
             log.warning(
-                f'PRNG seed is only {seed.bit_length()} bits long, which is '
-                'unlikely for a sample from a 256-bit distribution. Please '
-                'double-check the logic.')
+                f"PRNG seed is only {seed.bit_length()} bits long, which is "
+                "unlikely for a sample from a 256-bit distribution. Please "
+                "double-check the logic."
+            )
         # Check if the seed is longer than 256 bits. Trim the excess bits and
         # issue a warning if it is.
         if seed.bit_length() > 256:
             new_seed = seed % (1 << 256)
-            log.warning("Seed longer than 256 bits. CTR_DRBG seeded with: " +
-                        hex(new_seed))
-            entropy_input = new_seed.to_bytes(32, 'big')
+            log.warning("Seed longer than 256 bits. CTR_DRBG seeded with: " + hex(new_seed))
+            entropy_input = new_seed.to_bytes(32, "big")
         else:
-            entropy_input = seed.to_bytes(32, 'big')
+            entropy_input = seed.to_bytes(32, "big")
 
         self.CTR_DRBG_Instantiate(entropy_input)
         self.returned_bits = []
@@ -212,15 +214,13 @@ class SecurePrng:
         return self.returned_bits.pop(0)
 
     def getrandbits(self, n_bits):
-        """Fetches n_bits next bits from a PRNG.
-
-        """
+        """Fetches n_bits next bits from a PRNG."""
 
         bitsleft = n_bits
         R = 0
-        while (bitsleft > 0):
+        while bitsleft > 0:
             random_byte = int(self.fetchbyte())
-            if (bitsleft > 8):
+            if bitsleft > 8:
                 R = (R << 8) | random_byte
                 bitsleft = bitsleft - 8
             else:
@@ -228,7 +228,7 @@ class SecurePrng:
                 R = (R << bitsleft) | random_byte
                 bitsleft = 0
         assert R >= 0
-        return (R)
+        return R
 
     def randbelow(self, n):
         """Generates a random integer smaller than n.
@@ -242,7 +242,7 @@ class SecurePrng:
         R = self.getrandbits(length_bits)
         while R >= n:
             R = self.getrandbits(length_bits)
-        return (R)
+        return R
 
     def shuffle(self, x):
         """Shuffles a list x.
@@ -264,13 +264,13 @@ class SecurePrng:
         """
 
         i = self.randbelow(len(x))
-        return (x[i])
+        return x[i]
 
     def padded_hex(self, c, length):
         """Convert integer to a hexadecimal string with leading zeros."""
         payload = hex(c)[2:]
-        padding = '0' * (length - len(payload))
-        return '0x' + padding + payload
+        padding = "0" * (length - len(payload))
+        return "0x" + padding + payload
 
     def test_point_gen(self, entropy_input):
         """Generate a test point in NIST format
@@ -293,14 +293,14 @@ class SecurePrng:
         K2 = self.padded_hex(self.Key, 32)
         V2 = self.padded_hex(self.V, 32)
         test_point = {
-            'EntropyInput': entropy,
-            'Key_Inst': K0,
-            'V_Inst': V0,
-            'Key_First': K1,
-            'V_First': V1,
-            'ReturnedBits': test_word,
-            'Key_Second': K2,
-            'V_Second': V2
+            "EntropyInput": entropy,
+            "Key_Inst": K0,
+            "V_Inst": V0,
+            "Key_First": K1,
+            "V_First": V1,
+            "ReturnedBits": test_word,
+            "Key_Second": K2,
+            "V_Second": V2,
         }
         return test_point
 
@@ -312,6 +312,7 @@ class SecurePrngFactory:
     This factory allows you to instantiate multiple PRNGs with different seeds
     and retrieve them later by name.
     """
+
     _rngs: dict[str, SecurePrng] = {}
 
     @classmethod
@@ -332,6 +333,8 @@ class SecurePrngFactory:
         Retrieves a previously created pseudo-random number generator by its name.
         """
         if name not in cls._rngs:
-            raise KeyError(f"Error: PRNG with name '{name}' not found. "
-                           "Please create it first using SecurePrngFactory.create().")
+            raise KeyError(
+                f"Error: PRNG with name '{name}' not found. "
+                "Please create it first using SecurePrngFactory.create()."
+            )
         return cls._rngs[name]

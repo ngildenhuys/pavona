@@ -3,6 +3,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 r"""Parses slang lint report and dumps filtered messages in hjson format."""
+
 import argparse
 import logging as log
 import sys
@@ -22,18 +23,23 @@ def main():
 
         The script returns nonzero status if any warnings or errors are
         present.
-        """)
-    parser.add_argument('--repfile',
-                        type=lambda p: Path(p).resolve(),
-                        default="./slang.log",
-                        help="""The script searches the log file provided.
-                        Defaults to './slang.log'""")
+        """
+    )
+    parser.add_argument(
+        "--repfile",
+        type=lambda p: Path(p).resolve(),
+        default="./slang.log",
+        help="""The script searches the log file provided.
+                        Defaults to './slang.log'""",
+    )
 
-    parser.add_argument('--outfile',
-                        type=lambda p: Path(p).resolve(),
-                        default="./results.hjson",
-                        help="""Path to the results Hjson file.
-                        Defaults to './results.hjson'""")
+    parser.add_argument(
+        "--outfile",
+        type=lambda p: Path(p).resolve(),
+        default="./results.hjson",
+        help="""Path to the results Hjson file.
+                        Defaults to './results.hjson'""",
+    )
     args = parser.parse_args()
 
     # Define warning/error patterns for the slang log file.
@@ -51,26 +57,21 @@ def main():
             # error if there are no other errors or warnings, since that
             # shows something has come unstuck. (Probably the lint tool
             # spat out a warning that we don't understand)
-            ("fusesoc-error",
-             r"^ERROR: Failed to build .* 'make' exited with an error code"),
-            ("flow_error",
-             r"^(?!ERROR: Failed to build .* 'make' exited with an error code)ERROR: .*"),
+            ("fusesoc-error", r"^ERROR: Failed to build .* 'make' exited with an error code"),
+            (
+                "flow_error",
+                r"^(?!ERROR: Failed to build .* 'make' exited with an error code)ERROR: .*",
+            ),
             # Errors from fusesoc, which stop the run before slang is started.
-            ("flow_error",
-             r"^fusesoc: error: .*"),
+            ("flow_error", r"^fusesoc: error: .*"),
             # Tool-level errors emitted by slang itself (e.g. bad flags, missing files).
-            ("flow_error",
-             r"^slang: error: .*"),
+            ("flow_error", r"^slang: error: .*"),
             # Generic error lines without a file location (e.g. elaboration failures).
-            ("flow_error",
-             r"^(?!.*:\d+:\d+:)error: .*"),
+            ("flow_error", r"^(?!.*:\d+:\d+:)error: .*"),
             # Per-location diagnostics mapped to lint severities.
-            ("lint_error",
-             r"^.*:\d+:\d+: error: .*"),
-            ("lint_warning",
-             r"^.*:\d+:\d+: warning: .*"),
-            ("lint_info",
-             r"^.*:\d+:\d+: note: .*"),
+            ("lint_error", r"^.*:\d+:\d+: error: .*"),
+            ("lint_warning", r"^.*:\d+:\d+: warning: .*"),
+            ("lint_info", r"^.*:\d+:\d+: note: .*"),
         ]
     }
 
@@ -83,10 +84,12 @@ def main():
 
     # Return nonzero status if any warnings or errors are present.
     # lint infos do not count as failures.
-    if num_messages['error'] > 0 or num_messages['warning'] > 0:
-        log.info("Found %d lint errors and %d lint warnings",
-                 num_messages['error'],
-                 num_messages['warning'])
+    if num_messages["error"] > 0 or num_messages["warning"] > 0:
+        log.info(
+            "Found %d lint errors and %d lint warnings",
+            num_messages["error"],
+            num_messages["warning"],
+        )
         sys.exit(1)
 
     log.info("Lint logfile parsed successfully")

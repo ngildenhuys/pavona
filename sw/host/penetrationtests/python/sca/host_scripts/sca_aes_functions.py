@@ -7,7 +7,7 @@ from sw.host.penetrationtests.python.sca.communication.sca_prng_commands import 
 from sw.host.penetrationtests.python.sca.communication.sca_trigger_commands import OTTRIGGER
 
 
-def char_aes_single_encrypt(target, iterations, fpga, masking, key, text, reset = False):
+def char_aes_single_encrypt(target, iterations, fpga, masking, key, text, reset=False):
     aessca = OTAES(target)
     if reset:
         target.reset_target()
@@ -35,7 +35,7 @@ def char_aes_single_encrypt(target, iterations, fpga, masking, key, text, reset 
 
 
 def char_aes_batch_daisy_chain(
-    target, iterations, num_segments, fpga, masking, key, text, reset = False
+    target, iterations, num_segments, fpga, masking, key, text, reset=False
 ):
     aessca = OTAES(target)
     if reset:
@@ -67,7 +67,7 @@ def char_aes_batch_daisy_chain(
 
 
 def char_aes_batch_fvsr_data(
-    target, iterations, num_segments, fpga, masking, key, text, reset = False
+    target, iterations, num_segments, fpga, masking, key, text, reset=False
 ):
     aessca = OTAES(target)
     if reset:
@@ -99,7 +99,7 @@ def char_aes_batch_fvsr_data(
     return response
 
 
-def char_aes_batch_fvsr_key(target, iterations, num_segments, fpga, masking, key, reset = False):
+def char_aes_batch_fvsr_key(target, iterations, num_segments, fpga, masking, key, reset=False):
     aessca = OTAES(target)
     if reset:
         target.reset_target()
@@ -130,7 +130,7 @@ def char_aes_batch_fvsr_key(target, iterations, num_segments, fpga, masking, key
     return response
 
 
-def char_aes_batch_random(target, iterations, num_segments, fpga, masking, key, reset = False):
+def char_aes_batch_random(target, iterations, num_segments, fpga, masking, key, reset=False):
     aessca = OTAES(target)
 
     if reset:

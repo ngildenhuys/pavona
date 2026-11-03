@@ -32,20 +32,20 @@ def pack_arith_shares(share_vals, nshares):
     buf = bytearray()
     for s in range(nshares):
         for v in share_vals[s]:
-            buf += int(v).to_bytes(4, 'little')
+            buf += int(v).to_bytes(4, "little")
     return bytes(buf)
 
 
 def pack_poly(vals):
     buf = bytearray()
     for v in vals:
-        buf += int(v).to_bytes(4, 'little')
+        buf += int(v).to_bytes(4, "little")
     return bytes(buf)
 
 
 def gen_secunmask_modq_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -54,17 +54,17 @@ def gen_secunmask_modq_test(
     xb = pack_arith_shares(share_vals, NSHARES)
     yb = pack_poly(x_vals)
 
-    write_test_data({'x_in': xb}, data_file)
+    write_test_data({"x_in": xb}, data_file)
     write_test_exp({}, exp_file)
-    write_test_dexp({'y_out': yb}, dexp_file)
+    write_test_dexp({"y_out": yb}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_secunmask_modq_test(args.seed, args.data, args.exp, args.dexp)

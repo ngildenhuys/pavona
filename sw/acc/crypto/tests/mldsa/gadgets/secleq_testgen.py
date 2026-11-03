@@ -42,19 +42,17 @@ def pack_shares_sharemajor(vals, kbits, nshares):
     buf = bytearray()
     for s in range(nshares):
         for bit in range(kbits):
-            buf += bit_shares[bit][s].to_bytes(SHARE_BYTES, 'little')
-        buf += b'\x00' * SHARE_BYTES  # bit k pad
+            buf += bit_shares[bit][s].to_bytes(SHARE_BYTES, "little")
+        buf += b"\x00" * SHARE_BYTES  # bit k pad
     return bytes(buf)
 
 
 def pack_c_wdr(C):
     """32-byte WDR-image with C in lane 0 (low 4 bytes); other lanes = 0."""
-    return C.to_bytes(4, 'little') + b'\x00' * 28
+    return C.to_bytes(4, "little") + b"\x00" * 28
 
 
-def gen_secleq_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+def gen_secleq_test(seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
     if seed is not None:
         random.seed(seed)
 
@@ -72,22 +70,21 @@ def gen_secleq_test(
             if v <= psi:
                 out_word |= 1 << lane
 
-        inputs['x_in{}'.format(idx)] = pack_shares_sharemajor(
-            x_vals, KBITS, NSHARES)
-        inputs['c_wdr{}'.format(idx)] = pack_c_wdr(C)
-        dexp['y_out{}'.format(idx)] = out_word.to_bytes(SHARE_BYTES, 'little')
+        inputs["x_in{}".format(idx)] = pack_shares_sharemajor(x_vals, KBITS, NSHARES)
+        inputs["c_wdr{}".format(idx)] = pack_c_wdr(C)
+        dexp["y_out{}".format(idx)] = out_word.to_bytes(SHARE_BYTES, "little")
 
     write_test_data(inputs, data_file)
     write_test_exp({}, exp_file)
     write_test_dexp(dexp, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_secleq_test(args.seed, args.data, args.exp, args.dexp)

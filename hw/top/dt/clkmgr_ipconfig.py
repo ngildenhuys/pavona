@@ -5,6 +5,7 @@
 This contains a class to access the clkmgr's configuration from its ipconfig
 files.
 """
+
 from typing import List, Dict
 
 from ipgen.clkmgr_gen import get_rg_srcs

@@ -13,8 +13,8 @@ def char_inactive_firmware_invalidate(target, reset=False):
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        bootfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = bootfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     bootfi.handle_inactive_firmware_invalidate()
     return target.read_response()
@@ -27,8 +27,8 @@ def char_next_slot(target, reset=False):
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        bootfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = bootfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     # Target resets after this
     bootfi.handle_next_slot()
@@ -41,8 +41,8 @@ def char_boot_status(target, reset=False):
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        bootfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = bootfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     bootfi.handle_boot_status()
 
@@ -54,7 +54,7 @@ def char_epmp_status(target, reset=False):
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        bootfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = bootfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     bootfi.handle_epmp_status()

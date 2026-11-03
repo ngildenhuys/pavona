@@ -4,6 +4,7 @@
 """This contains a class which is used to help generate the device tables (DT)
 files.
 """
+
 from dtgen.helper import indent_text, IpHelper, Extension, StructType, ScalarType, ArrayMapType
 from topgen.lib import CEnum, Name
 from typing import Dict, Optional
@@ -71,7 +72,7 @@ class OtpCtrlExt(Extension):
 
         self._otp_partition_ids_prefix = Name(["Otp", "Partition"])
         self._ipconfig = OtpCtrlIpConfig(ip_helper.ipconfig, self._otp_partition_ids_prefix)
-        self._otp_partition_ids = CEnum(top_name = None, name = self._otp_partition_ids_prefix)
+        self._otp_partition_ids = CEnum(top_name=None, name=self._otp_partition_ids_prefix)
         for partition in self._ipconfig.partitions():
             self._otp_partition_ids.add_constant(partition["name"])
         self._otp_partition_ids.add_count_constant()
@@ -79,65 +80,65 @@ class OtpCtrlExt(Extension):
         # An OTP partition information structure
         self._otp_partition_info_struct = StructType(self.OTP_PARTITION_INFO_STRUCT_NAME)
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_START_ADDR_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "The absolute OTP address at which this partition starts",
+            name=self.OTP_PARTITION_INFO_STRUCT_START_ADDR_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="The absolute OTP address at which this partition starts",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_SIZE_FIELD_NAME,
-            field_type = ScalarType("size_t"),
-            docstring = "Size of the partition (bytes), excluding the digest / zeroization fields.",
+            name=self.OTP_PARTITION_INFO_STRUCT_SIZE_FIELD_NAME,
+            field_type=ScalarType("size_t"),
+            docstring="Size of the partition (bytes), excluding the digest / zeroization fields.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_SW_READABLE_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Set to true iff the partition is readable by software.",
+            name=self.OTP_PARTITION_INFO_STRUCT_SW_READABLE_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Set to true iff the partition is readable by software.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_SW_DIGEST_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Set to true iff the partition has a software digest.",
+            name=self.OTP_PARTITION_INFO_STRUCT_SW_DIGEST_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Set to true iff the partition has a software digest.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_HW_DIGEST_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Set to true iff the partition has a hardware digest.",
+            name=self.OTP_PARTITION_INFO_STRUCT_HW_DIGEST_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Set to true iff the partition has a hardware digest.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_DIGEST_ADDR_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "The OTP digest CSR (where the digest is buffered) offset for " +
-            "this partition.",
+            name=self.OTP_PARTITION_INFO_STRUCT_DIGEST_ADDR_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="The OTP digest CSR (where the digest is buffered) offset for "
+            + "this partition.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_READ_LOCKABLE_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Whether the partition can be locked for reading by software.",
+            name=self.OTP_PARTITION_INFO_STRUCT_READ_LOCKABLE_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Whether the partition can be locked for reading by software.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_LOCK_ADDR_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "The OTP lock CSR offset for this partition.",
+            name=self.OTP_PARTITION_INFO_STRUCT_LOCK_ADDR_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="The OTP lock CSR offset for this partition.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_READ_LOCK_BIT_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "The bit-offset of the read lock in the OTP lock CSR for this partition.",
+            name=self.OTP_PARTITION_INFO_STRUCT_READ_LOCK_BIT_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="The bit-offset of the read lock in the OTP lock CSR for this partition.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_ZEROIZABLE_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Whether this partition is zeroizable."
+            name=self.OTP_PARTITION_INFO_STRUCT_ZEROIZABLE_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Whether this partition is zeroizable.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_LIFECYCLE_FIELD_NAME,
-            field_type = ScalarType("uint8_t"),
-            docstring = "Whether this partition stores the chip life cycle state."
+            name=self.OTP_PARTITION_INFO_STRUCT_LIFECYCLE_FIELD_NAME,
+            field_type=ScalarType("uint8_t"),
+            docstring="Whether this partition stores the chip life cycle state.",
         )
         self._otp_partition_info_struct.add_field(
-            name = self.OTP_PARTITION_INFO_STRUCT_ALIGN_MASK_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "The alignment mask for this partition",
+            name=self.OTP_PARTITION_INFO_STRUCT_ALIGN_MASK_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="The alignment mask for this partition",
         )
 
         self._invalid_partition_info = {
@@ -165,13 +166,13 @@ class OtpCtrlExt(Extension):
         st = StructType()
         # Add field to count OTP partitions.
         st.add_field(
-            name = self.OTP_PARTITION_INFO_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = self._otp_partition_info_struct,
-                index_type = ScalarType("size_t"),
-                length = str(partition_count),
+            name=self.OTP_PARTITION_INFO_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=self._otp_partition_info_struct,
+                index_type=ScalarType("size_t"),
+                length=str(partition_count),
             ),
-            docstring = "List of OTP partitions",
+            docstring="List of OTP partitions",
         )
         return Name(["partitions"]), st
 
@@ -190,33 +191,44 @@ class OtpCtrlExt(Extension):
             has_lock_csr = partition["read_lock"] == "CSR"
             partition_name = partition["name"].as_c_define()
             read_lock_bit = part_prefix + "READ_LOCK_" + partition_name + "_READ_LOCK_BIT"
-            for (id, value, _) in self._otp_partition_ids.constants:
+            for id, value, _ in self._otp_partition_ids.constants:
                 if id == partition["id"]:
                     otp_partitions[id.as_c_enum()] = {
-                        self.OTP_PARTITION_INFO_STRUCT_SW_READABLE_FIELD_NAME:
-                            1 if partition["sw_readable"] else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_SW_DIGEST_FIELD_NAME:
-                            1 if partition["sw_digest"] else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_HW_DIGEST_FIELD_NAME:
-                            1 if partition["hw_digest"] else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_START_ADDR_FIELD_NAME:
-                            part_param_prefix + "OFFSET",
-                        self.OTP_PARTITION_INFO_STRUCT_SIZE_FIELD_NAME:
-                            partition_size_expr,
-                        self.OTP_PARTITION_INFO_STRUCT_DIGEST_ADDR_FIELD_NAME:
-                            part_prefix + "DIGEST_0_REG_OFFSET" if has_digest_csr else "0xdeadbeef",
-                        self.OTP_PARTITION_INFO_STRUCT_READ_LOCKABLE_FIELD_NAME:
-                            1 if has_lock_csr else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_LOCK_ADDR_FIELD_NAME:
-                            part_prefix + "READ_LOCK_REG_OFFSET" if has_lock_csr else "0xdeadbeef",
-                        self.OTP_PARTITION_INFO_STRUCT_READ_LOCK_BIT_FIELD_NAME:
-                            read_lock_bit if has_lock_csr else "0xdeadbeef",
-                        self.OTP_PARTITION_INFO_STRUCT_ZEROIZABLE_FIELD_NAME:
-                            1 if partition["zeroizable"] else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_LIFECYCLE_FIELD_NAME:
-                            1 if partition["variant"] == "LifeCycle" else 0,
-                        self.OTP_PARTITION_INFO_STRUCT_ALIGN_MASK_FIELD_NAME:
-                            "0x7" if partition["secret"] else "0x3",
+                        self.OTP_PARTITION_INFO_STRUCT_SW_READABLE_FIELD_NAME: 1
+                        if partition["sw_readable"]
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_SW_DIGEST_FIELD_NAME: 1
+                        if partition["sw_digest"]
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_HW_DIGEST_FIELD_NAME: 1
+                        if partition["hw_digest"]
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_START_ADDR_FIELD_NAME: part_param_prefix
+                        + "OFFSET",
+                        self.OTP_PARTITION_INFO_STRUCT_SIZE_FIELD_NAME: partition_size_expr,
+                        self.OTP_PARTITION_INFO_STRUCT_DIGEST_ADDR_FIELD_NAME: part_prefix
+                        + "DIGEST_0_REG_OFFSET"
+                        if has_digest_csr
+                        else "0xdeadbeef",
+                        self.OTP_PARTITION_INFO_STRUCT_READ_LOCKABLE_FIELD_NAME: 1
+                        if has_lock_csr
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_LOCK_ADDR_FIELD_NAME: part_prefix
+                        + "READ_LOCK_REG_OFFSET"
+                        if has_lock_csr
+                        else "0xdeadbeef",
+                        self.OTP_PARTITION_INFO_STRUCT_READ_LOCK_BIT_FIELD_NAME: read_lock_bit
+                        if has_lock_csr
+                        else "0xdeadbeef",
+                        self.OTP_PARTITION_INFO_STRUCT_ZEROIZABLE_FIELD_NAME: 1
+                        if partition["zeroizable"]
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_LIFECYCLE_FIELD_NAME: 1
+                        if partition["variant"] == "LifeCycle"
+                        else 0,
+                        self.OTP_PARTITION_INFO_STRUCT_ALIGN_MASK_FIELD_NAME: "0x7"
+                        if partition["secret"]
+                        else "0x3",
                     }
 
         return {
@@ -226,21 +238,21 @@ class OtpCtrlExt(Extension):
     def render_dt_ip(self, pos: Extension.DtIpPos) -> str:
         if pos == Extension.DtIpPos.HeaderEnd:
             subs = {
-                'otp_partition_info_struct': self._otp_partition_info_struct.render_type_def(),
-                'otp_partition_info_struct_name': self._otp_partition_info_struct.as_c_type(),
-                'otp_partition_ids_enum': self._otp_partition_ids.render(),
-                'otp_partition_ids_enum_name': self._otp_partition_ids.name.as_c_type(),
+                "otp_partition_info_struct": self._otp_partition_info_struct.render_type_def(),
+                "otp_partition_info_struct_name": self._otp_partition_info_struct.as_c_type(),
+                "otp_partition_ids_enum": self._otp_partition_ids.render(),
+                "otp_partition_ids_enum_name": self._otp_partition_ids.name.as_c_type(),
             }
             return HEADER_EXT_TEMPLATE % subs
         elif pos == Extension.DtIpPos.SourceIncludes:
             return '#include "hw/top/otp_ctrl_regs.h"'
         elif pos == Extension.DtIpPos.SourceEnd:
             subs = {
-                'otp_partition_info_struct_name': self._otp_partition_info_struct.as_c_type(),
-                'otp_partition_ids_enum_name': self._otp_partition_ids.name.as_c_type(),
-                'invalid_partition':
-                    indent_text(self._otp_partition_info_struct.
-                                render_value(self._invalid_partition_info), " "),
+                "otp_partition_info_struct_name": self._otp_partition_info_struct.as_c_type(),
+                "otp_partition_ids_enum_name": self._otp_partition_ids.name.as_c_type(),
+                "invalid_partition": indent_text(
+                    self._otp_partition_info_struct.render_value(self._invalid_partition_info), " "
+                ),
             }
             return SOURCE_EXT_TEMPLATE % subs
         else:

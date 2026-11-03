@@ -14,8 +14,8 @@ NSHARES = 2
 
 
 def gen_secfulladder_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     # Generate random operands.
     if seed is not None:
         random.seed(seed)
@@ -36,9 +36,9 @@ def gen_secfulladder_test(
         x ^= tx
         y ^= ty
         c ^= tc
-        xb |= (tx << (i * N))
-        yb |= (ty << (i * N))
-        cb |= (tc << (i * N))
+        xb |= tx << (i * N)
+        yb |= ty << (i * N)
+        cb |= tc << (i * N)
 
     # Compute expected result x + y + c.
     w0 = 0
@@ -48,49 +48,51 @@ def gen_secfulladder_test(
         yi = (y >> i) & 1
         ci = (c >> i) & 1
         t = xi + yi + ci
-        w0 |= ((t & 1) << i)
-        w1 |= (((t >> 1) & 1) << i)
+        w0 |= (t & 1) << i
+        w1 |= ((t >> 1) & 1) << i
     w = w0 | (w1 << N)
 
-    xb_bytes = int.to_bytes(xb, byteorder='little', length=operand_nbytes)
-    yb_bytes = int.to_bytes(yb, byteorder='little', length=operand_nbytes)
-    cb_bytes = int.to_bytes(cb, byteorder='little', length=operand_nbytes)
-    r_bytes = int.to_bytes(w, byteorder='little', length=64)
-    rb_bytes = int.to_bytes(0, byteorder='little', length=operand_nbytes)
-    coutb_bytes = int.to_bytes(0, byteorder='little', length=operand_nbytes)
+    xb_bytes = int.to_bytes(xb, byteorder="little", length=operand_nbytes)
+    yb_bytes = int.to_bytes(yb, byteorder="little", length=operand_nbytes)
+    cb_bytes = int.to_bytes(cb, byteorder="little", length=operand_nbytes)
+    r_bytes = int.to_bytes(w, byteorder="little", length=64)
+    rb_bytes = int.to_bytes(0, byteorder="little", length=operand_nbytes)
+    coutb_bytes = int.to_bytes(0, byteorder="little", length=operand_nbytes)
 
     # Write input values.
-    inputs = {
-        'xb': xb_bytes, 'yb': yb_bytes, 'cb': cb_bytes,
-        'rb': rb_bytes, 'coutb': coutb_bytes
-    }
+    inputs = {"xb": xb_bytes, "yb": yb_bytes, "cb": cb_bytes, "rb": rb_bytes, "coutb": coutb_bytes}
     write_test_data(inputs, data_file)
 
     # Write expected register values (none).
     write_test_exp({}, exp_file)
 
     # Write expected dmem values.
-    write_test_dexp({'r': r_bytes}, dexp_file)
+    write_test_dexp({"r": r_bytes}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed',
-                        type=int,
-                        required=False,
-                        help=('Seed value for pseudorandomness.'))
-    parser.add_argument('data',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for input DMEM values.'))
-    parser.add_argument('exp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected register values.'))
-    parser.add_argument('dexp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected DMEM values.'))
+    parser.add_argument(
+        "-s", "--seed", type=int, required=False, help=("Seed value for pseudorandomness.")
+    )
+    parser.add_argument(
+        "data",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for input DMEM values."),
+    )
+    parser.add_argument(
+        "exp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected register values."),
+    )
+    parser.add_argument(
+        "dexp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected DMEM values."),
+    )
     args = parser.parse_args()
 
     with args.data, args.exp, args.dexp:

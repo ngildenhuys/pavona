@@ -6,7 +6,6 @@ r"""Command-line tool to add the calling interpreter to fusesoc's PATH, so it
 is used for generators.
 """
 
-
 import argparse
 import os
 import sys
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     # `VERILATOR_CXX` is passed in as a relative path to the Bazel
     # `execroot`. Convert this to an absolute path in --make_options, if present.
     parser = argparse.ArgumentParser()
-    parser.add_argument('--make_options', type=str, default = "")
+    parser.add_argument("--make_options", type=str, default="")
     args, others = parser.parse_known_args()
     make_options = args.make_options
     # Modify the --make_options to include the `VERILATOR_CXX` path as the
@@ -81,9 +80,11 @@ if __name__ == "__main__":
         make_options += " CXX={path} LINK={path}".format(path=verilator_cxx_abs)
     if "VERILATOR_LIBCXX" in os.environ:
         verilator_libcxx = os.environ["VERILATOR_LIBCXX"]
-        verilator_libcxx_abs = str(Path(
-            os.path.join(cwd, verilator_libcxx),
-        ).parent)
+        verilator_libcxx_abs = str(
+            Path(
+                os.path.join(cwd, verilator_libcxx),
+            ).parent
+        )
         cxxflags += [
             # Specify library paths for libc++.
             "-L" + verilator_libcxx_abs,
@@ -95,9 +96,11 @@ if __name__ == "__main__":
         # A path to a specific header is passed in. Get the great-grandparent
         # directory containing all the headers.
         verilator_include = os.environ["VERILATOR_INCLUDE"]
-        verilator_include_abs = str(Path(
-            os.path.join(cwd, verilator_include),
-        ).parents[3])
+        verilator_include_abs = str(
+            Path(
+                os.path.join(cwd, verilator_include),
+            ).parents[3]
+        )
         cxxflags += [
             # Specify include paths for libc/libc++.
             "-I" + verilator_include_abs,

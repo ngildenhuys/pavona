@@ -37,17 +37,19 @@ def parse_verify(data, param_set):
             msg = bytes.fromhex(test["msg"])
             sig = bytes.fromhex(test["sig"])
             ctx = bytes.fromhex(test.get("ctx", ""))
-            test_vectors.append({
-                "vendor": "wycheproof",
-                "test_case_id": test["tcId"],
-                "operation": "sigver",
-                "parameter_set": param_set,
-                "pk": list(pk),
-                "message": list(msg),
-                "context": list(ctx),
-                "signature": list(sig),
-                "result": test["result"] == "valid",
-            })
+            test_vectors.append(
+                {
+                    "vendor": "wycheproof",
+                    "test_case_id": test["tcId"],
+                    "operation": "sigver",
+                    "parameter_set": param_set,
+                    "pk": list(pk),
+                    "message": list(msg),
+                    "context": list(ctx),
+                    "signature": list(sig),
+                    "result": test["result"] == "valid",
+                }
+            )
     return test_vectors
 
 
@@ -130,7 +132,8 @@ def parse_sign_noseed(data, param_set):
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Parsing utility for Wycheproof ML-DSA testvectors.")
+        description="Parsing utility for Wycheproof ML-DSA testvectors."
+    )
     parser.add_argument(
         "--src",
         type=argparse.FileType("r"),

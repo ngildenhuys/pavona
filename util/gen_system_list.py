@@ -72,6 +72,7 @@ def get_description(topdir):
         for ln in md_text.splitlines():
             if re.match("[A-Za-z]", ln.lstrip()):
                 return ln
+
     try:
         return first_line_of_md_text(top_doc_file(topdir).read_text())
     except Exception:
@@ -91,11 +92,9 @@ def make_tops_table(outfile_path=DEFAULT_OUTFILE):
     table = [TABLE_COLUMNS, ("---",) * len(TABLE_COLUMNS)]
     for topdir in sorted(REPO_TOP.glob("hw/top_*")):
         try:
-            table.append((
-                get_design(topdir, outfile_path),
-                get_targets(topdir),
-                get_description(topdir)
-            ))
+            table.append(
+                (get_design(topdir, outfile_path), get_targets(topdir), get_description(topdir))
+            )
         except Exception:
             continue
     return render_table(table)

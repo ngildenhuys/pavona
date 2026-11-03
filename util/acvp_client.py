@@ -23,8 +23,7 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-REPO = Path(os.environ.get("BUILD_WORKSPACE_DIRECTORY",
-                           Path(__file__).resolve().parent.parent))
+REPO = Path(os.environ.get("BUILD_WORKSPACE_DIRECTORY", Path(__file__).resolve().parent.parent))
 SCHEMAS = "sw/host/cryptotest/testvectors/data/schemas"
 CRYPTOTEST = "sw/device/tests/crypto/cryptotest"
 PARSERS = "//sw/host/cryptotest/testvectors/parsers"
@@ -79,18 +78,27 @@ def convert(prompt, answers, out_dir, skip_unsupported):
     key = (vector_set["algorithm"], vector_set.get("mode", ""))
     if key not in VECTOR_SETS:
         name = " ".join(part for part in key if part)
-        print(f"vsId {vector_set['vsId']}: skipping {name}, no cryptotest "
-              "harness answers this algorithm and mode", file=sys.stderr)
+        print(
+            f"vsId {vector_set['vsId']}: skipping {name}, no cryptotest "
+            "harness answers this algorithm and mode",
+            file=sys.stderr,
+        )
         return SKIPPED, None
     harness, test_type = VECTOR_SETS[key]
     out = out_dir / f"acvp_{harness}_{test_type}_{vector_set['vsId']}.json"
 
     args = [
-        "run", f"{PARSERS}:nist_acvp_{harness}_parser", "--",
-        "--src", str(prompt),
-        "--dst", str(out),
-        "--test-type", test_type,
-        "--schema", str(REPO / SCHEMAS / f"{harness}_schema.json"),
+        "run",
+        f"{PARSERS}:nist_acvp_{harness}_parser",
+        "--",
+        "--src",
+        str(prompt),
+        "--dst",
+        str(out),
+        "--test-type",
+        test_type,
+        "--schema",
+        str(REPO / SCHEMAS / f"{harness}_schema.json"),
     ]
     # The answers, when the session supplied them, go onto the test cases.
     expected = answers.get(vector_set["vsId"])
@@ -106,29 +114,46 @@ def convert(prompt, answers, out_dir, skip_unsupported):
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("prompts", nargs="+", type=Path,
-                        help="Prompt files, one per vector set.")
-    parser.add_argument("--expected", nargs="+", type=Path, default=[],
-                        help="Answers to those prompts, paired by vsId.")
-    parser.add_argument("--out", type=Path,
-                        help="Where to write the responses, besides "
-                        "bazel-testlogs.")
-    parser.add_argument("--exec-env", default="fpga_cw340_pqc_test_rom",
-                        help="Execution environment of the cryptotest target.")
-    parser.add_argument("--test-arg", "--test_arg", action="append",
-                        default=[], help="Extra argument for the test, such "
-                        "as --usb-serial=<serial>.")
-    parser.add_argument("--hardened", action="store_true",
-                        help="Run the hardened ACC backend instead.")
-    parser.add_argument("--acc-pqc", action=argparse.BooleanOptionalAction,
-                        default=True,
-                        help="Build the ACC PQC backends into the firmware.")
-    parser.add_argument("--skip-unsupported", action="store_true",
-                        help="Skip test cases this cryptolib cannot answer.")
-    parser.add_argument("--timeout", type=int, default=7200,
-                        help="Test timeout in seconds.")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("prompts", nargs="+", type=Path, help="Prompt files, one per vector set.")
+    parser.add_argument(
+        "--expected",
+        nargs="+",
+        type=Path,
+        default=[],
+        help="Answers to those prompts, paired by vsId.",
+    )
+    parser.add_argument(
+        "--out", type=Path, help="Where to write the responses, besides bazel-testlogs."
+    )
+    parser.add_argument(
+        "--exec-env",
+        default="fpga_cw340_pqc_test_rom",
+        help="Execution environment of the cryptotest target.",
+    )
+    parser.add_argument(
+        "--test-arg",
+        "--test_arg",
+        action="append",
+        default=[],
+        help="Extra argument for the test, such as --usb-serial=<serial>.",
+    )
+    parser.add_argument(
+        "--hardened", action="store_true", help="Run the hardened ACC backend instead."
+    )
+    parser.add_argument(
+        "--acc-pqc",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Build the ACC PQC backends into the firmware.",
+    )
+    parser.add_argument(
+        "--skip-unsupported",
+        action="store_true",
+        help="Skip test cases this cryptolib cannot answer.",
+    )
+    parser.add_argument("--timeout", type=int, default=7200, help="Test timeout in seconds.")
     args = parser.parse_args()
 
     vectors_dir = Path.home() / ".cache/pavona-acvp-client"
@@ -139,8 +164,7 @@ def main() -> int:
     answers = {load_vector_set(p)["vsId"]: p for p in args.expected}
     vectors, failed, skipped = {}, [], 0
     for prompt in args.prompts:
-        harness, out = convert(prompt, answers, vectors_dir,
-                               args.skip_unsupported)
+        harness, out = convert(prompt, answers, vectors_dir, args.skip_unsupported)
         if harness == SKIPPED:
             skipped += 1
         elif harness == FAILED:
@@ -149,8 +173,10 @@ def main() -> int:
             vectors.setdefault(harness, []).append(out)
 
     answered = sum(len(paths) for paths in vectors.values())
-    print(f"\n{answered} converted, {skipped} skipped as another algorithm, "
-          f"{len(failed)} failed", file=sys.stderr)
+    print(
+        f"\n{answered} converted, {skipped} skipped as another algorithm, {len(failed)} failed",
+        file=sys.stderr,
+    )
     # A session is answered whole or not at all.
     for prompt in failed:
         print(f"  failed: {prompt}", file=sys.stderr)
@@ -162,10 +188,15 @@ def main() -> int:
         name = f"{harness}_kat{suffix}_{args.exec_env}"
         config = ["--define=acc_has_pqc=true"] if args.acc_pqc else []
         events = vectors_dir / f"{name}-events.json"
-        command = ["test", "--nocache_test_results", "--test_output=streamed",
-                   f"--test_timeout={args.timeout}", *config,
-                   f"--build_event_json_file={events}",
-                   f"//{CRYPTOTEST}:{name}"]
+        command = [
+            "test",
+            "--nocache_test_results",
+            "--test_output=streamed",
+            f"--test_timeout={args.timeout}",
+            *config,
+            f"--build_event_json_file={events}",
+            f"//{CRYPTOTEST}:{name}",
+        ]
         command += [f"--test_arg=--acvp-json={path}" for path in paths]
         command += [f"--test_arg={arg}" for arg in args.test_arg]
         print(" ".join(["./bazelisk.sh", *command]), file=sys.stderr)

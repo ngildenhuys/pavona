@@ -31,8 +31,7 @@ import sys
 
 import jsonschema
 
-from acvp_util import (acvp_common, apply_expected, load_vector_set,
-                       report_skipped)
+from acvp_util import acvp_common, apply_expected, load_vector_set, report_skipped
 
 PARAMETER_SETS = {
     "ML-DSA-44": 44,
@@ -88,14 +87,16 @@ def parse_keygen(data):
         param_set = PARAMETER_SETS[group["parameterSet"]]
         for test in group["tests"]:
             seed = bytes.fromhex(test["seed"])
-            test_vectors.append({
-                **acvp_common(data, group),
-                "test_case_id": test["tcId"],
-                "operation": "keygen",
-                "parameter_set": param_set,
-                "seed": list(seed),
-                "result": True,
-            })
+            test_vectors.append(
+                {
+                    **acvp_common(data, group),
+                    "test_case_id": test["tcId"],
+                    "operation": "keygen",
+                    "parameter_set": param_set,
+                    "seed": list(seed),
+                    "result": True,
+                }
+            )
     return test_vectors
 
 
@@ -124,23 +125,28 @@ def parse_siggen(data, skip_unsupported):
 
             sk = bytes.fromhex(test["sk"])
             rnd = bytes(32) if deterministic else bytes.fromhex(test["rnd"])
-            test_vectors.append({
-                **acvp_common(data, group),
-                "test_case_id": test["tcId"],
-                "operation": "siggen",
-                "parameter_set": param_set,
-                "sign_mode": sign_mode,
-                "sk": list(sk),
-                "message": list(message),
-                "context": list(context),
-                "rnd": list(rnd),
-                "result": True,
-            })
-    report_skipped("parse_siggen", {
-        "the hash algorithm is not implemented": skipped_hash_alg,
-        "the internal signature interface needs a precomputed mu":
-            skipped_interface,
-    }, skip_unsupported)
+            test_vectors.append(
+                {
+                    **acvp_common(data, group),
+                    "test_case_id": test["tcId"],
+                    "operation": "siggen",
+                    "parameter_set": param_set,
+                    "sign_mode": sign_mode,
+                    "sk": list(sk),
+                    "message": list(message),
+                    "context": list(context),
+                    "rnd": list(rnd),
+                    "result": True,
+                }
+            )
+    report_skipped(
+        "parse_siggen",
+        {
+            "the hash algorithm is not implemented": skipped_hash_alg,
+            "the internal signature interface needs a precomputed mu": skipped_interface,
+        },
+        skip_unsupported,
+    )
     return test_vectors
 
 
@@ -168,28 +174,32 @@ def parse_sigver(data, skip_unsupported):
 
             pk = bytes.fromhex(test["pk"])
             sig = bytes.fromhex(test["signature"])
-            test_vectors.append({
-                **acvp_common(data, group),
-                "test_case_id": test["tcId"],
-                "operation": "sigver",
-                "parameter_set": param_set,
-                "sign_mode": sign_mode,
-                "pk": list(pk),
-                "message": list(message),
-                "context": list(context),
-                "signature": list(sig),
-            })
-    report_skipped("parse_sigver", {
-        "the hash algorithm is not implemented": skipped_hash_alg,
-        "the internal signature interface needs a precomputed mu":
-            skipped_interface,
-    }, skip_unsupported)
+            test_vectors.append(
+                {
+                    **acvp_common(data, group),
+                    "test_case_id": test["tcId"],
+                    "operation": "sigver",
+                    "parameter_set": param_set,
+                    "sign_mode": sign_mode,
+                    "pk": list(pk),
+                    "message": list(message),
+                    "context": list(context),
+                    "signature": list(sig),
+                }
+            )
+    report_skipped(
+        "parse_sigver",
+        {
+            "the hash algorithm is not implemented": skipped_hash_alg,
+            "the internal signature interface needs a precomputed mu": skipped_interface,
+        },
+        skip_unsupported,
+    )
     return test_vectors
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Parsing utility for ACVP ML-DSA prompts.")
+    parser = argparse.ArgumentParser(description="Parsing utility for ACVP ML-DSA prompts.")
     parser.add_argument(
         "--src",
         type=str,

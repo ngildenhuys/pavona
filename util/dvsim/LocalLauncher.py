@@ -45,7 +45,7 @@ def _read_vmhwm_mb(pid: int) -> Union[float, None]:
 
     try:
         # The value is in kB, per proc(5).
-        return int(blob[start + len(b"VmHWM:"):end]) / 1024
+        return int(blob[start + len(b"VmHWM:") : end]) / 1024
     except ValueError:
         return None
 
@@ -137,7 +137,7 @@ class LocalLauncher(Launcher):
                 self._log_file.write(f"[Executing]:\n{self.deploy.cmd}\n\n")
                 self._log_file.flush()
 
-                log.debug(f'Executing command: {self.deploy.cmd}')
+                log.debug(f"Executing command: {self.deploy.cmd}")
                 self._process = subprocess.Popen(
                     shlex.split(self.deploy.cmd),
                     bufsize=4096,

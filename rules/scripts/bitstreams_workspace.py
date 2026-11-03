@@ -27,11 +27,11 @@ MANIFEST_SCHEMA_VERSION_MIN = 2
 MANIFEST_SCHEMA_VERSION_MAX = 3
 
 # Default location of the bitstreams cache.
-CACHE_DIR = '~/.cache/pavona-bitstreams'
+CACHE_DIR = "~/.cache/pavona-bitstreams"
 # Default bucket URL.
-BUCKET_URL = 'https://storage.googleapis.com/pavona-bitstreams/'
+BUCKET_URL = "https://storage.googleapis.com/pavona-bitstreams/"
 # The xml document returned by the bucket is in this namespace.
-XMLNS = {'': 'http://doc.s3.amazonaws.com/2006-03-01'}
+XMLNS = {"": "http://doc.s3.amazonaws.com/2006-03-01"}
 # Manifest schema directory
 MANIFESTS_DIR = os.path.dirname(__file__) if __file__ else os.path.dirname(sys.argv[0])
 # Required designs
@@ -54,80 +54,71 @@ KNOWN_DESIGNS = {
     },
 }
 
-parser = argparse.ArgumentParser(
-    description='Bitstream Downloader & Cache manager')
-parser.add_argument('--cache', default=CACHE_DIR, help='Cache directory name')
-parser.add_argument('--create-symlink', default=True,
-                    action=argparse.BooleanOptionalAction,
-                    help='Create symlink to cache directory')
-parser.add_argument('--latest-update',
-                    default='latest.txt',
-                    help='Last time the cache was updated')
-parser.add_argument('--branch',
-                    default="main",
-                    help='Upstream git branch to search for bitstreams.')
-parser.add_argument('--bucket-url', default=BUCKET_URL, help='GCP Bucket URL')
-parser.add_argument('--build-file',
-                    default='BUILD.bazel',
-                    help='Name of the generated BUILD file')
-parser.add_argument('--watch-file',
-                    default=None,
-                    help='Path to output files to watch')
-parser.add_argument('--list',
-                    default=False,
-                    action=argparse.BooleanOptionalAction,
-                    help='List GCP Bucket contents')
-parser.add_argument('--offline',
-                    default=False,
-                    action=argparse.BooleanOptionalAction,
-                    help='Operating in an offline environment')
-parser.add_argument('--refresh',
-                    default=False,
-                    action=argparse.BooleanOptionalAction,
-                    help='Force a refresh')
-parser.add_argument('--refresh-time',
-                    default=300,
-                    type=int,
-                    help='How often to check for new bitstreams')
-parser.add_argument('--repo',
-                    default='',
-                    help="Location of the source git repo")
+parser = argparse.ArgumentParser(description="Bitstream Downloader & Cache manager")
+parser.add_argument("--cache", default=CACHE_DIR, help="Cache directory name")
 parser.add_argument(
-    'bitstream',
-    default='HEAD',
-    nargs='?',
-    help='Bitstream to retrieve: "latest" or git commit identifier')
+    "--create-symlink",
+    default=True,
+    action=argparse.BooleanOptionalAction,
+    help="Create symlink to cache directory",
+)
+parser.add_argument("--latest-update", default="latest.txt", help="Last time the cache was updated")
+parser.add_argument(
+    "--branch", default="main", help="Upstream git branch to search for bitstreams."
+)
+parser.add_argument("--bucket-url", default=BUCKET_URL, help="GCP Bucket URL")
+parser.add_argument("--build-file", default="BUILD.bazel", help="Name of the generated BUILD file")
+parser.add_argument("--watch-file", default=None, help="Path to output files to watch")
+parser.add_argument(
+    "--list", default=False, action=argparse.BooleanOptionalAction, help="List GCP Bucket contents"
+)
+parser.add_argument(
+    "--offline",
+    default=False,
+    action=argparse.BooleanOptionalAction,
+    help="Operating in an offline environment",
+)
+parser.add_argument(
+    "--refresh", default=False, action=argparse.BooleanOptionalAction, help="Force a refresh"
+)
+parser.add_argument(
+    "--refresh-time", default=300, type=int, help="How often to check for new bitstreams"
+)
+parser.add_argument("--repo", default="", help="Location of the source git repo")
+parser.add_argument(
+    "bitstream",
+    default="HEAD",
+    nargs="?",
+    help='Bitstream to retrieve: "latest" or git commit identifier',
+)
 
 
 class BitstreamCache(object):
-
     def __init__(self, bucket_url, cachedir, latest_update, offline=False):
         """Initialize the Bitstream Cache Manager."""
-        if bucket_url[-1] != '/':
-            bucket_url += '/'
+        if bucket_url[-1] != "/":
+            bucket_url += "/"
         self.bucket_url = bucket_url
         cachedir = os.path.abspath(os.path.expanduser(cachedir))
-        self.cachedir = os.path.join(cachedir, 'cache')
-        latest_update = os.path.join(cachedir,
-                                     os.path.expanduser(latest_update))
+        self.cachedir = os.path.join(cachedir, "cache")
+        latest_update = os.path.join(cachedir, os.path.expanduser(latest_update))
         self.latest_update = latest_update
         self.offline = offline
         self.available = {}
         self.watch_list = []
 
     @staticmethod
-    def MakeWithDefaults() -> 'BitstreamCache':
+    def MakeWithDefaults() -> "BitstreamCache":
         """Create a BitstreamCache with default parameters."""
         args = parser.parse_args([])
-        cache = BitstreamCache(args.bucket_url, args.cache, args.latest_update,
-                               args.offline)
+        cache = BitstreamCache(args.bucket_url, args.cache, args.latest_update, args.offline)
         return cache
 
     def InitRepository(self, create_symlink: bool):
         """Create the cache directory and symlink it into the bazel repository dir."""
         os.makedirs(self.cachedir, exist_ok=True)
         if create_symlink:
-            os.symlink(self.cachedir, 'cache')
+            os.symlink(self.cachedir, "cache")
 
     def ResolveGitRef(self, repodir: str, ref: str):
         """Resolve Git references and add related Git files to watch list.
@@ -136,24 +127,25 @@ class BitstreamCache(object):
         """
 
         # Object ID (possibly in short form)
-        if re.search(r'^[0-9A-Fa-f]{4,}$', ref):
+        if re.search(r"^[0-9A-Fa-f]{4,}$", ref):
             return subprocess.check_output(
-                ['git', 'rev-parse', ref],
-                universal_newlines=True,
-                cwd=repodir).strip()
+                ["git", "rev-parse", ref], universal_newlines=True, cwd=repodir
+            ).strip()
 
         # For short form of references, expand it to long form
         if not ref.endswith("HEAD") and not ref.startswith("refs/"):
             ref = subprocess.check_output(
-                ['git', 'rev-parse', '--symbolic-full-name', ref],
+                ["git", "rev-parse", "--symbolic-full-name", ref],
                 universal_newlines=True,
-                cwd=repodir).strip()
+                cwd=repodir,
+            ).strip()
 
         # Resolve git path. This is not simply `<repodir>/.git/<ref>` when worktrees are used.
         path = subprocess.check_output(
-            ['git', 'rev-parse', '--path-format=absolute', '--git-path', ref],
+            ["git", "rev-parse", "--path-format=absolute", "--git-path", ref],
             universal_newlines=True,
-            cwd=repodir).strip()
+            cwd=repodir,
+        ).strip()
 
         self.watch_list.append(path)
 
@@ -161,8 +153,8 @@ class BitstreamCache(object):
             content = f.read().strip()
 
         # For refs, recurse into contents.
-        if content.startswith('ref: '):
-            return self.ResolveGitRef(repodir, content.removeprefix('ref: '))
+        if content.startswith("ref: "):
+            return self.ResolveGitRef(repodir, content.removeprefix("ref: "))
 
         return content
 
@@ -172,7 +164,7 @@ class BitstreamCache(object):
         Args:
             key: str; The git hash of the latest bitstream.
         """
-        with open(self.latest_update, 'wt') as f:
+        with open(self.latest_update, "wt") as f:
             print(key, file=f)
 
     def NeedRefresh(self, interval):
@@ -215,8 +207,7 @@ class BitstreamCache(object):
                 return response.read()
             except urllib.error.HTTPError as e:
                 if e.code not in (403, 408, 429, 500, 502, 503, 504):
-                    logging.error(
-                        f"Request to {url} failed with status code {e.code}")
+                    logging.error(f"Request to {url} failed with status code {e.code}")
                     sys.exit(1)
                 elif attempt >= max_attempts:
                     logging.error(f"Requests to {url} failed afer retries: {e}")
@@ -232,20 +223,18 @@ class BitstreamCache(object):
             load_latest_update: bool; whether to load the latest_update file
         """
         if not refresh:
-            for (_, dirnames, _) in os.walk('cache'):
+            for _, dirnames, _ in os.walk("cache"):
                 for d in dirnames:
-                    self.available[d] = 'local'
+                    self.available[d] = "local"
             if load_latest_update:
                 try:
-                    with open(self.latest_update, 'rt') as f:
-                        self.available['latest'] = f.read().strip()
+                    with open(self.latest_update, "rt") as f:
+                        self.available["latest"] = f.read().strip()
                 except FileNotFoundError:
                     if self.offline:
-                        logging.error(
-                            'Must pre-initialize bitstream cache in offline mode.')
+                        logging.error("Must pre-initialize bitstream cache in offline mode.")
                     else:
-                        logging.error(
-                            f'Bitstream cache missing {self.latest_update}.')
+                        logging.error(f"Bitstream cache missing {self.latest_update}.")
                     sys.exit(1)
             return
 
@@ -255,25 +244,24 @@ class BitstreamCache(object):
         # See the GCP docs and the XML REST API reference for more details:
         # https://cloud.google.com/storage/docs/paginate-results
         # https://cloud.google.com/storage/docs/xml-api/get-bucket-list
-        marker = ''
+        marker = ""
         while True:
-            document = self.Get('', marker=marker).decode('utf-8')
+            document = self.Get("", marker=marker).decode("utf-8")
             et = xml.etree.ElementTree.fromstring(document)
-            for content in et.findall('Contents', XMLNS):
-                for key in content.findall('Key', XMLNS):
-                    m = re.search(r'bitstream-([0-9A-Fa-f]+).tar.gz', key.text)
+            for content in et.findall("Contents", XMLNS):
+                for key in content.findall("Key", XMLNS):
+                    m = re.search(r"bitstream-([0-9A-Fa-f]+).tar.gz", key.text)
                     if m:
                         self.available[m.group(1)] = key.text
             # Handle any pagination
-            is_truncated_elt = et.find('IsTruncated', XMLNS)
-            if (is_truncated_elt is not None) and \
-               (is_truncated_elt.text == 'true'):
-                marker = et.find('NextMarker', XMLNS).text
+            is_truncated_elt = et.find("IsTruncated", XMLNS)
+            if (is_truncated_elt is not None) and (is_truncated_elt.text == "true"):
+                marker = et.find("NextMarker", XMLNS).text
             else:
                 break
 
-        latest = self.Get(f'{branch}/latest.txt').decode('utf-8').split('\n')
-        self.available['latest'] = latest[1]
+        latest = self.Get(f"{branch}/latest.txt").decode("utf-8").split("\n")
+        self.available["latest"] = latest[1]
 
     def GetClosest(self, repodir, key):
         """Get the best match for a bitstream (exact or next older commit).
@@ -291,11 +279,12 @@ class BitstreamCache(object):
 
         commits = []
         lines = subprocess.check_output(
-            ['git', 'log', '--oneline', '--no-abbrev-commit', key],
+            ["git", "log", "--oneline", "--no-abbrev-commit", key],
             universal_newlines=True,
-            cwd=repodir)
-        for line in lines.split('\n'):
-            commits.append(line.split(' ')[0])
+            cwd=repodir,
+        )
+        for line in lines.split("\n"):
+            commits.append(line.split(" ")[0])
 
         for commit in commits:
             if commit in self.available:
@@ -310,11 +299,11 @@ class BitstreamCache(object):
         Returns:
             list[str]: The requested bitstream files or empty list.
         """
-        if key == 'latest':
-            key = self.available['latest']
+        if key == "latest":
+            key = self.available["latest"]
         files = []
-        local_dir = os.path.join('cache', key)
-        for (dirname, _, filenames) in os.walk(local_dir):
+        local_dir = os.path.join("cache", key)
+        for dirname, _, filenames in os.walk(local_dir):
             files.extend(os.path.join(dirname, f) for f in filenames)
         return files
 
@@ -327,8 +316,8 @@ class BitstreamCache(object):
         """
         if self.offline:
             return
-        if key == 'latest':
-            latest = self.available['latest']
+        if key == "latest":
+            latest = self.available["latest"]
             key = latest
         else:
             latest = None
@@ -336,7 +325,7 @@ class BitstreamCache(object):
         remote_filename = self.available[key]
         local_dir = os.path.join(self.cachedir, key)
         archive = io.BytesIO(self.Get(remote_filename))
-        tar = tarfile.open(fileobj=archive, mode='r|*')
+        tar = tarfile.open(fileobj=archive, mode="r|*")
         tar.extractall(local_dir)
         if latest:
             self.Touch(latest)
@@ -458,8 +447,9 @@ class BitstreamCache(object):
         with open(path, "w") as manifest_file:
             json.dump(contents, manifest_file, indent=True)
 
-    def _ConstructBazelString(self, build_file: Path, key: str, manifest: Dict,
-                              manifest_path: Path) -> str:
+    def _ConstructBazelString(
+        self, build_file: Path, key: str, manifest: Dict, manifest_path: Path
+    ) -> str:
         designs = collections.defaultdict(dict)
 
         # Attempt to check the schema if `jsonschema` is available.
@@ -481,32 +471,32 @@ class BitstreamCache(object):
             designs[design_name] = design
 
         bazel_lines = [
-            '# This file was autogenerated. Do not edit!',
-            '# Built at {}.'.format(BitstreamCache._GetDateTimeStr()),
-            '# Configured for bitstream: {}'.format(key),
-            '',
+            "# This file was autogenerated. Do not edit!",
+            "# Built at {}.".format(BitstreamCache._GetDateTimeStr()),
+            "# Configured for bitstream: {}".format(key),
+            "",
             'package(default_visibility = ["//visibility:public"])',
-            '',
+            "",
             'exports_files(glob(["cache/**"]))',
-            '',
+            "",
         ]
 
         def filegroup_lines(name, src):
             return [
-                'filegroup(',
+                "filegroup(",
                 '    name = "{}",'.format(name),
                 '    srcs = ["{}"],'.format(src),
-                ')',
-                '',
+                ")",
+                "",
             ]
 
         def alias_lines(name, target):
             return [
-                'alias(',
+                "alias(",
                 '    name = "{}",'.format(name),
                 '    actual = "{}",'.format(target),
-                ')',
-                '',
+                ")",
+                "",
             ]
 
         used_target_names: Set[str] = set()
@@ -516,12 +506,11 @@ class BitstreamCache(object):
             design = designs[design_name]
             if "bitstream" not in design:
                 error_msg_lines = [
-                    "Could not find the bitstreams to generate a BUILD file:" +
-                    repr(build_file),
+                    "Could not find the bitstreams to generate a BUILD file:" + repr(build_file),
                     "in design " + design_name + ":" + repr(design),
                     "using key:" + repr(key),
                 ]
-                logging.error('\n'.join(error_msg_lines))
+                logging.error("\n".join(error_msg_lines))
                 sys.exit(1)
 
             for target in sorted(design.keys()):
@@ -530,8 +519,10 @@ class BitstreamCache(object):
 
                 if target_name in used_target_names:
                     logging.error(
-                        "Target name {} for file {} would collide with another target"
-                        .format(repr(target_name), repr(target_file)))
+                        "Target name {} for file {} would collide with another target".format(
+                            repr(target_name), repr(target_file)
+                        )
+                    )
                     sys.exit(1)
                 used_target_names.add(target_name)
 
@@ -545,7 +536,7 @@ class BitstreamCache(object):
                     target = "{}_{}".format(design_name, target_ext)
                     bazel_lines += alias_lines(target, alias)
 
-        return '\n'.join(bazel_lines)
+        return "\n".join(bazel_lines)
 
     def WriteBazelFiles(self, build_file: Path, key: str) -> str:
         """Write a BUILD file for the requested bitstream files.
@@ -558,20 +549,18 @@ class BitstreamCache(object):
         """
         # If `key` passed in is "latest", this updates the `key` to be the hash
         # that "latest" points to.
-        if key == 'latest':
-            key = self.available['latest']
+        if key == "latest":
+            key = self.available["latest"]
 
         (manifest, manifest_path) = self.GetFromCache(key)
 
         if manifest_path is None:
             # Write substitute manifest if none came with the cache entry.
-            manifest_path = os.path.join("cache", key,
-                                         "substitute_manifest.json")
-            abs_manifest_path = os.path.join(self.cachedir, key,
-                                             "substitute_manifest.json")
+            manifest_path = os.path.join("cache", key, "substitute_manifest.json")
+            abs_manifest_path = os.path.join(self.cachedir, key, "substitute_manifest.json")
             self._WriteSubstituteManifest(manifest, abs_manifest_path)
 
-        with open(build_file, 'wt') as f:
+        with open(build_file, "wt") as f:
             f.write(self._ConstructBazelString(build_file, key, manifest, manifest_path))
 
         return key
@@ -580,9 +569,9 @@ class BitstreamCache(object):
 def main(argv):
     # The user can override some basic behaviors with the BITSTREAM
     # environment variable.
-    env = os.environ.get('BITSTREAM')
+    env = os.environ.get("BITSTREAM")
     if env:
-        argv.extend(env.split(' '))
+        argv.extend(env.split(" "))
     args = parser.parse_args(args=argv[1:])
     desired_bitstream = args.bitstream
 
@@ -600,8 +589,9 @@ def main(argv):
 
     # Check if repo is initialized with git or not. If not, unable ot use remote cache.
     try:
-        in_git_repo = subprocess.check_output(["git", "rev-parse", "--is-inside-work-tree"],
-                                              cwd=repo, encoding="utf-8")
+        in_git_repo = subprocess.check_output(
+            ["git", "rev-parse", "--is-inside-work-tree"], cwd=repo, encoding="utf-8"
+        )
         assert in_git_repo == "true\n"
     except (subprocess.CalledProcessError, AssertionError):
         logging.warning("not inside of git worktree, only using local cache")
@@ -610,48 +600,47 @@ def main(argv):
             logging.warning("bitstream for 'HEAD' without git history always corresponds to latest")
             desired_bitstream = "latest"
 
-    cache = BitstreamCache(args.bucket_url, args.cache, args.latest_update,
-                           args.offline)
+    cache = BitstreamCache(args.bucket_url, args.cache, args.latest_update, args.offline)
     cache.InitRepository(args.create_symlink)
 
     # Do we need a refresh?
-    need_refresh = (args.refresh or desired_bitstream != 'latest' or
-                    cache.NeedRefresh(args.refresh_time))
+    need_refresh = (
+        args.refresh or desired_bitstream != "latest" or cache.NeedRefresh(args.refresh_time)
+    )
     # Do we need to load the latest_update file?
-    load_latest_update = (desired_bitstream == 'latest')
-    cache.GetBitstreamsAvailable(args.branch, need_refresh and not args.offline,
-                                 load_latest_update)
+    load_latest_update = desired_bitstream == "latest"
+    cache.GetBitstreamsAvailable(args.branch, need_refresh and not args.offline, load_latest_update)
 
     # If commanded to print bitstream availability, do so.
     if args.list:
         for k, v in cache.available.items():
-            print('{}: {}'.format(k, v))
+            print("{}: {}".format(k, v))
 
     # If we aren't getting the latest bitstream, resolve the hash to the closest
     # bitstream we can find.
-    if desired_bitstream != 'latest':
+    if desired_bitstream != "latest":
         closest_bitstream = cache.GetClosest(repo, desired_bitstream)
         if closest_bitstream is None:
-            logging.error('Cannot find a bitstream close to {}'.format(
-                desired_bitstream))
+            logging.error("Cannot find a bitstream close to {}".format(desired_bitstream))
             return 1
         if closest_bitstream != desired_bitstream:
-            logging.warning('Closest bitstream to {} is {}.'.format(
-                desired_bitstream, closest_bitstream))
+            logging.warning(
+                "Closest bitstream to {} is {}.".format(desired_bitstream, closest_bitstream)
+            )
             desired_bitstream = closest_bitstream
 
     # Write a build file which allows tests to reference the bitstreams with
     # the labels:
     #   @bitstreams//:{design}_bitstream
-    configured_bitream = cache.WriteBazelFiles(args.build_file,
-                                               desired_bitstream)
-    if desired_bitstream != 'latest' and configured_bitream != desired_bitstream:
+    configured_bitream = cache.WriteBazelFiles(args.build_file, desired_bitstream)
+    if desired_bitstream != "latest" and configured_bitream != desired_bitstream:
         logging.error(
-            'Configured bitstream {} does not match desired bitstream {}.'.
-            format(configured_bitream, desired_bitstream))
+            "Configured bitstream {} does not match desired bitstream {}.".format(
+                configured_bitream, desired_bitstream
+            )
+        )
         return 1
-    logging.info(
-        'Configured latest bitstream as {}.'.format(configured_bitream))
+    logging.info("Configured latest bitstream as {}.".format(configured_bitream))
 
     if args.watch_file is not None:
         with open(args.watch_file, "w") as f:
@@ -660,5 +649,5 @@ def main(argv):
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv))

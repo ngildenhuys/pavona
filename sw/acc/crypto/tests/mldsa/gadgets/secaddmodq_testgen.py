@@ -47,15 +47,15 @@ def pack_shared_bits(vals, kbits, nshares):
     buf = bytearray()
     for s in range(nshares):
         for bit in range(kbits):
-            buf += shares_bits[s][bit].to_bytes(32, 'little')
+            buf += shares_bits[s][bit].to_bytes(32, "little")
         # bit kbits = 0
-        buf += b'\x00' * 32
+        buf += b"\x00" * 32
     return bytes(buf)
 
 
 def gen_secaddmodq_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -65,23 +65,23 @@ def gen_secaddmodq_test(
 
     xb = pack_shared_bits(x_vals, KBITS, NSHARES)
     yb = pack_shared_bits(y_vals, KBITS, NSHARES)
-    zb_init = b'\x00' * ((KBITS + 1) * NSHARES * 32)
+    zb_init = b"\x00" * ((KBITS + 1) * NSHARES * 32)
 
     r_bytes = bytearray()
     for bit in range(KBITS):
-        r_bytes += bitslice(z_vals, bit).to_bytes(32, 'little')
+        r_bytes += bitslice(z_vals, bit).to_bytes(32, "little")
 
-    write_test_data({'xb': xb, 'yb': yb, 'zb': zb_init}, data_file)
+    write_test_data({"xb": xb, "yb": yb, "zb": zb_init}, data_file)
     write_test_exp({}, exp_file)
-    write_test_dexp({'r': bytes(r_bytes)}, dexp_file)
+    write_test_dexp({"r": bytes(r_bytes)}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_secaddmodq_test(args.seed, args.data, args.exp, args.dexp)

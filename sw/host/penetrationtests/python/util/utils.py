@@ -5,17 +5,16 @@
 import struct
 
 
-def compare_json_data(
-    actual_data: dict, expected_data: dict, ignored_keys: set
-) -> bool:
+def compare_json_data(actual_data: dict, expected_data: dict, ignored_keys: set) -> bool:
     expected_comparable_keys = set(expected_data.keys()) - ignored_keys
     actual_comparable_keys = set(actual_data.keys()) - ignored_keys
 
     assert expected_comparable_keys == actual_comparable_keys
 
     for key in expected_comparable_keys:
-        assert expected_data[key] == actual_data[key], \
+        assert expected_data[key] == actual_data[key], (
             f"Found {actual_data[key]} but expected {expected_data[key]} under the key: {key}"
+        )
 
 
 def to_signed32(n_unsigned):
@@ -31,7 +30,7 @@ def bytes_to_words(byte_array):
 
     word_list = []
     for i in range(0, len(byte_array), 4):
-        chunk = byte_array[i: i + 4]
+        chunk = byte_array[i : i + 4]
         word = struct.unpack(">I", chunk)[0]
         word_list.append(word)
     return word_list

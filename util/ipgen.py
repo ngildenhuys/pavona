@@ -3,19 +3,18 @@
 # Copyright zeroRISC Inc.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-r"""IP Generator: Produce IP blocks from IP templates
-"""
+r"""IP Generator: Produce IP blocks from IP templates"""
+
 import argparse
 import logging
 import sys
 from pathlib import Path
 
-from ipgen import (IpBlockRenderer, IpConfig, IpTemplate, TemplateParseError,
-                   TemplateRenderError)
+from ipgen import IpBlockRenderer, IpConfig, IpTemplate, TemplateParseError, TemplateRenderError
 
 
 def init_logging(verbose: bool) -> None:
-    """ Initialize the logging system """
+    """Initialize the logging system"""
     log_format = "%(filename)s:%(lineno)d: %(levelname)s: %(message)s"
     if verbose:
         logging.basicConfig(format=log_format, level=logging.DEBUG)
@@ -24,7 +23,7 @@ def init_logging(verbose: bool) -> None:
 
 
 def action_generate(ip_template: IpTemplate, args: argparse.Namespace) -> None:
-    """ Handle the 'generate' action/subcommand. """
+    """Handle the 'generate' action/subcommand."""
     overwrite_output_dir = args.force
     output_path = args.outdir
 
@@ -36,8 +35,9 @@ def action_generate(ip_template: IpTemplate, args: argparse.Namespace) -> None:
         sys.exit(1)
 
     try:
-        ip_config = IpConfig.from_text(ip_template.params, config_text,
-                                       "the file passed to --config")
+        ip_config = IpConfig.from_text(
+            ip_template.params, config_text, "the file passed to --config"
+        )
     except ValueError as e:
         logging.error(f"IP config creation failed with {e}")
         sys.exit(1)
@@ -50,15 +50,17 @@ def action_generate(ip_template: IpTemplate, args: argparse.Namespace) -> None:
         logging.error(e.verbose_str())
         sys.exit(1)
 
-    print(f"Wrote IP block {ip_config.instance_name!r} "
-          f"from template {ip_template.name!r} to '{output_path}'.")
+    print(
+        f"Wrote IP block {ip_config.instance_name!r} "
+        f"from template {ip_template.name!r} to '{output_path}'."
+    )
 
 
 def action_describe(ip_template: IpTemplate, args: argparse.Namespace) -> None:
-    """ Handle the 'describe' action/subcommand. """
+    """Handle the 'describe' action/subcommand."""
     headline = f"IP template {ip_template.name!r}"
     print(headline)
-    print('=' * len(headline))
+    print("=" * len(headline))
     print()
     print(f"The template is stored in '{ip_template.template_path}'.")
     print()
@@ -84,23 +86,23 @@ def main() -> int:
         action="store_true",
     )
     parent_parser.add_argument(
-        '-C',
-        '--template-dir',
+        "-C",
+        "--template-dir",
         type=Path,
         required=True,
-        help='IP template directory',
+        help="IP template directory",
     )
     parent_parser.add_argument(
-        '--no-top',
+        "--no-top",
         help="Generate standalone IP without top-specific references",
-        action="store_true"
+        action="store_true",
     )
 
     subparsers = parser.add_subparsers(
-        metavar='ACTION',
+        metavar="ACTION",
         title="actions",
-        description=("Use 'ipgen.py ACTION --help' to learn more about the "
-                     "individual actions."))
+        description=("Use 'ipgen.py ACTION --help' to learn more about the individual actions."),
+    )
     subparsers.required = True
 
     # 'describe' subparser

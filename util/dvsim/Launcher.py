@@ -315,8 +315,7 @@ class Launcher:
         if peak_rss_mb is None:
             return
         if (
-            self.deploy.job_peak_rss is None
-            or peak_rss_mb > self.deploy.job_peak_rss  # noqa: W503
+            self.deploy.job_peak_rss is None or peak_rss_mb > self.deploy.job_peak_rss  # noqa: W503
         ):
             self.deploy.job_peak_rss = peak_rss_mb
 
@@ -339,8 +338,10 @@ class Launcher:
         if peak_mb is None or peak_mb <= limit_gb * 1024:
             return None
 
-        return (f"Job exceeded the {limit_gb} GB memory limit "
-                f"(peak resident set size {peak_mb / 1024:.2f} GB)")
+        return (
+            f"Job exceeded the {limit_gb} GB memory limit "
+            f"(peak resident set size {peak_mb / 1024:.2f} GB)"
+        )
 
     def _kill(self) -> None:
         """Terminate the running job without recording an outcome.
@@ -419,9 +420,7 @@ class Launcher:
         if not self.timeout_secs:
             return None
 
-        run_secs = (
-            datetime.datetime.now() - self._run_start_time
-        ).total_seconds()
+        run_secs = (datetime.datetime.now() - self._run_start_time).total_seconds()
         if run_secs > self.timeout_secs:
             timeout_mins = self.deploy.get_timeout_mins()
             return f"Job timed out after running for {timeout_mins} minutes"
@@ -626,8 +625,7 @@ class Launcher:
                 # A sequence, because the parsers reverse and index it.
                 lines = list(collections.deque(f, maxlen=_LOG_TAIL_LINES))
         except OSError as e:
-            log.log(VERBOSE, "Could not read %s to extract the job's "
-                             "info: %s", log_path, e)
+            log.log(VERBOSE, "Could not read %s to extract the job's info: %s", log_path, e)
             return
 
         # This runs while dvsim is shutting down after an interrupt, so it must
@@ -635,8 +633,7 @@ class Launcher:
         try:
             self.deploy.extract_info_from_log(lines)
         except Exception as e:
-            log.log(VERBOSE, "Could not extract the job's info from %s: %s",
-                    log_path, e)
+            log.log(VERBOSE, "Could not extract the job's info from %s: %s", log_path, e)
 
     def _post_finish(self, status, err_msg) -> None:
         """Do post-completion activities, such as preparing the results.

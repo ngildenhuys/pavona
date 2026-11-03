@@ -16,15 +16,15 @@ from ..snippet_gen import GenCont, GenRet, SnippetGen
 
 
 class KmacAppReqInsn(SnippetGen):
-    ''' A snippet generator for creating KMAC AppIntf transactions.
-        Transactions consist of loading a random value into a WDR
-        and generating a sequence with a randomized msg len, sha3 mode,
-        keccak strength, and return digest amount. In the case of a
-        transaction being too large for the remaining model fuel, the
-        generator attempts to run again with half the message size. When
-        the message size is <= 32B the generator produces the least number
-        of instructions and is guaranteed to fit.
-    '''
+    """A snippet generator for creating KMAC AppIntf transactions.
+    Transactions consist of loading a random value into a WDR
+    and generating a sequence with a randomized msg len, sha3 mode,
+    keccak strength, and return digest amount. In the case of a
+    transaction being too large for the remaining model fuel, the
+    generator attempts to run again with half the message size. When
+    the message size is <= 32B the generator produces the least number
+    of instructions and is guaranteed to fit.
+    """
 
     pqc_program = True
 
@@ -32,42 +32,42 @@ class KmacAppReqInsn(SnippetGen):
         super().__init__()
 
         # bn.wsrw insn
-        self.bn_wsrw = self._get_named_insn(insns_file, 'bn.wsrw')
+        self.bn_wsrw = self._get_named_insn(insns_file, "bn.wsrw")
         self.bn_wsrw_wsr_op_type = self.bn_wsrw.operands[0].op_type
         self.bn_wsrw_wrs_op_type = self.bn_wsrw.operands[1].op_type
 
         # bn.wsrr insn
-        self.bn_wsrr = self._get_named_insn(insns_file, 'bn.wsrr')
+        self.bn_wsrr = self._get_named_insn(insns_file, "bn.wsrr")
         self.bn_wsrr_wrd_op_type = self.bn_wsrr.operands[0].op_type
         self.bn_wsrr_wsr_op_type = self.bn_wsrr.operands[1].op_type
 
         # bn.rshi insn
-        self.bn_rshi = self._get_named_insn(insns_file, 'bn.rshi')
+        self.bn_rshi = self._get_named_insn(insns_file, "bn.rshi")
         self.bn_rshi_wrd_op_type = self.bn_rshi.operands[0].op_type
         self.bn_rshi_wrs1_op_type = self.bn_rshi.operands[1].op_type
         self.bn_rshi_wrs2_op_type = self.bn_rshi.operands[2].op_type
         self.bn_rshi_imm_op_type = self.bn_rshi.operands[3].op_type
 
         # csrrw insn
-        self.csrrw = self._get_named_insn(insns_file, 'csrrw')
+        self.csrrw = self._get_named_insn(insns_file, "csrrw")
         self.csrrw_grd_op_type = self.csrrw.operands[0].op_type
         self.csrrw_csr_op_type = self.csrrw.operands[1].op_type
         self.csrrw_grs1_op_type = self.csrrw.operands[2].op_type
         self._csrrw_grs1 = 0
 
         # li insn
-        self.li = self._get_named_insn(insns_file, 'li')
+        self.li = self._get_named_insn(insns_file, "li")
         self.li_grd_op_type = self.li.operands[0].op_type
         self.li_imm_op_type = self.li.operands[1].op_type
 
         # addi insn (substitute for li)
-        self.addi = self._get_named_insn(insns_file, 'addi')
+        self.addi = self._get_named_insn(insns_file, "addi")
         self.addi_grd_op_type = self.addi.operands[0].op_type
         self.addi_grs1_op_type = self.addi.operands[1].op_type
         self.addi_imm_op_type = self.addi.operands[2].op_type
 
         # lui insn (substitute for li)
-        self.lui = self._get_named_insn(insns_file, 'lui')
+        self.lui = self._get_named_insn(insns_file, "lui")
         self.lui_grd_op_type = self.lui.operands[0].op_type
         self.lui_imm_op_type = self.lui.operands[1].op_type
 
@@ -92,14 +92,11 @@ class KmacAppReqInsn(SnippetGen):
         # bn.wsrw insn mode
         self._fill_wsrw_mode = FillWsrwMode.MSG
 
-    def gen(self,
-            cont: GenCont,
-            model: Model,
-            program: Program) -> Optional[GenRet]:
-        ''' Generate the block of AppReq instructions for each stage.
-            First checks if there is sufficient room for instructions
-            Then generates the KMAC configuration
-        '''
+    def gen(self, cont: GenCont, model: Model, program: Program) -> Optional[GenRet]:
+        """Generate the block of AppReq instructions for each stage.
+        First checks if there is sufficient room for instructions
+        Then generates the KMAC configuration
+        """
 
         # Return None if there are less than 50 instruction spaces remaining
         # because this is the safe minimum to complete an entire transaction.
@@ -120,22 +117,21 @@ class KmacAppReqInsn(SnippetGen):
 
         # Randomly choose a SHA3 Mode and Keccak Strength
         self._sha3_mode = random.choices([Sha3Mode.Sha3, Sha3Mode.Shake], weights=[1, 1])[0]
-        if (self._sha3_mode == Sha3Mode.Sha3):
-            self._keccak_strength = random.choices([KeccakStrength.L256, KeccakStrength.L512],
-                                                   weights=[1, 1])[0]
-        elif (self._sha3_mode == Sha3Mode.Shake):
-            self._keccak_strength = random.choices([KeccakStrength.L128, KeccakStrength.L256],
-                                                   weights=[1, 1])[0]
+        if self._sha3_mode == Sha3Mode.Sha3:
+            self._keccak_strength = random.choices(
+                [KeccakStrength.L256, KeccakStrength.L512], weights=[1, 1]
+            )[0]
+        elif self._sha3_mode == Sha3Mode.Shake:
+            self._keccak_strength = random.choices(
+                [KeccakStrength.L128, KeccakStrength.L256], weights=[1, 1]
+            )[0]
 
         # Alternatively determine the amount of fuel required for the constructed
         # kmac req and determine if the model has sufficient fuel remaining to
         # complete the transactio / request. Loop 5 times or until msg size < 32B
         # (512 / 256 / 128 / 64 / 32)
 
-        size_behavior = random.choices(
-            ["normal", "large"],
-            weights=[90, 10]
-        )[0]
+        size_behavior = random.choices(["normal", "large"], weights=[90, 10])[0]
 
         if size_behavior == "normal":
             self._msg_size = random.randint(1, 512)
@@ -172,8 +168,8 @@ class KmacAppReqInsn(SnippetGen):
         return (snippet, model)
 
     def _gen(self, model: Model, program: Program) -> list[ProgInsn]:
-        """ Helper function to build and return a full instruction list for the given message size.
-            Attempts to regularly change the partial word size during the message.
+        """Helper function to build and return a full instruction list for the given message size.
+        Attempts to regularly change the partial word size during the message.
         """
         insn_list = []
 
@@ -188,13 +184,11 @@ class KmacAppReqInsn(SnippetGen):
 
         rsp_max_cnt = min(model.fuel - 35, program.space - 35, 6)
         num_digest_rd = 0
-        if ((self._sha3_mode == Sha3Mode.Sha3)
-                and (self._keccak_strength == KeccakStrength.L256)):
+        if (self._sha3_mode == Sha3Mode.Sha3) and (self._keccak_strength == KeccakStrength.L256):
             num_digest_rd = 1
-        elif ((self._sha3_mode == Sha3Mode.Sha3)
-                and (self._keccak_strength == KeccakStrength.L512)):
+        elif (self._sha3_mode == Sha3Mode.Sha3) and (self._keccak_strength == KeccakStrength.L512):
             num_digest_rd = 2
-        elif (self._sha3_mode == Sha3Mode.Shake):
+        elif self._sha3_mode == Sha3Mode.Shake:
             num_digest_rd = random.randint(1, rsp_max_cnt)
 
         # Reset Variables
@@ -211,26 +205,26 @@ class KmacAppReqInsn(SnippetGen):
             insn_list.append(insn)
 
         # While loop to send MSG body
-        while (remaining_bytes > 0):
+        while remaining_bytes > 0:
             # Check if we should change partial_write size
-            if (current_write_count >= writes_before_change and remaining_bytes > 0):
+            if current_write_count >= writes_before_change and remaining_bytes > 0:
                 self._pw_size = random.randint(1, 32)
                 writes_before_change = random.randint(1, 5)
                 current_write_count = 0
                 write_pw_pair = True
 
             # This is preparation the final write
-            if (remaining_bytes <= self._pw_size):
+            if remaining_bytes <= self._pw_size:
                 self._pw_size = remaining_bytes
                 write_pw_pair = True
 
             # If the MSG SIZE is <= 32B perform a single write
-            if (self._msg_size <= 32):
+            if self._msg_size <= 32:
                 self._pw_size = self._msg_size
                 write_pw_pair = True
 
             # Update the PW register size
-            if (write_pw_pair is True):
+            if write_pw_pair is True:
                 # Create an li/csrrw pair for the new size
                 self._fill_li_mode = FillLiMode.PW
                 write_pw_pair = False
@@ -262,10 +256,10 @@ class KmacAppReqInsn(SnippetGen):
 
         # Status read
         op_vals = []
-        mem_type = 'csr'
+        mem_type = "csr"
 
         csrrw_grd_val = 0x0
-        while (csrrw_grd_val <= 0x1):
+        while csrrw_grd_val <= 0x1:
             grd_val_pick = model.pick_operand_value(self.csrrw_grd_op_type)
             assert grd_val_pick is not None
             csrrw_grd_val = grd_val_pick
@@ -337,7 +331,7 @@ class KmacAppReqInsn(SnippetGen):
         while True:
             addi_grd_val = model.pick_operand_value(self.addi_grd_op_type)
             if addi_grd_val is not None:
-                if not model.is_const('gpr', addi_grd_val):
+                if not model.is_const("gpr", addi_grd_val):
                     # 0x0 is not writeable and 0x1 is SP
                     if addi_grd_val != 0x0 and addi_grd_val != 0x1:
                         break
@@ -361,28 +355,28 @@ class KmacAppReqInsn(SnippetGen):
         return insn_list
 
     def fill_csrrw(self, model: Model) -> ProgInsn:
-        ''' Function to fill the opcode values for a csrrw insn '''
+        """Function to fill the opcode values for a csrrw insn"""
 
         # Initialize opcode vals for csrrw instruction
         op_vals = []
-        mem_type = 'csr'
+        mem_type = "csr"
 
         # Create the destination register operand
         csrrw_grd_val = model.pick_operand_value(self.csrrw_grd_op_type)
 
         # Dont want grd to be 0x1 to prevent call stack write
-        if (csrrw_grd_val is not None and csrrw_grd_val <= 0x1):
+        if csrrw_grd_val is not None and csrrw_grd_val <= 0x1:
             csrrw_grd_val = 0x2
 
         csrrw_grd_val = 0x0
 
         op_vals.append(csrrw_grd_val)
 
-        if (self._fill_li_mode == FillLiMode.CFG):
+        if self._fill_li_mode == FillLiMode.CFG:
             csrrw_csr_val = model._kmac_csr_addr["KMAC_CFG"]
-        elif (self._fill_li_mode == FillLiMode.PW):
+        elif self._fill_li_mode == FillLiMode.PW:
             csrrw_csr_val = model._kmac_csr_addr["KMAC_PW"]
-        elif (self._fill_li_mode == FillLiMode.MSG):
+        elif self._fill_li_mode == FillLiMode.MSG:
             csrrw_csr_val = self._target_mod_addr
 
         op_vals.append(csrrw_csr_val)
@@ -395,7 +389,7 @@ class KmacAppReqInsn(SnippetGen):
         return ProgInsn(self.csrrw, op_vals, (mem_type, addr))
 
     def fill_li(self, model: Model) -> Tuple[ProgInsn, ProgInsn]:
-        ''' Function to fill the (lui + addi) instructions needed for li pseudo insn '''
+        """Function to fill the (lui + addi) instructions needed for li pseudo insn"""
 
         # TODO: Add model check to see if reg is const
 
@@ -407,7 +401,7 @@ class KmacAppReqInsn(SnippetGen):
         while True:
             li_grd_val = model.pick_operand_value(self.li_grd_op_type)
             if li_grd_val is not None:
-                if not model.is_const('gpr', li_grd_val):
+                if not model.is_const("gpr", li_grd_val):
                     # 0x0 is not writeable and 0x1 is SP
                     if li_grd_val != 0x0 and li_grd_val != 0x1:
                         break
@@ -420,9 +414,9 @@ class KmacAppReqInsn(SnippetGen):
         addi_op_vals.append(li_grd_val)
         addi_op_vals.append(addi_grs1_val)
 
-        if (self._fill_li_mode == FillLiMode.CFG):
+        if self._fill_li_mode == FillLiMode.CFG:
             lui_imm_val, addi_imm_val = self._fill_li_cfg()
-        elif (self._fill_li_mode == FillLiMode.MSG):
+        elif self._fill_li_mode == FillLiMode.MSG:
             lui_imm_val, addi_imm_val = self._fill_li_msg(model)
         else:
             raise ValueError(f"Unknown fill_li_mode: {self._fill_li_mode}")
@@ -439,13 +433,13 @@ class KmacAppReqInsn(SnippetGen):
         return prog_lui_insn, prog_addi_insn
 
     def _fill_li_pw(self) -> int:
-        ''' Helper function to generate appropriate imm value for partial word insn '''
+        """Helper function to generate appropriate imm value for partial word insn"""
         addi_imm_op_val = self._pw_size & 0xFFF
 
         return addi_imm_op_val
 
     def _fill_li_cfg(self) -> Tuple[int, int]:
-        ''' Helper function to generate appropriate imm value for kmac cfg '''
+        """Helper function to generate appropriate imm value for kmac cfg"""
 
         # Create the destination register operand
         whole_words = self._msg_size // 8
@@ -453,12 +447,12 @@ class KmacAppReqInsn(SnippetGen):
 
         # Create the bit mask
         cfg_mask = 0
-        cfg_mask |= (self._sha3_mode.value & 0b11) << 0          # Sha3 Mode [1:0]
-        cfg_mask |= (self._keccak_strength.value & 0b111) << 2   # Strength  [4:2]
-        cfg_mask |= (byte_remainder & 0b111) << 5                # Msg Bytes [7:5]
-        cfg_mask |= (whole_words & 0xFFF) << 8                   # Msg Words [19:8]
-        cfg_mask |= (self._masked_mode & 0b1) << 20              # Masked Mode [20]
-        cfg_mask |= (self._cfg_done & 0b1) << 31                 # Cfg Done  [31]
+        cfg_mask |= (self._sha3_mode.value & 0b11) << 0  # Sha3 Mode [1:0]
+        cfg_mask |= (self._keccak_strength.value & 0b111) << 2  # Strength  [4:2]
+        cfg_mask |= (byte_remainder & 0b111) << 5  # Msg Bytes [7:5]
+        cfg_mask |= (whole_words & 0xFFF) << 8  # Msg Words [19:8]
+        cfg_mask |= (self._masked_mode & 0b1) << 20  # Masked Mode [20]
+        cfg_mask |= (self._cfg_done & 0b1) << 31  # Cfg Done  [31]
 
         lui_imm_op_val = cfg_mask >> 12
         addi_imm_op_val = cfg_mask & 0xFFF
@@ -470,7 +464,7 @@ class KmacAppReqInsn(SnippetGen):
         return lui_imm_op_val, addi_imm_op_val
 
     def _fill_li_msg(self, model: Model) -> Tuple[int, int]:
-        ''' Helper function to generate random imm payload for kmac msg '''
+        """Helper function to generate random imm payload for kmac msg"""
 
         lui_imm_op_val = model.pick_operand_value(self.lui_imm_op_type)
         addi_imm_op_val = model.pick_operand_value(self.addi_imm_op_type)
@@ -480,7 +474,7 @@ class KmacAppReqInsn(SnippetGen):
         return lui_imm_op_val, addi_imm_op_val
 
     def fill_bn_rshi(self, model: Model) -> ProgInsn:
-        ''' Function to generate bn.rshi insn opcode values '''
+        """Function to generate bn.rshi insn opcode values"""
         op_vals = []
         bn_rshi_wrs2_val = self._share0_wrs
         bn_rshi_wrd_val = bn_rshi_wrs2_val
@@ -518,11 +512,11 @@ class KmacAppReqInsn(SnippetGen):
         return ProgInsn(self.bn_rshi, op_vals, None)
 
     def fill_bn_wsrr(self, model: Model) -> ProgInsn:
-        ''' Function to generate wsrr insn opcode values '''
+        """Function to generate wsrr insn opcode values"""
 
         # Intialize opcode vals for bn.wsrr instruction
         op_vals = []
-        mem_type = 'wsr'
+        mem_type = "wsr"
 
         # Pick destination register
         bn_wsrr_wrd_val = model.pick_operand_value(self.bn_wsrr_wrd_op_type)
@@ -531,11 +525,11 @@ class KmacAppReqInsn(SnippetGen):
         op_vals.append(bn_wsrr_wrd_val)
 
         # Pick source WSR addr
-        if (self._fill_wsrr_mode == FillWsrrMode.MSG):
+        if self._fill_wsrr_mode == FillWsrrMode.MSG:
             bn_wsrr_wsr_val = model._kmac_wsr_addr["MOD"]
-        elif (self._fill_wsrr_mode == FillWsrrMode.DIGEST):
+        elif self._fill_wsrr_mode == FillWsrrMode.DIGEST:
             bn_wsrr_wsr_val = model._kmac_wsr_addr["KMAC_DIGEST"]
-        elif (self._fill_wsrr_mode == FillWsrrMode.DIGEST1):
+        elif self._fill_wsrr_mode == FillWsrrMode.DIGEST1:
             bn_wsrr_wsr_val = model._kmac_wsr_addr["KMAC_DIGEST1"]
 
         op_vals.append(bn_wsrr_wsr_val)
@@ -545,18 +539,18 @@ class KmacAppReqInsn(SnippetGen):
         return ProgInsn(self.bn_wsrr, op_vals, (mem_type, addr))
 
     def fill_bn_wsrw(self, model: Model) -> ProgInsn:
-        ''' Function to generate wsr insn opcode values '''
+        """Function to generate wsr insn opcode values"""
 
         # Intialize opcode vals for bn.wsrw instruction
         op_vals = []
-        mem_type = 'wsr'
+        mem_type = "wsr"
 
         # Pick destination register
-        if (self._fill_wsrw_mode == FillWsrwMode.MSG):
+        if self._fill_wsrw_mode == FillWsrwMode.MSG:
             bn_wsrw_wsr_val = model._kmac_wsr_addr["KMAC_MSG"]
             bn_wsrw_wrs_val = self._share0_wrs
         # Pick destination register
-        if (self._fill_wsrw_mode == FillWsrwMode.MSG1):
+        if self._fill_wsrw_mode == FillWsrwMode.MSG1:
             bn_wsrw_wsr_val = model._kmac_wsr_addr["KMAC_MSG1"]
             bn_wsrw_wrs_val = self._share1_wrs
 

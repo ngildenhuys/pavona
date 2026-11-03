@@ -36,7 +36,6 @@ BOOTSTRAP = args.bootstrap
 
 
 class SymCryptoScaTest(unittest.TestCase):
-
     def test_init(self):
         symsca = OTSymCrypto(target)
         device_id, owner_page, boot_log, boot_measurements, version = symsca.init()
@@ -101,9 +100,7 @@ class SymCryptoScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -180,9 +177,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_aes_daisy(self):
         for num_segments in num_segments_list:
@@ -236,9 +231,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_gcm_fvsr_plaintext(self):
         for num_segments in num_segments_list:
@@ -291,12 +284,8 @@ class SymCryptoScaTest(unittest.TestCase):
 
             cipher_gen = AES.new(bytes(key), AES.MODE_GCM, bytes(iv))
             cipher_gen.update(bytes(aad))
-            expected_ciphertext, expected_tag = cipher_gen.encrypt_and_digest(
-                bytes(batch_data)
-            )
-            expected_ciphertext = utils.pad_with_zeros(
-                [x for x in expected_ciphertext], 64
-            )
+            expected_ciphertext, expected_tag = cipher_gen.encrypt_and_digest(bytes(batch_data))
+            expected_ciphertext = utils.pad_with_zeros([x for x in expected_ciphertext], 64)
             expected_tag = utils.pad_with_zeros([x for x in expected_tag], 64)
             expected_result_json = {
                 "status": 0,
@@ -307,9 +296,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_gcm_daisy(self):
         for num_segments in num_segments_list:
@@ -365,9 +352,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_hmac_fvsr_plaintext(self):
         for num_segments in num_segments_list:
@@ -423,9 +408,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_hmac_daisy(self):
         for num_segments in num_segments_list:
@@ -472,9 +455,7 @@ class SymCryptoScaTest(unittest.TestCase):
                 "cfg": 0,
             }
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_drbg(self):
         for num_segments in num_segments_list:
@@ -512,17 +493,13 @@ class SymCryptoScaTest(unittest.TestCase):
             drbg_ignored_key_sets = ignored_keys_set.copy()
             drbg_ignored_key_sets.add("data")
 
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, drbg_ignored_key_sets
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, drbg_ignored_key_sets)
 
 
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:

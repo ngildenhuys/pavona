@@ -5,7 +5,7 @@
 
 from pathlib import Path
 
-binaries = list(Path('.').glob('**/*.bin'))
+binaries = list(Path(".").glob("**/*.bin"))
 assert len(binaries) > 2
 
 contents = [path.read_bytes() for path in binaries]

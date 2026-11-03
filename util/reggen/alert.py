@@ -10,50 +10,50 @@ from reggen.lib import check_name, check_str, check_list
 from basegen.validate import create_validator
 
 
-ALERT_VALIDATOR = create_validator('urn:reggen:alert')
+ALERT_VALIDATOR = create_validator("urn:reggen:alert")
 
 
 class Alert(Signal):
-
     def __init__(self, name: str, desc: str, bit: int, fatal: bool):
         super().__init__(name, desc, Bits(bit, bit))
         self.bit = bit
         self.fatal = fatal
 
     @staticmethod
-    def from_raw(what: str, lsb: int, raw: object) -> 'Alert':
+    def from_raw(what: str, lsb: int, raw: object) -> "Alert":
         if not isinstance(raw, dict):
-            raise TypeError('must instantiate alert with dict: alert of ' + what)
+            raise TypeError("must instantiate alert with dict: alert of " + what)
         ALERT_VALIDATOR.validate(raw)
 
-        name = check_name(raw['name'], 'name field of ' + what)
-        desc = check_str(raw['desc'], 'desc field of ' + what)
+        name = check_name(raw["name"], "name field of " + what)
+        desc = check_str(raw["desc"], "desc field of " + what)
 
         # Make sense of the alert name, which should be prefixed with recov_ or
         # fatal_.
-        pfx = name.split('_')[0]
-        if pfx == 'recov':
+        pfx = name.split("_")[0]
+        if pfx == "recov":
             fatal = False
-        elif pfx == 'fatal':
+        elif pfx == "fatal":
             fatal = True
         else:
             raise ValueError(
-                f'Invalid name field of {what}: alert names must be prefixed '
-                f'with "recov_" or "fatal_". Saw {name!r}.')
+                f"Invalid name field of {what}: alert names must be prefixed "
+                f'with "recov_" or "fatal_". Saw {name!r}.'
+            )
 
         return Alert(name, desc, lsb, fatal)
 
     @staticmethod
-    def from_raw_list(what: str, raw: object) -> List['Alert']:
+    def from_raw_list(what: str, raw: object) -> List["Alert"]:
         ret = []
         for idx, entry in enumerate(check_list(raw, what)):
-            entry_what = 'entry {} of {}'.format(idx, what)
+            entry_what = "entry {} of {}".format(idx, what)
             alert = Alert.from_raw(entry_what, idx, entry)
             ret.append(alert)
         return ret
 
     def _asdict(self) -> Dict[str, object]:
         return {
-            'name': self.name,
-            'desc': self.desc,
+            "name": self.name,
+            "desc": self.desc,
         }

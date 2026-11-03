@@ -19,40 +19,43 @@ from shared.testcase import AccTestCase
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('elf')
-    parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('--dump-rtl-sim', action="store_true")
+    parser.add_argument("elf")
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("--dump-rtl-sim", action="store_true")
     parser.add_argument(
-        '--testcase',
-        type=argparse.FileType('r'),
+        "--testcase",
+        type=argparse.FileType("r"),
         metavar="FILE",
         help="Path to a testcase hjson file.",
     )
     parser.add_argument(
-        '--dump-dmem',
+        "--dump-dmem",
         metavar="FILE",
-        type=argparse.FileType('wb'),
-        help=("after execution, write the data memory contents to this file. "
-              "Use '-' to write to STDOUT.")
+        type=argparse.FileType("wb"),
+        help=(
+            "after execution, write the data memory contents to this file. "
+            "Use '-' to write to STDOUT."
+        ),
     )
     parser.add_argument(
-        '--dump-regs',
+        "--dump-regs",
         metavar="FILE",
-        type=argparse.FileType('w'),
-        help=("after execution, write the GPR and WDR contents to this file. "
-              "Use '-' to write to STDOUT.")
+        type=argparse.FileType("w"),
+        help=(
+            "after execution, write the GPR and WDR contents to this file. "
+            "Use '-' to write to STDOUT."
+        ),
     )
     parser.add_argument(
-        '--dump-stats',
+        "--dump-stats",
         metavar="FILE",
-        type=argparse.FileType('w'),
-        help=("after execution, write execution statistics to this file. "
-              "Use '-' to write to STDOUT.")
+        type=argparse.FileType("w"),
+        help=(
+            "after execution, write execution statistics to this file. Use '-' to write to STDOUT."
+        ),
     )
     parser.add_argument(
-        '--pqc',
-        type=bool,
-        help=("set accsim to PQC feature mode for ML-KEM and ML-DSA.")
+        "--pqc", type=bool, help=("set accsim to PQC feature mode for ML-KEM and ML-DSA.")
     )
 
     args = parser.parse_args()
@@ -60,7 +63,7 @@ def main() -> int:
     collect_stats = args.dump_stats is not None
 
     # Check if Bazel is requesting coverage output
-    coverage_dat = os.environ.get('COVERAGE_OUTPUT_FILE', None)
+    coverage_dat = os.environ.get("COVERAGE_OUTPUT_FILE", None)
     if coverage_dat:
         collect_stats = True
 
@@ -90,9 +93,12 @@ def main() -> int:
 
     if exp_end_addr is not None:
         if sim.state.pc != exp_end_addr:
-            print('Run stopped at PC {:#x}, but _expected_end_addr was {:#x}.'
-                  .format(sim.state.pc, exp_end_addr),
-                  file=sys.stderr)
+            print(
+                "Run stopped at PC {:#x}, but _expected_end_addr was {:#x}.".format(
+                    sim.state.pc, exp_end_addr
+                ),
+                file=sys.stderr,
+            )
             return 1
 
     if args.dump_dmem is not None:
@@ -104,9 +110,9 @@ def main() -> int:
         if args.dump_stats:
             args.dump_stats.write(stat_analyzer.dump())
         if coverage_dat:
-            with open(coverage_dat, 'w') as f:
+            with open(coverage_dat, "w") as f:
                 f.write(stat_analyzer.dump_lcov_coverage())
-            print(f'Coverage dumped to {coverage_dat}')
+            print(f"Coverage dumped to {coverage_dat}")
 
     return 0
 

@@ -15,10 +15,17 @@ import sys
 
 from .constants import ErrBits
 from .flags import FlagReg
-from .isa import (ACCInsn, RV32RegReg, RV32RegImm,
-                  RV32ImmShift, insn_for_mnemonic, logical_byte_shift,
-                  bit_shift,
-                  extract_quarter_word, extract_sub_word)
+from .isa import (
+    ACCInsn,
+    RV32RegReg,
+    RV32RegImm,
+    RV32ImmShift,
+    insn_for_mnemonic,
+    logical_byte_shift,
+    bit_shift,
+    extract_quarter_word,
+    extract_sub_word,
+)
 from .state import ACCState
 
 DEBUG_MEM = False
@@ -57,7 +64,7 @@ def cmod_single_subv(n: int, q: int) -> int:
 
 
 class ADD(RV32RegReg):
-    insn = insn_for_mnemonic('add', 3)
+    insn = insn_for_mnemonic("add", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -87,7 +94,7 @@ class ADD(RV32RegReg):
 
 
 class ADDI(RV32RegImm):
-    insn = insn_for_mnemonic('addi', 3)
+    insn = insn_for_mnemonic("addi", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -116,19 +123,19 @@ class ADDI(RV32RegImm):
 
 
 class LUI(ACCInsn):
-    insn = insn_for_mnemonic('lui', 2)
+    insn = insn_for_mnemonic("lui", 2)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.imm = op_vals['imm']
+        self.grd = op_vals["grd"]
+        self.imm = op_vals["imm"]
 
     def execute(self, state: ACCState) -> None:
         state.gprs.get_reg(self.grd).write_unsigned(self.imm << 12)
 
 
 class SUB(RV32RegReg):
-    insn = insn_for_mnemonic('sub', 3)
+    insn = insn_for_mnemonic("sub", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -144,11 +151,11 @@ class SUB(RV32RegReg):
 
 
 class SLL(RV32RegReg):
-    insn = insn_for_mnemonic('sll', 3)
+    insn = insn_for_mnemonic("sll", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
-        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1f
+        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1F
         if state.gprs.call_stack_err:
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return
@@ -160,7 +167,7 @@ class SLL(RV32RegReg):
 
 
 class SLLI(RV32ImmShift):
-    insn = insn_for_mnemonic('slli', 3)
+    insn = insn_for_mnemonic("slli", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -174,11 +181,11 @@ class SLLI(RV32ImmShift):
 
 
 class SRL(RV32RegReg):
-    insn = insn_for_mnemonic('srl', 3)
+    insn = insn_for_mnemonic("srl", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
-        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1f
+        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1F
         if state.gprs.call_stack_err:
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return
@@ -190,7 +197,7 @@ class SRL(RV32RegReg):
 
 
 class SRLI(RV32ImmShift):
-    insn = insn_for_mnemonic('srli', 3)
+    insn = insn_for_mnemonic("srli", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -204,11 +211,11 @@ class SRLI(RV32ImmShift):
 
 
 class SRA(RV32RegReg):
-    insn = insn_for_mnemonic('sra', 3)
+    insn = insn_for_mnemonic("sra", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_signed()
-        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1f
+        val2 = state.gprs.get_reg(self.grs2).read_unsigned() & 0x1F
         if state.gprs.call_stack_err:
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return
@@ -220,7 +227,7 @@ class SRA(RV32RegReg):
 
 
 class SRAI(RV32ImmShift):
-    insn = insn_for_mnemonic('srai', 3)
+    insn = insn_for_mnemonic("srai", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_signed()
@@ -234,7 +241,7 @@ class SRAI(RV32ImmShift):
 
 
 class AND(RV32RegReg):
-    insn = insn_for_mnemonic('and', 3)
+    insn = insn_for_mnemonic("and", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -250,7 +257,7 @@ class AND(RV32RegReg):
 
 
 class ANDI(RV32RegImm):
-    insn = insn_for_mnemonic('andi', 3)
+    insn = insn_for_mnemonic("andi", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -265,7 +272,7 @@ class ANDI(RV32RegImm):
 
 
 class OR(RV32RegReg):
-    insn = insn_for_mnemonic('or', 3)
+    insn = insn_for_mnemonic("or", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -280,7 +287,7 @@ class OR(RV32RegReg):
 
 
 class ORI(RV32RegImm):
-    insn = insn_for_mnemonic('ori', 3)
+    insn = insn_for_mnemonic("ori", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -294,7 +301,7 @@ class ORI(RV32RegImm):
 
 
 class XOR(RV32RegReg):
-    insn = insn_for_mnemonic('xor', 3)
+    insn = insn_for_mnemonic("xor", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -308,7 +315,7 @@ class XOR(RV32RegReg):
 
 
 class XORI(RV32RegImm):
-    insn = insn_for_mnemonic('xori', 3)
+    insn = insn_for_mnemonic("xori", 3)
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -322,13 +329,13 @@ class XORI(RV32RegImm):
 
 
 class LW(ACCInsn):
-    insn = insn_for_mnemonic('lw', 3)
+    insn = insn_for_mnemonic("lw", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.offset = op_vals['offset']
-        self.grs1 = op_vals['grs1']
+        self.grd = op_vals["grd"]
+        self.offset = op_vals["offset"]
+        self.grs1 = op_vals["grs1"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         # LW executes over two cycles. On the first cycle, we read the base
@@ -370,13 +377,13 @@ class LW(ACCInsn):
 
 
 class SW(ACCInsn):
-    insn = insn_for_mnemonic('sw', 3)
+    insn = insn_for_mnemonic("sw", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grs2 = op_vals['grs2']
-        self.offset = op_vals['offset']
-        self.grs1 = op_vals['grs1']
+        self.grs2 = op_vals["grs2"]
+        self.offset = op_vals["offset"]
+        self.grs1 = op_vals["grs1"]
 
     def execute(self, state: ACCState) -> None:
         base = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -403,15 +410,15 @@ class SW(ACCInsn):
 
 
 class BEQ(ACCInsn):
-    insn = insn_for_mnemonic('beq', 3)
+    insn = insn_for_mnemonic("beq", 3)
     affects_control = True
     has_fetch_stall = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grs1 = op_vals['grs1']
-        self.grs2 = op_vals['grs2']
-        self.offset = op_vals['offset']
+        self.grs1 = op_vals["grs1"]
+        self.grs2 = op_vals["grs2"]
+        self.offset = op_vals["offset"]
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -435,15 +442,15 @@ class BEQ(ACCInsn):
 
 
 class BNE(ACCInsn):
-    insn = insn_for_mnemonic('bne', 3)
+    insn = insn_for_mnemonic("bne", 3)
     affects_control = True
     has_fetch_stall = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grs1 = op_vals['grs1']
-        self.grs2 = op_vals['grs2']
-        self.offset = op_vals['offset']
+        self.grs1 = op_vals["grs1"]
+        self.grs2 = op_vals["grs2"]
+        self.offset = op_vals["offset"]
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -468,17 +475,17 @@ class BNE(ACCInsn):
 
 
 class JAL(ACCInsn):
-    insn = insn_for_mnemonic('jal', 2)
+    insn = insn_for_mnemonic("jal", 2)
     affects_control = True
     has_fetch_stall = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.offset = op_vals['offset']
+        self.grd = op_vals["grd"]
+        self.offset = op_vals["offset"]
 
     def execute(self, state: ACCState) -> None:
-        mask32 = ((1 << 32) - 1)
+        mask32 = (1 << 32) - 1
         link_pc = (state.pc + 4) & mask32
         state.gprs.get_reg(self.grd).write_unsigned(link_pc)
         if DEBUG_FLOW:
@@ -491,15 +498,15 @@ class JAL(ACCInsn):
 
 
 class JALR(ACCInsn):
-    insn = insn_for_mnemonic('jalr', 3)
+    insn = insn_for_mnemonic("jalr", 3)
     affects_control = True
     has_fetch_stall = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.grs1 = op_vals['grs1']
-        self.offset = op_vals['offset']
+        self.grd = op_vals["grd"]
+        self.grs1 = op_vals["grs1"]
+        self.offset = op_vals["offset"]
 
     def execute(self, state: ACCState) -> None:
         val1 = state.gprs.get_reg(self.grs1).read_unsigned()
@@ -507,7 +514,7 @@ class JALR(ACCInsn):
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return
 
-        mask32 = ((1 << 32) - 1)
+        mask32 = (1 << 32) - 1
         link_pc = (state.pc + 4) & mask32
 
         state.gprs.get_reg(self.grd).write_unsigned(link_pc)
@@ -520,13 +527,13 @@ class JALR(ACCInsn):
 
 
 class CSRRS(ACCInsn):
-    insn = insn_for_mnemonic('csrrs', 3)
+    insn = insn_for_mnemonic("csrrs", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.csr = op_vals['csr']
-        self.grs1 = op_vals['grs1']
+        self.grd = op_vals["grd"]
+        self.csr = op_vals["csr"]
+        self.grs1 = op_vals["grs1"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         if not state.csrs.check_idx(self.csr):
@@ -539,7 +546,7 @@ class CSRRS(ACCInsn):
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return None
 
-        if self.csr == 0xfc0:
+        if self.csr == 0xFC0:
             # A read from RND. If a RND value is not available, request_value()
             # initiates or continues an EDN request and returns False. If a RND
             # value is available, it returns True.
@@ -558,13 +565,13 @@ class CSRRS(ACCInsn):
 
 
 class CSRRW(ACCInsn):
-    insn = insn_for_mnemonic('csrrw', 3)
+    insn = insn_for_mnemonic("csrrw", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.csr = op_vals['csr']
-        self.grs1 = op_vals['grs1']
+        self.grd = op_vals["grd"]
+        self.csr = op_vals["csr"]
+        self.grs1 = op_vals["grs1"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         # eprint("csrrw")
@@ -578,7 +585,7 @@ class CSRRW(ACCInsn):
             state.stop_at_end_of_cycle(ErrBits.CALL_STACK)
             return None
 
-        if self.csr == 0xfc0 and self.grd != 0:
+        if self.csr == 0xFC0 and self.grd != 0:
             # A read from RND. If a RND value is not available, request_value()
             # initiates or continues an EDN request and returns False. If a RND
             # value is available, it returns True.
@@ -586,32 +593,31 @@ class CSRRW(ACCInsn):
                 # There's a pending EDN request. Stall for a cycle.
                 yield None
 
-        if self.csr == 0x7f3:
+        if self.csr == 0x7F3:
             # A write to KMAC_PW might stall, if there is a pending write
             # to the AppIntf FIFO inside ACC Bignum ALU
             if DEBUG_KMAC:
                 eprint("\tBNWSRW FOR KMAC PARTIAL WRITE REGISTER")
             while (
-                state.wsrs.KMAC_MSG0.pending_write_pw() or
-                state.wsrs.KMAC_MSG1.pending_write_pw()
+                state.wsrs.KMAC_MSG0.pending_write_pw() or state.wsrs.KMAC_MSG1.pending_write_pw()
             ):
                 if DEBUG_KMAC:
                     eprint("\tBNWSRW to KMAC_PW stall")
 
                 # The following conditions cause a deadlock in execution
                 if (
-                    state.wsrs.KMAC_MSG1._pending_write_to_app_intf and
-                    not state.kmac.app_intf_fifo1_ready() and
-                    state.kmac.app_intf_fifo0_ready() and
-                    state.kmac._masked_mode
+                    state.wsrs.KMAC_MSG1._pending_write_to_app_intf
+                    and not state.kmac.app_intf_fifo1_ready()
+                    and state.kmac.app_intf_fifo0_ready()
+                    and state.kmac._masked_mode
                 ):
                     state.stop_at_end_of_cycle(ErrBits.KMAC_FATAL_ERROR)
 
                 if (
-                    state.wsrs.KMAC_MSG0._pending_write_to_app_intf and
-                    not state.kmac.app_intf_fifo0_ready() and
-                    state.kmac.app_intf_fifo1_ready() and
-                    state.kmac._masked_mode
+                    state.wsrs.KMAC_MSG0._pending_write_to_app_intf
+                    and not state.kmac.app_intf_fifo0_ready()
+                    and state.kmac.app_intf_fifo1_ready()
+                    and state.kmac._masked_mode
                 ):
                     state.stop_at_end_of_cycle(ErrBits.KMAC_FATAL_ERROR)
 
@@ -629,7 +635,7 @@ class CSRRW(ACCInsn):
 
 
 class ECALL(ACCInsn):
-    insn = insn_for_mnemonic('ecall', 0)
+    insn = insn_for_mnemonic("ecall", 0)
 
     def execute(self, state: ACCState) -> None:
         # Set INTR_STATE.done and STATUS, reflecting the fact we've stopped.
@@ -637,13 +643,13 @@ class ECALL(ACCInsn):
 
 
 class LOOP(ACCInsn):
-    insn = insn_for_mnemonic('loop', 2)
+    insn = insn_for_mnemonic("loop", 2)
     affects_control = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grs = op_vals['grs']
-        self.bodysize = op_vals['bodysize']
+        self.grs = op_vals["grs"]
+        self.bodysize = op_vals["bodysize"]
 
     def execute(self, state: ACCState) -> None:
         num_iters = state.gprs.get_reg(self.grs).read_unsigned()
@@ -658,13 +664,13 @@ class LOOP(ACCInsn):
 
 
 class LOOPI(ACCInsn):
-    insn = insn_for_mnemonic('loopi', 2)
+    insn = insn_for_mnemonic("loopi", 2)
     affects_control = True
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.iterations = op_vals['iterations']
-        self.bodysize = op_vals['bodysize']
+        self.iterations = op_vals["iterations"]
+        self.bodysize = op_vals["bodysize"]
 
     def execute(self, state: ACCState) -> None:
         if DEBUG_FLOW:
@@ -676,16 +682,16 @@ class LOOPI(ACCInsn):
 
 
 class BNADD(ACCInsn):
-    insn = insn_for_mnemonic('bn.add', 6)
+    insn = insn_for_mnemonic("bn.add", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -699,24 +705,26 @@ class BNADD(ACCInsn):
         flags = FlagReg.mlz_for_result(carry_flag, masked_result)
 
         if DEBUG_ARITH:
-            eprint(f"bn.add 0x{format(a, '064x')} + 0x{format(b, '064x')} = "
-                   f"{format(a+b, '064x')} = {format(masked_result, '064x')}")
+            eprint(
+                f"bn.add 0x{format(a, '064x')} + 0x{format(b, '064x')} = "
+                f"{format(a + b, '064x')} = {format(masked_result, '064x')}"
+            )
 
         state.wdrs.get_reg(self.wrd).write_unsigned(masked_result)
         state.set_flags(self.flag_group, flags)
 
 
 class BNADDC(ACCInsn):
-    insn = insn_for_mnemonic('bn.addc', 6)
+    insn = insn_for_mnemonic("bn.addc", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -735,14 +743,14 @@ class BNADDC(ACCInsn):
 
 
 class BNADDI(ACCInsn):
-    insn = insn_for_mnemonic('bn.addi', 4)
+    insn = insn_for_mnemonic("bn.addi", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs = op_vals['wrs']
-        self.imm = op_vals['imm']
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs = op_vals["wrs"]
+        self.imm = op_vals["imm"]
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs).read_unsigned()
@@ -752,8 +760,10 @@ class BNADDI(ACCInsn):
         mask256 = (1 << 256) - 1
         masked_result = full_result & mask256
         if DEBUG_ARITH:
-            eprint(f"bn.addi {format(a, '064x')} + {b} = {format(a+b, '064x')} = "
-                   f"{format(masked_result, '064x')}")
+            eprint(
+                f"bn.addi {format(a, '064x')} + {b} = {format(a + b, '064x')} = "
+                f"{format(masked_result, '064x')}"
+            )
         carry_flag = bool((full_result >> 256) & 1)
         flags = FlagReg.mlz_for_result(carry_flag, masked_result)
 
@@ -762,13 +772,13 @@ class BNADDI(ACCInsn):
 
 
 class BNADDM(ACCInsn):
-    insn = insn_for_mnemonic('bn.addm', 3)
+    insn = insn_for_mnemonic("bn.addm", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -783,8 +793,10 @@ class BNADDM(ACCInsn):
         result = result & ((1 << 256) - 1)
 
         if DEBUG_ARITH:
-            eprint(f"bn.addm 0x{format(a, '064x')} + 0x{format(b, '064x')} = "
-                   f"{format(a+b, '064x')} = {format(result, '064x')}")
+            eprint(
+                f"bn.addm 0x{format(a, '064x')} + 0x{format(b, '064x')} = "
+                f"{format(a + b, '064x')} = {format(result, '064x')}"
+            )
             if result >= mod_val:
                 eprint("incomplete reduction")
 
@@ -792,14 +804,14 @@ class BNADDM(ACCInsn):
 
 
 class BNADDV(ACCInsn):
-    insn = insn_for_mnemonic('bn.addv', 4)
+    insn = insn_for_mnemonic("bn.addv", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.type = op_vals['type']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.type = op_vals["type"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -822,21 +834,21 @@ class BNADDV(ACCInsn):
             if DEBUG_ARITH:
                 eprint(f"addvm {ai:#x} + {bi:#x} = {ai + bi:#x} = {resulti:#x}")
             result <<= size
-            result |= (resulti & ((1 << size) - 1))
+            result |= resulti & ((1 << size) - 1)
 
         result = result & ((1 << 256) - 1)
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
 
 
 class BNMULV(ACCInsn):
-    insn = insn_for_mnemonic('bn.mulv', 4)
+    insn = insn_for_mnemonic("bn.mulv", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.type = op_vals['type']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.type = op_vals["type"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -889,17 +901,19 @@ class BNMULV(ACCInsn):
 
         if DEBUG_ARITH:
             eprint("BNMULV")
-            eprint(f"lane_mode | exec_mode | acc_mode | sel | data_type = \
-                   0 | {exec_mode} | {acc_mode} | {sel} | {data_type}")
+            eprint(
+                f"lane_mode | exec_mode | acc_mode | sel | data_type = \
+                   0 | {exec_mode} | {acc_mode} | {sel} | {data_type}"
+            )
             eprint(f"acc_v = {[hex(acci) for acci in acc_v]}")
-            eprint(f'lane_indices = {lane_indices}')
+            eprint(f"lane_indices = {lane_indices}")
             eprint(f"acc_en = {acc_en}")
 
         for i in lane_indices:
             prodi = wrs1_v[i] * wrs2_v[i]
 
             if DEBUG_ARITH:
-                eprint(f'i = {i}')
+                eprint(f"i = {i}")
                 eprint(f"ai * bi = {hex(wrs1_v[i])} * {hex(wrs2_v[i])} = {hex(prodi)}")
                 eprint(f"acci = {hex(acc_v[i])}")
 
@@ -939,15 +953,15 @@ class BNMULV(ACCInsn):
 
 
 class BNMULVL(ACCInsn):
-    insn = insn_for_mnemonic('bn.mulv.l', 5)
+    insn = insn_for_mnemonic("bn.mulv.l", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.type = op_vals['type']
-        self.lane_reg = op_vals['lane_reg']
-        self.lane_index = op_vals['lane_index']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.type = op_vals["type"]
+        self.lane_reg = op_vals["lane_reg"]
+        self.lane_index = op_vals["lane_index"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -1003,17 +1017,19 @@ class BNMULVL(ACCInsn):
 
         if DEBUG_ARITH:
             eprint("BNMULV.L")
-            eprint(f"lane_mode | exec_mode | acc_mode | sel | data_type = \
-                   1 | {exec_mode} | {acc_mode} | {sel} | {data_type}")
+            eprint(
+                f"lane_mode | exec_mode | acc_mode | sel | data_type = \
+                   1 | {exec_mode} | {acc_mode} | {sel} | {data_type}"
+            )
             eprint(f"acc_v = {[hex(acci) for acci in acc_v]}")
-            eprint(f'lane_indices = {lane_indices}')
+            eprint(f"lane_indices = {lane_indices}")
             eprint(f"acc_en = {acc_en}")
 
         for i in lane_indices:
             prodi = wrs1_v[i] * wrs2_v[i]
 
             if DEBUG_ARITH:
-                eprint(f'i = {i}')
+                eprint(f"i = {i}")
                 eprint(f"ai * bi = {hex(wrs1_v[i])} * {hex(wrs2_v[i])} = {hex(prodi)}")
                 eprint(f"acci = {hex(acc_v[i])}")
 
@@ -1053,16 +1069,16 @@ class BNMULVL(ACCInsn):
 
 
 class BNMULQACC(ACCInsn):
-    insn = insn_for_mnemonic('bn.mulqacc', 6)
+    insn = insn_for_mnemonic("bn.mulqacc", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.zero_acc = op_vals['zero_acc']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs1_qwsel = op_vals['wrs1_qwsel']
-        self.wrs2 = op_vals['wrs2']
-        self.wrs2_qwsel = op_vals['wrs2_qwsel']
-        self.acc_shift_imm = op_vals['acc_shift_imm']
+        self.zero_acc = op_vals["zero_acc"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs1_qwsel = op_vals["wrs1_qwsel"]
+        self.wrs2 = op_vals["wrs2"]
+        self.wrs2_qwsel = op_vals["wrs2_qwsel"]
+        self.acc_shift_imm = op_vals["acc_shift_imm"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1077,7 +1093,7 @@ class BNMULQACC(ACCInsn):
         if self.zero_acc:
             acc = 0
 
-        acc += (mul_res << self.acc_shift_imm)
+        acc += mul_res << self.acc_shift_imm
 
         truncated = acc & ((1 << 256) - 1)
 
@@ -1088,18 +1104,18 @@ class BNMULQACC(ACCInsn):
 
 
 class BNMULQACCWO(ACCInsn):
-    insn = insn_for_mnemonic('bn.mulqacc.wo', 8)
+    insn = insn_for_mnemonic("bn.mulqacc.wo", 8)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.zero_acc = op_vals['zero_acc']
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs1_qwsel = op_vals['wrs1_qwsel']
-        self.wrs2 = op_vals['wrs2']
-        self.wrs2_qwsel = op_vals['wrs2_qwsel']
-        self.acc_shift_imm = op_vals['acc_shift_imm']
-        self.flag_group = op_vals['flag_group']
+        self.zero_acc = op_vals["zero_acc"]
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs1_qwsel = op_vals["wrs1_qwsel"]
+        self.wrs2 = op_vals["wrs2"]
+        self.wrs2_qwsel = op_vals["wrs2_qwsel"]
+        self.acc_shift_imm = op_vals["acc_shift_imm"]
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1114,7 +1130,7 @@ class BNMULQACCWO(ACCInsn):
         if self.zero_acc:
             acc = 0
 
-        acc += (mul_res << self.acc_shift_imm)
+        acc += mul_res << self.acc_shift_imm
 
         truncated = acc & ((1 << 256) - 1)
         state.wdrs.get_reg(self.wrd).write_unsigned(truncated)
@@ -1125,19 +1141,19 @@ class BNMULQACCWO(ACCInsn):
 
 
 class BNMULQACCSO(ACCInsn):
-    insn = insn_for_mnemonic('bn.mulqacc.so', 9)
+    insn = insn_for_mnemonic("bn.mulqacc.so", 9)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.zero_acc = op_vals['zero_acc']
-        self.wrd = op_vals['wrd']
-        self.wrd_hwsel = op_vals['wrd_hwsel']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs1_qwsel = op_vals['wrs1_qwsel']
-        self.wrs2 = op_vals['wrs2']
-        self.wrs2_qwsel = op_vals['wrs2_qwsel']
-        self.acc_shift_imm = op_vals['acc_shift_imm']
-        self.flag_group = op_vals['flag_group']
+        self.zero_acc = op_vals["zero_acc"]
+        self.wrd = op_vals["wrd"]
+        self.wrd_hwsel = op_vals["wrd_hwsel"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs1_qwsel = op_vals["wrs1_qwsel"]
+        self.wrs2 = op_vals["wrs2"]
+        self.wrs2_qwsel = op_vals["wrs2_qwsel"]
+        self.acc_shift_imm = op_vals["acc_shift_imm"]
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1152,7 +1168,7 @@ class BNMULQACCSO(ACCInsn):
         if self.zero_acc:
             acc = 0
 
-        acc += (mul_res << self.acc_shift_imm)
+        acc += mul_res << self.acc_shift_imm
         truncated = acc & ((1 << 256) - 1)
 
         if DEBUG_ARITH:
@@ -1174,29 +1190,28 @@ class BNMULQACCSO(ACCInsn):
 
         old_flags = state.csrs.flags[self.flag_group]
         if self.wrd_hwsel:
-            new_flags = FlagReg(C=old_flags.C,
-                                M=bool((lo_part >> 127) & 1),
-                                L=old_flags.L,
-                                Z=old_flags.Z and lo_part == 0)
+            new_flags = FlagReg(
+                C=old_flags.C,
+                M=bool((lo_part >> 127) & 1),
+                L=old_flags.L,
+                Z=old_flags.Z and lo_part == 0,
+            )
         else:
-            new_flags = FlagReg(C=old_flags.C,
-                                M=old_flags.M,
-                                L=bool(lo_part & 1),
-                                Z=lo_part == 0)
+            new_flags = FlagReg(C=old_flags.C, M=old_flags.M, L=bool(lo_part & 1), Z=lo_part == 0)
         state.set_flags(self.flag_group, new_flags)
 
 
 class BNSUB(ACCInsn):
-    insn = insn_for_mnemonic('bn.sub', 6)
+    insn = insn_for_mnemonic("bn.sub", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1210,24 +1225,26 @@ class BNSUB(ACCInsn):
         flags = FlagReg.mlz_for_result(carry_flag, masked_result)
 
         if DEBUG_ARITH:
-            eprint(f"bn.sub 0x{format(a, '064x')} - 0x{format(b, '064x')} = "
-                   f"{format(a-b, '064x')} = {format(masked_result, '064x')}")
+            eprint(
+                f"bn.sub 0x{format(a, '064x')} - 0x{format(b, '064x')} = "
+                f"{format(a - b, '064x')} = {format(masked_result, '064x')}"
+            )
 
         state.wdrs.get_reg(self.wrd).write_unsigned(masked_result)
         state.set_flags(self.flag_group, flags)
 
 
 class BNSUBB(ACCInsn):
-    insn = insn_for_mnemonic('bn.subb', 6)
+    insn = insn_for_mnemonic("bn.subb", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1246,14 +1263,14 @@ class BNSUBB(ACCInsn):
 
 
 class BNSUBI(ACCInsn):
-    insn = insn_for_mnemonic('bn.subi', 4)
+    insn = insn_for_mnemonic("bn.subi", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs = op_vals['wrs']
-        self.imm = op_vals['imm']
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs = op_vals["wrs"]
+        self.imm = op_vals["imm"]
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs).read_unsigned()
@@ -1270,13 +1287,13 @@ class BNSUBI(ACCInsn):
 
 
 class BNSUBM(ACCInsn):
-    insn = insn_for_mnemonic('bn.subm', 3)
+    insn = insn_for_mnemonic("bn.subm", 3)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1290,21 +1307,23 @@ class BNSUBM(ACCInsn):
         result = result & ((1 << 256) - 1)
 
         if DEBUG_ARITH:
-            eprint(f"bn.subm 0x{format(a, '064x')} - 0x{format(b, '064x')} = "
-                   f"{format(a-b, '064x')} = {format(result, '064x')}")
+            eprint(
+                f"bn.subm 0x{format(a, '064x')} - 0x{format(b, '064x')} = "
+                f"{format(a - b, '064x')} = {format(result, '064x')}"
+            )
 
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
 
 
 class BNSUBV(ACCInsn):
-    insn = insn_for_mnemonic('bn.subv', 4)
+    insn = insn_for_mnemonic("bn.subv", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.type = op_vals['type']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.type = op_vals["type"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -1327,23 +1346,23 @@ class BNSUBV(ACCInsn):
             if DEBUG_ARITH:
                 eprint(f"subvm {ai:#x} - {bi:#x} = {ai - bi:#x} = {resulti:#x} | MOD: {mod_val:#x}")
             result <<= size
-            result |= (resulti & ((1 << size) - 1))
+            result |= resulti & ((1 << size) - 1)
 
-        result &= ((1 << 256) - 1)
+        result &= (1 << 256) - 1
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
 
 
 class BNAND(ACCInsn):
-    insn = insn_for_mnemonic('bn.and', 6)
+    insn = insn_for_mnemonic("bn.and", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1353,24 +1372,26 @@ class BNAND(ACCInsn):
         result = a & b_shifted
 
         if DEBUG_ARITH:
-            eprint(f"bn.and {format(a,'064x')} & {format(b_shifted, '064x')} = "
-                   f"{format(result, '064x')}")
+            eprint(
+                f"bn.and {format(a, '064x')} & {format(b_shifted, '064x')} = "
+                f"{format(result, '064x')}"
+            )
 
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
         state.set_mlz_flags(self.flag_group, result)
 
 
 class BNOR(ACCInsn):
-    insn = insn_for_mnemonic('bn.or', 6)
+    insn = insn_for_mnemonic("bn.or", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1380,23 +1401,25 @@ class BNOR(ACCInsn):
         result = a | b_shifted
 
         if DEBUG_ARITH:
-            eprint(f"bn.or {format(a,'064x')} & {format(b_shifted, '064x')} = "
-                   f"{format(result, '064x')}")
+            eprint(
+                f"bn.or {format(a, '064x')} & {format(b_shifted, '064x')} = "
+                f"{format(result, '064x')}"
+            )
 
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
         state.set_mlz_flags(self.flag_group, result)
 
 
 class BNNOT(ACCInsn):
-    insn = insn_for_mnemonic('bn.not', 5)
+    insn = insn_for_mnemonic("bn.not", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs = op_vals['wrs']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs = op_vals["wrs"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs).read_unsigned()
@@ -1408,16 +1431,16 @@ class BNNOT(ACCInsn):
 
 
 class BNXOR(ACCInsn):
-    insn = insn_for_mnemonic('bn.xor', 6)
+    insn = insn_for_mnemonic("bn.xor", 6)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1426,21 +1449,23 @@ class BNXOR(ACCInsn):
 
         result = a ^ b_shifted
         if DEBUG_ARITH:
-            eprint(f"bn.xor 0x{format(a, '064x')} ^ 0x{format(b_shifted, '064x')} = "
-                   f"{format(a^b, '064x')} = {format(result, '064x')}")
+            eprint(
+                f"bn.xor 0x{format(a, '064x')} ^ 0x{format(b_shifted, '064x')} = "
+                f"{format(a ^ b, '064x')} = {format(result, '064x')}"
+            )
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
         state.set_mlz_flags(self.flag_group, result)
 
 
 class BNRSHI(ACCInsn):
-    insn = insn_for_mnemonic('bn.rshi', 4)
+    insn = insn_for_mnemonic("bn.rshi", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.imm = op_vals['imm']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.imm = op_vals["imm"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1453,15 +1478,15 @@ class BNRSHI(ACCInsn):
 
 
 class BNSHV(ACCInsn):
-    insn = insn_for_mnemonic('bn.shv', 5)
+    insn = insn_for_mnemonic("bn.shv", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.type = op_vals['type']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bits = op_vals['shift_bits']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.type = op_vals["type"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bits = op_vals["shift_bits"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -1484,15 +1509,15 @@ class BNSHV(ACCInsn):
 
 
 class BNSEL(ACCInsn):
-    insn = insn_for_mnemonic('bn.sel', 5)
+    insn = insn_for_mnemonic("bn.sel", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.flag_group = op_vals['flag_group']
-        self.flag = op_vals['flag']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.flag_group = op_vals["flag_group"]
+        self.flag = op_vals["flag"]
 
     def execute(self, state: ACCState) -> None:
         flag_is_set = state.csrs.flags[self.flag_group].get_by_idx(self.flag)
@@ -1504,15 +1529,15 @@ class BNSEL(ACCInsn):
 
 
 class BNCMP(ACCInsn):
-    insn = insn_for_mnemonic('bn.cmp', 5)
+    insn = insn_for_mnemonic("bn.cmp", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1526,23 +1551,25 @@ class BNCMP(ACCInsn):
         flags = FlagReg.mlz_for_result(carry_flag, masked_result)
 
         if DEBUG_ARITH:
-            eprint(f"bn.cmp {format(a, '064x')}, {format(b_shifted, '064x')} = "
-                   f"{format(full_result, '064x')}")
+            eprint(
+                f"bn.cmp {format(a, '064x')}, {format(b_shifted, '064x')} = "
+                f"{format(full_result, '064x')}"
+            )
             eprint(f"\tCarry: {carry_flag}")
 
         state.set_flags(self.flag_group, flags)
 
 
 class BNCMPB(ACCInsn):
-    insn = insn_for_mnemonic('bn.cmpb', 5)
+    insn = insn_for_mnemonic("bn.cmpb", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.shift_type = op_vals['shift_type']
-        self.shift_bytes = op_vals['shift_bits'] // 8
-        self.flag_group = op_vals['flag_group']
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.shift_type = op_vals["shift_type"]
+        self.shift_bytes = op_vals["shift_bits"] // 8
+        self.flag_group = op_vals["flag_group"]
 
     def execute(self, state: ACCState) -> None:
         a = state.wdrs.get_reg(self.wrs1).read_unsigned()
@@ -1560,15 +1587,15 @@ class BNCMPB(ACCInsn):
 
 
 class BNLID(ACCInsn):
-    insn = insn_for_mnemonic('bn.lid', 5)
+    insn = insn_for_mnemonic("bn.lid", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.grd_inc = op_vals['grd_inc']
-        self.offset = op_vals['offset']
-        self.grs1 = op_vals['grs1']
-        self.grs1_inc = op_vals['grs1_inc']
+        self.grd = op_vals["grd"]
+        self.grd_inc = op_vals["grd_inc"]
+        self.offset = op_vals["offset"]
+        self.grs1 = op_vals["grs1"]
+        self.grs1_inc = op_vals["grs1_inc"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         # BN.LID executes over two cycles. On the first cycle, we read the base
@@ -1605,7 +1632,7 @@ class BNLID(ACCInsn):
         if saw_err:
             return None
 
-        wrd = grd_val & 0x1f
+        wrd = grd_val & 0x1F
         value = state.dmem.load_u256(addr)
 
         if self.grd_inc:
@@ -1631,15 +1658,15 @@ class BNLID(ACCInsn):
 
 
 class BNSID(ACCInsn):
-    insn = insn_for_mnemonic('bn.sid', 5)
+    insn = insn_for_mnemonic("bn.sid", 5)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grs2 = op_vals['grs2']
-        self.grs2_inc = op_vals['grs2_inc']
-        self.offset = op_vals['offset']
-        self.grs1 = op_vals['grs1']
-        self.grs1_inc = op_vals['grs1_inc']
+        self.grs2 = op_vals["grs2"]
+        self.grs2_inc = op_vals["grs2_inc"]
+        self.offset = op_vals["offset"]
+        self.grs1 = op_vals["grs1"]
+        self.grs1_inc = op_vals["grs1_inc"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         if self.grs1_inc and self.grs2_inc:
@@ -1681,7 +1708,7 @@ class BNSID(ACCInsn):
 
         yield None
 
-        wrs = grs2_val & 0x1f
+        wrs = grs2_val & 0x1F
         wrs_val = state.wdrs.get_reg(wrs).read_unsigned()
         if DEBUG_MEM:
             print(f"\t {format(wrs_val, '064x')}", file=sys.stderr)
@@ -1690,14 +1717,14 @@ class BNSID(ACCInsn):
 
 
 class BNLD(ACCInsn):
-    insn = insn_for_mnemonic('bn.ld', 4)
+    insn = insn_for_mnemonic("bn.ld", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.offset = op_vals['offset']
-        self.grs = op_vals['grs']
-        self.grs_inc = op_vals['grs_inc']
+        self.wrd = op_vals["wrd"]
+        self.offset = op_vals["offset"]
+        self.grs = op_vals["grs"]
+        self.grs_inc = op_vals["grs_inc"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         # BN.LD executes over two cycles. On the first cycle, we read the base
@@ -1746,14 +1773,14 @@ class BNLD(ACCInsn):
 
 
 class BNSD(ACCInsn):
-    insn = insn_for_mnemonic('bn.sd', 4)
+    insn = insn_for_mnemonic("bn.sd", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrs = op_vals['wrs']
-        self.offset = op_vals['offset']
-        self.grs = op_vals['grs']
-        self.grs_inc = op_vals['grs_inc']
+        self.wrs = op_vals["wrs"]
+        self.offset = op_vals["offset"]
+        self.grs = op_vals["grs"]
+        self.grs_inc = op_vals["grs_inc"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         grs_val = state.gprs.get_reg(self.grs).read_unsigned()
@@ -1789,12 +1816,12 @@ class BNSD(ACCInsn):
 
 
 class BNMOV(ACCInsn):
-    insn = insn_for_mnemonic('bn.mov', 2)
+    insn = insn_for_mnemonic("bn.mov", 2)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs = op_vals['wrs']
+        self.wrd = op_vals["wrd"]
+        self.wrs = op_vals["wrs"]
 
     def execute(self, state: ACCState) -> None:
         value = state.wdrs.get_reg(self.wrs).read_unsigned()
@@ -1802,14 +1829,14 @@ class BNMOV(ACCInsn):
 
 
 class BNMOVR(ACCInsn):
-    insn = insn_for_mnemonic('bn.movr', 4)
+    insn = insn_for_mnemonic("bn.movr", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.grd = op_vals['grd']
-        self.grd_inc = op_vals['grd_inc']
-        self.grs = op_vals['grs']
-        self.grs_inc = op_vals['grs_inc']
+        self.grd = op_vals["grd"]
+        self.grd_inc = op_vals["grd_inc"]
+        self.grs = op_vals["grs"]
+        self.grs_inc = op_vals["grs_inc"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         if DEBUG_ARITH:
@@ -1841,8 +1868,8 @@ class BNMOVR(ACCInsn):
         if saw_err:
             return None
 
-        wrd = grd_val & 0x1f
-        wrs = grs_val & 0x1f
+        wrd = grd_val & 0x1F
+        wrs = grs_val & 0x1F
 
         if self.grd_inc:
             new_grd_val = grd_val + 1
@@ -1860,12 +1887,12 @@ class BNMOVR(ACCInsn):
 
 
 class BNWSRR(ACCInsn):
-    insn = insn_for_mnemonic('bn.wsrr', 2)
+    insn = insn_for_mnemonic("bn.wsrr", 2)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wsr = op_vals['wsr']
+        self.wrd = op_vals["wrd"]
+        self.wsr = op_vals["wsr"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         # The first, and possibly only, cycle of execution.
@@ -1918,12 +1945,12 @@ class BNWSRR(ACCInsn):
 
 
 class BNWSRW(ACCInsn):
-    insn = insn_for_mnemonic('bn.wsrw', 2)
+    insn = insn_for_mnemonic("bn.wsrw", 2)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wsr = op_vals['wsr']
-        self.wrs = op_vals['wrs']
+        self.wsr = op_vals["wsr"]
+        self.wrs = op_vals["wrs"]
 
     def execute(self, state: ACCState) -> Optional[Iterator[None]]:
         if DEBUG_KMAC:
@@ -1941,9 +1968,9 @@ class BNWSRW(ACCInsn):
                     eprint("\tBNWSRW to KMAC_MSG0 stall")
                 # The following write will cause a deadlock by a full fifo
                 if (
-                    not state.wsrs.KMAC_MSG1._pending_write_to_app_intf and
-                    state.kmac.app_intf_fifo1_ready() and
-                    state.kmac._masked_mode
+                    not state.wsrs.KMAC_MSG1._pending_write_to_app_intf
+                    and state.kmac.app_intf_fifo1_ready()
+                    and state.kmac._masked_mode
                 ):
                     state.stop_at_end_of_cycle(ErrBits.KMAC_FATAL_ERROR)
                     return None
@@ -1960,8 +1987,8 @@ class BNWSRW(ACCInsn):
                     eprint("\tBNWSRW to KMAC_MSG1 stall")
                 # The following write will cause a deadlock by a full fifo
                 if (
-                    not state.wsrs.KMAC_MSG0._pending_write_to_app_intf and
-                    state.kmac.app_intf_fifo0_ready()
+                    not state.wsrs.KMAC_MSG0._pending_write_to_app_intf
+                    and state.kmac.app_intf_fifo0_ready()
                 ):
                     state.stop_at_end_of_cycle(ErrBits.KMAC_FATAL_ERROR)
                     return None
@@ -1974,14 +2001,14 @@ class BNWSRW(ACCInsn):
 
 
 class BNTRN(ACCInsn):
-    insn = insn_for_mnemonic('bn.trn', 4)
+    insn = insn_for_mnemonic("bn.trn", 4)
 
     def __init__(self, raw: int, op_vals: Dict[str, int]):
         super().__init__(raw, op_vals)
-        self.wrd = op_vals['wrd']
-        self.wrs1 = op_vals['wrs1']
-        self.wrs2 = op_vals['wrs2']
-        self.type = op_vals['type']
+        self.wrd = op_vals["wrd"]
+        self.wrs1 = op_vals["wrs1"]
+        self.wrs2 = op_vals["wrs2"]
+        self.type = op_vals["type"]
 
     def execute(self, state: ACCState) -> None:
         if not state.EN_PQC:
@@ -2014,31 +2041,70 @@ class BNTRN(ACCInsn):
             result = (result << size) | ai
 
         result = result & ((1 << 256) - 1)
-        if (DEBUG_ARITH):
-            eprint(f"trn: {format(a,'064x')}, {format(b,'064x')}, {format(result, '064x')}")
+        if DEBUG_ARITH:
+            eprint(f"trn: {format(a, '064x')}, {format(b, '064x')}, {format(result, '064x')}")
         state.wdrs.get_reg(self.wrd).write_unsigned(result)
 
 
 INSN_CLASSES = [
-    ADD, ADDI, LUI, SUB, SLL, SLLI, SRL, SRLI, SRA, SRAI,
-    AND, ANDI, OR, ORI, XOR, XORI,
-    LW, SW,
-    BEQ, BNE, JAL, JALR,
-    CSRRS, CSRRW,
+    ADD,
+    ADDI,
+    LUI,
+    SUB,
+    SLL,
+    SLLI,
+    SRL,
+    SRLI,
+    SRA,
+    SRAI,
+    AND,
+    ANDI,
+    OR,
+    ORI,
+    XOR,
+    XORI,
+    LW,
+    SW,
+    BEQ,
+    BNE,
+    JAL,
+    JALR,
+    CSRRS,
+    CSRRW,
     ECALL,
-    LOOP, LOOPI,
-
-    BNADD, BNADDC, BNADDI, BNADDM, BNADDV,
-    BNMULV, BNMULVL,
-    BNMULQACC, BNMULQACCWO, BNMULQACCSO,
-    BNSUB, BNSUBB, BNSUBI, BNSUBM, BNSUBV,
-    BNAND, BNOR, BNNOT, BNXOR,
+    LOOP,
+    LOOPI,
+    BNADD,
+    BNADDC,
+    BNADDI,
+    BNADDM,
+    BNADDV,
+    BNMULV,
+    BNMULVL,
+    BNMULQACC,
+    BNMULQACCWO,
+    BNMULQACCSO,
+    BNSUB,
+    BNSUBB,
+    BNSUBI,
+    BNSUBM,
+    BNSUBV,
+    BNAND,
+    BNOR,
+    BNNOT,
+    BNXOR,
     BNSHV,
     BNRSHI,
     BNSEL,
-    BNCMP, BNCMPB,
-    BNLID, BNSID,
-    BNLD, BNSD,
-    BNMOV, BNMOVR, BNTRN,
-    BNWSRR, BNWSRW
+    BNCMP,
+    BNCMPB,
+    BNLID,
+    BNSID,
+    BNLD,
+    BNSD,
+    BNMOV,
+    BNMOVR,
+    BNTRN,
+    BNWSRR,
+    BNWSRW,
 ]

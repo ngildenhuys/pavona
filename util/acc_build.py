@@ -50,17 +50,17 @@ from elftools.elf.elffile import ELFFile, SymbolTableSection  # type: ignore
 
 
 def cmd_to_str(cmd: List[str]) -> str:
-    return ' '.join([shlex.quote(str(a)) for a in cmd])
+    return " ".join([shlex.quote(str(a)) for a in cmd])
 
 
 def run_cmd(args, display_cmd=None):
-    '''Run the command in args.
+    """Run the command in args.
 
     If display_cmd is not None, it should be a string that is printed instead
     of the actual arguments that ran (for hiding the details of temporary
     files).
 
-    '''
+    """
     str_args = [str(a) for a in args]
     info_msg = cmd_to_str(str_args) if display_cmd is None else display_cmd
     log.info(info_msg)
@@ -69,7 +69,7 @@ def run_cmd(args, display_cmd=None):
 
 
 def run_tool(tool, out_file: Path, args) -> None:
-    '''Run tool to produce out_file (using an '-o' argument)
+    """Run tool to produce out_file (using an '-o' argument)
 
     This works by writing to a temporary file (in the same directory) and then
     atomically replacing any existing destination file when done. This is
@@ -77,17 +77,14 @@ def run_tool(tool, out_file: Path, args) -> None:
     same files in parallel (this was a requirement of our old Meson-based
     infrastructure; it may not be needed now that we use Bazel).
 
-    '''
+    """
     out_dir, out_base = os.path.split(out_file)
-    tmpfile = tempfile.NamedTemporaryFile(prefix=out_base,
-                                          dir=out_dir,
-                                          delete=False)
+    tmpfile = tempfile.NamedTemporaryFile(prefix=out_base, dir=out_dir, delete=False)
     try:
         if type(tool) is str:
-            run_cmd([tool, '-o', tmpfile.name] + args,
-                    cmd_to_str([tool, '-o', out_file] + args))
+            run_cmd([tool, "-o", tmpfile.name] + args, cmd_to_str([tool, "-o", out_file] + args))
         else:
-            tool(['', '-o', tmpfile.name] + list(map(str, args)))
+            tool(["", "-o", tmpfile.name] + list(map(str, args)))
 
         # If we get here, the tool ran successfully, producing the output file.
         # Use os.replace to rename appropriately.
@@ -107,33 +104,31 @@ def call_acc_as(src_file: Path, out_file: Path):
     run_tool(acc_as.main, out_file, [src_file])
 
 
-def call_acc_ld(src_files: List[Path], out_file: Path,
-                linker_script: Optional[Path]):
+def call_acc_ld(src_files: List[Path], out_file: Path, linker_script: Optional[Path]):
 
     # ld.lld lacks the `--gc-keep-exported` flag from GNU ld. Instead, we add a
     # `KEEP` annotation to the `.data` contents in the ACC linker script to
     # ensure that exported symbols are not optimized out, which would cause
     # `undefined symbol` errors during LTO when linking against Ibex binaries.
-    args = ['-gc-sections']
+    args = ["-gc-sections"]
     if linker_script:
-        args += ['-T', linker_script]
+        args += ["-T", linker_script]
     args += src_files
     run_tool(acc_ld.main, out_file, args)
 
 
 def call_rv32_objcopy(args: List[str]):
-    rv32_tool_objcopy = os.environ.get('RV32_TOOL_OBJCOPY',
-                                       'riscv32-unknown-elf-objcopy')
+    rv32_tool_objcopy = os.environ.get("RV32_TOOL_OBJCOPY", "riscv32-unknown-elf-objcopy")
     run_cmd([rv32_tool_objcopy] + args)
 
 
 def call_rv32_ar(args: List[str]):
-    rv32_tool_ar = os.environ.get('RV32_TOOL_AR', 'riscv32-unknown-elf-ar')
+    rv32_tool_ar = os.environ.get("RV32_TOOL_AR", "riscv32-unknown-elf-ar")
     run_cmd([rv32_tool_ar] + args)
 
 
 def get_app_checksum(elf_path: str) -> int:
-    '''Get the CRC32 checksum of an ACC app.
+    """Get the CRC32 checksum of an ACC app.
 
     The checksum is computed over first the `.text` (IMEM) section, then the
     `.data` section, in order. Each 32-bit word of IMEM or DMEM becomes a
@@ -141,65 +136,72 @@ def get_app_checksum(elf_path: str) -> int:
     the value is for IMEM or DMEM, `addr` is the word-offset within ACC's
     memory zero-extended to 15 bits. The checksum is computed over this value
     in little-endian order.
-    '''
-    with open(elf_path, 'rb') as elf:
+    """
+    with open(elf_path, "rb") as elf:
         elf_file = ELFFile(elf)
-        imem = elf_file.get_section_by_name('.text').data()
-        data = elf_file.get_section_by_name('.data').data()
+        imem = elf_file.get_section_by_name(".text").data()
+        data = elf_file.get_section_by_name(".data").data()
 
         # Compute the checksum over the IMEM.
         checksum = 0
         for i in range(0, len(imem), 4):
-            checksum = binascii.crc32(imem[i:i + 4], checksum)
+            checksum = binascii.crc32(imem[i : i + 4], checksum)
             location = (1 << 15) | (i // 4)
-            location_bytes = int.to_bytes(location, length=2, byteorder='little')
+            location_bytes = int.to_bytes(location, length=2, byteorder="little")
             checksum = binascii.crc32(location_bytes, checksum)
 
         # The starting offset for the data section might not be zero, so pull
         # it from the symbol table.
-        symtab = elf_file.get_section_by_name('.symtab')
-        data_start_symbols = symtab.get_symbol_by_name('_dmem_data_start')
+        symtab = elf_file.get_section_by_name(".symtab")
+        data_start_symbols = symtab.get_symbol_by_name("_dmem_data_start")
         if len(data_start_symbols) != 1:
-            raise ValueError(f'Expected one symbol for `_dmem_data_start`, '
-                             f'got {len(data_start_symbols)}: '
-                             f'{data_start_symbols}')
-        data_start_offset = data_start_symbols[0]['st_value']
-        if (data_start_offset % 4 != 0):
+            raise ValueError(
+                f"Expected one symbol for `_dmem_data_start`, "
+                f"got {len(data_start_symbols)}: "
+                f"{data_start_symbols}"
+            )
+        data_start_offset = data_start_symbols[0]["st_value"]
+        if data_start_offset % 4 != 0:
             # If `.data` is not word-aligned, it will cause problems for Ibex
             # loading the app.
-            raise ValueError('Start of `.data` section is not word-aligned.')
+            raise ValueError("Start of `.data` section is not word-aligned.")
 
         # Continue computing the checksum over `.data`.
         for i in range(0, len(data), 4):
-            checksum = binascii.crc32(data[i:i + 4], checksum)
-            location = ((data_start_offset + i) // 4)
-            location_bytes = int.to_bytes(location, length=2, byteorder='little')
+            checksum = binascii.crc32(data[i : i + 4], checksum)
+            location = (data_start_offset + i) // 4
+            location_bytes = int.to_bytes(location, length=2, byteorder="little")
             checksum = binascii.crc32(location_bytes, checksum)
 
     return checksum
 
 
 def get_acc_syms(elf_path: str) -> List[Tuple[str, int]]:
-    '''Get externally-visible symbols from an ELF
+    """Get externally-visible symbols from an ELF
 
     Symbols are returned as a list of triples: (name, address). This
     discards locals and also anything in .scratchpad, since those addresses
     aren't bus-accessible.
-    '''
+    """
     with tempfile.TemporaryDirectory() as tmpdir:
         # First, run objcopy to discard local symbols and the .scratchpad
         # section.
-        syms_path = os.path.join(tmpdir, 'syms.elf')
-        call_rv32_objcopy([
-            '-O', 'elf32-littleriscv', '--remove-section=.scratchpad',
-            # ACC isn't a standard RISC-V architecture, remove .riscv.attributes.
-            '--remove-section=.riscv.attributes',
-        ] + [elf_path, syms_path])
+        syms_path = os.path.join(tmpdir, "syms.elf")
+        call_rv32_objcopy(
+            [
+                "-O",
+                "elf32-littleriscv",
+                "--remove-section=.scratchpad",
+                # ACC isn't a standard RISC-V architecture, remove .riscv.attributes.
+                "--remove-section=.riscv.attributes",
+            ]
+            + [elf_path, syms_path]
+        )
 
         # Load the file and use elftools to grab any symbol table
-        with open(syms_path, 'rb') as syms_fd:
+        with open(syms_path, "rb") as syms_fd:
             syms_file = ELFFile(syms_fd)
-            symtab = syms_file.get_section_by_name('.symtab')
+            symtab = syms_file.get_section_by_name(".symtab")
             if symtab is None or not isinstance(symtab, SymbolTableSection):
                 # No symbol table found or we did find a section called
                 # .symtab, but it isn't actually a symbol table (huh?!). Give
@@ -208,9 +210,9 @@ def get_acc_syms(elf_path: str) -> List[Tuple[str, int]]:
 
             ret = []
             for sym in symtab.iter_symbols():
-                if sym['st_info']['bind'] != 'STB_GLOBAL':
+                if sym["st_info"]["bind"] != "STB_GLOBAL":
                     continue
-                addr = sym['st_value']
+                addr = sym["st_value"]
                 assert isinstance(addr, int)
                 ret.append((sym.name, addr))
             return ret
@@ -218,40 +220,40 @@ def get_acc_syms(elf_path: str) -> List[Tuple[str, int]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('--out-dir',
-                        '-o',
-                        required=False,
-                        default=".",
-                        help="Output directory (default: %(default)s)")
-    parser.add_argument('--archive',
-                        '-a',
-                        action='store_true',
-                        help='Archive the rv32embed.o file into a library.')
-    parser.add_argument('--verbose',
-                        '-v',
-                        action='store_true',
-                        help='Print commands that are executed.')
-    parser.add_argument('--script',
-                        '-T',
-                        dest="linker_script",
-                        required=False,
-                        help="Linker script")
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
-        '--app-name',
-        '-n',
+        "--out-dir",
+        "-o",
+        required=False,
+        default=".",
+        help="Output directory (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--archive", "-a", action="store_true", help="Archive the rv32embed.o file into a library."
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Print commands that are executed."
+    )
+    parser.add_argument(
+        "--script", "-T", dest="linker_script", required=False, help="Linker script"
+    )
+    parser.add_argument(
+        "--app-name",
+        "-n",
         required=False,
         help="Name of the application, used as basename for the output. "
-        "Default: basename of the first source file.")
+        "Default: basename of the first source file.",
+    )
     parser.add_argument(
-        '--no-assembler',
-        '-x',
-        action='store_true',
+        "--no-assembler",
+        "-x",
+        action="store_true",
         required=False,
         help="Use when input files have already been assembled into object "
-        "files and only linking is required.")
-    parser.add_argument('src_files', nargs='+', type=str, metavar='SRC_FILE')
+        "files and only linking is required.",
+    )
+    parser.add_argument("src_files", nargs="+", type=str, metavar="SRC_FILE")
     args = parser.parse_args()
 
     log_level = log.INFO if args.verbose else log.WARNING
@@ -268,10 +270,10 @@ def main() -> int:
 
     obj_files = []
     for f in src_files:
-        if f.suffix == '.o':
+        if f.suffix == ".o":
             obj_files.append(f)
         else:
-            obj_files.append(out_dir / f.with_suffix('.o').name)
+            obj_files.append(out_dir / f.with_suffix(".o").name)
 
     app_name = args.app_name or str(src_files[0].stem)
     archive = args.archive
@@ -281,7 +283,7 @@ def main() -> int:
             for src_file, obj_file in zip(src_files, obj_files):
                 call_acc_as(src_file, obj_file)
 
-        out_elf = out_dir / (app_name + '.elf')
+        out_elf = out_dir / (app_name + ".elf")
         call_acc_ld(obj_files, out_elf, linker_script=args.linker_script)
 
         # out_elf is a fully-linked ACC binary, but we want to be able to use
@@ -307,11 +309,12 @@ def main() -> int:
         # means constructing an enormous objcopy command line :-/ If we run out
         # of space, we might have to use elftools to inject the addresses after
         # the objcopy.
-        host_side_pfx = '_acc_local_app_{}_'.format(app_name)
-        acc_side_pfx = '_acc_remote_app_{}_'.format(app_name)
-        out_embedded_obj = out_dir / (app_name + '.rv32embed.o')
+        host_side_pfx = "_acc_local_app_{}_".format(app_name)
+        acc_side_pfx = "_acc_remote_app_{}_".format(app_name)
+        out_embedded_obj = out_dir / (app_name + ".rv32embed.o")
         args = [
-            '-O', 'elf32-littleriscv',
+            "-O",
+            "elf32-littleriscv",
             # Due to a bug in `llvm-objcopy`
             # (https://github.com/llvm/llvm-project/issues/48694), the
             # `--set-section-flags` option does not remove existing section
@@ -321,20 +324,23 @@ def main() -> int:
             # explicitly specify the flags list, which convinces `llvm-objcopy`
             # to remove the `executable` flag from the `.text` section, which we
             # do not want, because it is not executable on Ibex.
-            '--rename-section=.text=.text,alloc,load,readonly',
-            '--set-section-flags=*=alloc,load,readonly',
-            '--remove-section=.scratchpad', '--remove-section=.bss',
-            '--remove-section=.debug*',
-            '--prefix-alloc-sections=.rodata.acc', '--prefix-symbols', host_side_pfx
+            "--rename-section=.text=.text,alloc,load,readonly",
+            "--set-section-flags=*=alloc,load,readonly",
+            "--remove-section=.scratchpad",
+            "--remove-section=.bss",
+            "--remove-section=.debug*",
+            "--prefix-alloc-sections=.rodata.acc",
+            "--prefix-symbols",
+            host_side_pfx,
         ]
         for name, addr in get_acc_syms(out_elf):
-            args += ['--add-symbol', f'{acc_side_pfx}{name}=0x{addr:x}']
+            args += ["--add-symbol", f"{acc_side_pfx}{name}=0x{addr:x}"]
 
         # Compute the CRC32 checksum and add it as a constant. Ibex can use
         # this with the LOAD_CHECKSUM register to ensure the app was loaded
         # correctly.
         checksum = get_app_checksum(out_elf)
-        args += ['--add-symbol', f'{acc_side_pfx}_checksum={checksum:#x}']
+        args += ["--add-symbol", f"{acc_side_pfx}_checksum={checksum:#x}"]
 
         call_rv32_objcopy(args + [out_elf, out_embedded_obj])
 
@@ -344,18 +350,19 @@ def main() -> int:
         # fully-linked executable file. Binutils doesn't want to link with
         # anything of type ET_EXEC (since it usually wouldn't make any sense to
         # do so). Hack the type to be 0x1 (ET_REL), which means an object file.
-        with open(out_embedded_obj, 'r+b') as emb_file:
+        with open(out_embedded_obj, "r+b") as emb_file:
             emb_file.seek(0x10)
-            emb_file.write(b'\1\0')
+            emb_file.write(b"\1\0")
 
         if archive:
-            out_embedded_a = out_dir / (app_name + '.rv32embed.a')
-            call_rv32_ar(['rcs', out_embedded_a, out_embedded_obj])
+            out_embedded_a = out_dir / (app_name + ".rv32embed.a")
+            call_rv32_ar(["rcs", out_embedded_a, out_embedded_obj])
 
     except subprocess.CalledProcessError as e:
         # Show a nicer error message if any of the called programs fail.
-        log.fatal("Command {!r} returned non-zero exit code {}".format(
-            cmd_to_str(e.cmd), e.returncode))
+        log.fatal(
+            "Command {!r} returned non-zero exit code {}".format(cmd_to_str(e.cmd), e.returncode)
+        )
         return 1
 
     return 0

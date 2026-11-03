@@ -21,13 +21,13 @@ def expand_mask(seed: bytes, nonce: int, polyz_bits: int, gamma1: int):
     n_bytes = N_COEFS * polyz_bits // 8
     shake = hashlib.shake_256()
     shake.update(seed)
-    shake.update(nonce.to_bytes(2, 'little'))
+    shake.update(nonce.to_bytes(2, "little"))
     buf = shake.digest(n_bytes)
     out = []
     for i in range(N_COEFS):
         bit = i * polyz_bits
-        b = buf[bit // 8:bit // 8 + 3]
-        v = int.from_bytes(b, 'little')
+        b = buf[bit // 8 : bit // 8 + 3]
+        v = int.from_bytes(b, "little")
         v = (v >> (bit % 8)) & ((1 << polyz_bits) - 1)
         out.append((gamma1 - v) % Q)
     return out
@@ -36,7 +36,7 @@ def expand_mask(seed: bytes, nonce: int, polyz_bits: int, gamma1: int):
 def pack_canonical(vals):
     buf = bytearray()
     for v in vals:
-        buf += v.to_bytes(4, 'little')
+        buf += v.to_bytes(4, "little")
     return bytes(buf)
 
 
@@ -49,8 +49,8 @@ def pack_share_major(seed_shares):
 
 
 def gen_masked_poly_uniform_gamma1_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -64,25 +64,24 @@ def gen_masked_poly_uniform_gamma1_test(
 
         y = expand_mask(rho, nonce, polyz_bits, gamma1)
 
-        suf = 'm{}'.format(mode)
-        inputs['rho_{}'.format(suf)] = pack_share_major([rho_share0, mask])
-        inputs['nonce_{}'.format(suf)] = nonce.to_bytes(4, 'little')
-        inputs['y_{}'.format(suf)] = b'\x00' * (2 * N_COEFS * 4)
-        inputs['r_{}'.format(suf)] = b'\x00' * (N_COEFS * 4)
-        dexp['r_{}'.format(suf)] = pack_canonical(y)
+        suf = "m{}".format(mode)
+        inputs["rho_{}".format(suf)] = pack_share_major([rho_share0, mask])
+        inputs["nonce_{}".format(suf)] = nonce.to_bytes(4, "little")
+        inputs["y_{}".format(suf)] = b"\x00" * (2 * N_COEFS * 4)
+        inputs["r_{}".format(suf)] = b"\x00" * (N_COEFS * 4)
+        dexp["r_{}".format(suf)] = pack_canonical(y)
 
     write_test_data(inputs, data_file)
     write_test_exp({}, exp_file)
     write_test_dexp(dexp, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
-        gen_masked_poly_uniform_gamma1_test(args.seed, args.data, args.exp,
-                                            args.dexp)
+        gen_masked_poly_uniform_gamma1_test(args.seed, args.data, args.exp, args.dexp)

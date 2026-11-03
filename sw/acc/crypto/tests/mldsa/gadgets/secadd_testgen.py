@@ -37,11 +37,11 @@ def gen_one(k):
         xi = 0
         yi = 0
         for j in range(k):
-            xi |= (((x[j] >> i) & 1) << j)
-            yi |= (((y[j] >> i) & 1) << j)
+            xi |= ((x[j] >> i) & 1) << j
+            yi |= ((y[j] >> i) & 1) << j
         ri = (xi + yi) & ((1 << k) - 1)
         for j in range(k):
-            r[j] |= (((ri >> j) & 1) << i)
+            r[j] |= ((ri >> j) & 1) << i
 
     r_bytes = bytes()
     for i in range(k):
@@ -51,9 +51,7 @@ def gen_one(k):
     return xb, yb, rb_bytes, r_bytes
 
 
-def gen_secadd_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+def gen_secadd_test(seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
     # Generate random operands.
     if seed is not None:
         random.seed(seed)
@@ -62,34 +60,39 @@ def gen_secadd_test(
     dexp = {}
     for k in KS:
         xb, yb, rb, r = gen_one(k)
-        inputs['xb{}'.format(k)] = xb
-        inputs['yb{}'.format(k)] = yb
-        inputs['rb{}'.format(k)] = rb
-        dexp['r{}'.format(k)] = r
+        inputs["xb{}".format(k)] = xb
+        inputs["yb{}".format(k)] = yb
+        inputs["rb{}".format(k)] = rb
+        dexp["r{}".format(k)] = r
 
     write_test_data(inputs, data_file)
     write_test_exp({}, exp_file)
     write_test_dexp(dexp, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed',
-                        type=int,
-                        required=False,
-                        help=('Seed value for pseudorandomness.'))
-    parser.add_argument('data',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for input DMEM values.'))
-    parser.add_argument('exp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected register values.'))
-    parser.add_argument('dexp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected DMEM values.'))
+    parser.add_argument(
+        "-s", "--seed", type=int, required=False, help=("Seed value for pseudorandomness.")
+    )
+    parser.add_argument(
+        "data",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for input DMEM values."),
+    )
+    parser.add_argument(
+        "exp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected register values."),
+    )
+    parser.add_argument(
+        "dexp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected DMEM values."),
+    )
     args = parser.parse_args()
 
     with args.data, args.exp, args.dexp:

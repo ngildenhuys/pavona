@@ -43,6 +43,7 @@ class DB(object):
 @dataclass
 class DeviceRecord(object):
     """Class for holding data and routines for device records."""
+
     device_id: str
     sku: str
     provisioning_state: str
@@ -91,7 +92,7 @@ class DeviceRecord(object):
         db.commit()
 
     @staticmethod
-    def query(db: DB, device_id: str) -> 'DeviceRecord':
+    def query(db: DB, device_id: str) -> "DeviceRecord":
         """Queries the database for the record.
 
         Args:
@@ -100,16 +101,14 @@ class DeviceRecord(object):
             The record from the database.
         """
         c = db.try_cursor()
-        c.execute(
-            f"SELECT * FROM {DeviceRecord.table_name()} WHERE device_id=?",
-            (device_id, ))
+        c.execute(f"SELECT * FROM {DeviceRecord.table_name()} WHERE device_id=?", (device_id,))
         record = c.fetchone()
         if record is None:
             return None
         return DeviceRecord(*record)
 
     @staticmethod
-    def query_all(db: DB) -> ['DeviceRecord']:
+    def query_all(db: DB) -> ["DeviceRecord"]:
         """Queries the database for all records.
 
         Args:
@@ -123,7 +122,7 @@ class DeviceRecord(object):
         return [DeviceRecord(*record) for record in records]
 
     @staticmethod
-    def from_dut(dut: ot_dut.OtDut) -> 'DeviceRecord':
+    def from_dut(dut: ot_dut.OtDut) -> "DeviceRecord":
         """Creates a DeviceRecord object from a DUT object.
 
         Args:
@@ -169,7 +168,8 @@ class DeviceRecord(object):
                 self.cp_json,
                 self.ft_json,
                 self.last_update,
-            ))
+            ),
+        )
         db.commit()
 
     def update(self, db: DB):
@@ -182,16 +182,13 @@ class DeviceRecord(object):
 
         c = db.try_cursor()
         keys = DeviceRecord.__annotations__.keys()
-        update_params = [
-            f"{field}=?" for field in keys if field != "device_id"
-        ]
-        update_vals = [
-            getattr(self, field) for field in keys if field != "device_id"
-        ]
+        update_params = [f"{field}=?" for field in keys if field != "device_id"]
+        update_vals = [getattr(self, field) for field in keys if field != "device_id"]
         update_vals.append(self.device_id)
         c.execute(
             f"UPDATE {DeviceRecord.table_name()} SET {', '.join(update_params)} WHERE device_id=?",
-            update_vals)
+            update_vals,
+        )
         db.commit()
 
     def upsert(self, db: DB):

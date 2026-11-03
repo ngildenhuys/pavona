@@ -54,16 +54,11 @@ def confirm():
 
 
 def run(cmd, stdout_logfile, stderr_logfile):
-    out_tee = subprocess.Popen(['/usr/bin/tee', stdout_logfile],
-                               stdin=subprocess.PIPE)
-    err_tee = subprocess.Popen(['/usr/bin/tee', stderr_logfile],
-                               stdin=subprocess.PIPE)
+    out_tee = subprocess.Popen(["/usr/bin/tee", stdout_logfile], stdin=subprocess.PIPE)
+    err_tee = subprocess.Popen(["/usr/bin/tee", stderr_logfile], stdin=subprocess.PIPE)
 
     cmd_list = shlex.split(cmd)
-    res = subprocess.run(cmd_list,
-                         text=True,
-                         stdout=out_tee.stdin,
-                         stderr=err_tee.stdin)
+    res = subprocess.run(cmd_list, text=True, stdout=out_tee.stdin, stderr=err_tee.stdin)
     out_tee.stdin.close()
     err_tee.stdin.close()
     return res
@@ -90,7 +85,7 @@ def resolve_runfile(path):
     # hack to fix up the supplied path.
     REPO = "pavona_pavona"
     if path.startswith("external/"):
-        corrected_path = path[len("external/"):]
+        corrected_path = path[len("external/") :]
     else:
         corrected_path = os.path.join(REPO, path)
 

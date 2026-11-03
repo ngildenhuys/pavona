@@ -52,29 +52,28 @@ def isOverlap(range1: Tuple[int, int], range2: Tuple[int, int]) -> bool:
 
 
 def isNotMinSpacing(range1: Tuple[int, int], range2: Tuple[int, int]) -> bool:
-    return not (range2[0] < range1[0] - MIN_DEVICE_SPACING or
-                range2[0] >= range1[0] + MIN_DEVICE_SPACING)
+    return not (
+        range2[0] < range1[0] - MIN_DEVICE_SPACING or range2[0] >= range1[0] + MIN_DEVICE_SPACING
+    )
 
 
 def isNotAligned(base: int) -> bool:
-    return ((base & (MIN_DEVICE_SPACING - 1)) != 0)
+    return (base & (MIN_DEVICE_SPACING - 1)) != 0
 
 
-def checkAddressOverlap(addr: Tuple[int, int],
-                        ranges: List[Tuple[int, int]]) -> bool:
+def checkAddressOverlap(addr: Tuple[int, int], ranges: List[Tuple[int, int]]) -> bool:
     result = [(hex(x[0]), hex(x[1])) for x in ranges if isOverlap(x, addr)]
     return len(result) != 0
 
 
-def checkAddressSpacing(addr: Tuple[int, int],
-                        ranges: List[Tuple[int, int]]) -> bool:
+def checkAddressSpacing(addr: Tuple[int, int], ranges: List[Tuple[int, int]]) -> bool:
     result = [x for x in ranges if isNotMinSpacing(x, addr)]
     return len(result) != 0
 
 
 # this returns 1 if the size mask overlaps with the address base
 def checkBaseSizeOverlap(addr_base: int, size: int) -> int:
-    return ((size - 1) & addr_base)
+    return (size - 1) & addr_base
 
 
 def get_string_keys(what: str, raw: object) -> List[str]:
@@ -105,47 +104,42 @@ def validate(obj: Dict[Any, Any]) -> Optional[Xbar]:
         raise SystemExit(message)
 
     # collection of all clocks and resets of this xbar
-    xbar.clocks = get_string_keys("clock_connections",
-                                  obj.get("clock_connections", {}))
-    xbar.resets = get_string_keys("reset_connections",
-                                  obj.get("reset_connections", {}))
+    xbar.clocks = get_string_keys("clock_connections", obj.get("clock_connections", {}))
+    xbar.resets = get_string_keys("reset_connections", obj.get("reset_connections", {}))
 
     # Nodes
     for nodeobj in obj["nodes"]:
-
         if checkNameExist(nodeobj["name"], xbar):
             log.error("Duplicated name: %s" % (nodeobj["name"]))
             raise SystemExit("Duplicated name in the configuration")
 
-        clock = nodeobj["clock"].lower() if "clock" in nodeobj.keys(
-        ) else xbar.clock
+        clock = nodeobj["clock"].lower() if "clock" in nodeobj.keys() else xbar.clock
 
-        reset = nodeobj["reset"].lower() if "reset" in nodeobj.keys(
-        ) else xbar.reset
+        reset = nodeobj["reset"].lower() if "reset" in nodeobj.keys() else xbar.reset
 
         if clock not in xbar.clocks:
             log.error(
                 "Clock %s for module %s does not exist in xbar_%s, check xbar hjson"
-                % (clock, nodeobj['name'], obj['name']))
+                % (clock, nodeobj["name"], obj["name"])
+            )
             raise SystemExit("Clock does not exist")
 
         if reset not in xbar.resets:
             log.error(
                 "Reset %s for module %s does not exist in xbar_%s, check xbar hjson"
-                % (reset, nodeobj['name'], obj['name']))
+                % (reset, nodeobj["name"], obj["name"])
+            )
             raise SystemExit("Reset does not exist")
 
-        node = mk_node(typ=nodeobj["type"].lower(),
-                       name=nodeobj["name"].lower(),
-                       clock=clock,
-                       reset=reset)
+        node = mk_node(
+            typ=nodeobj["type"].lower(), name=nodeobj["name"].lower(), clock=clock, reset=reset
+        )
 
         if isinstance(node, Host):
             node.addr_spaces = set()
-            addr_space = nodeobj.get('addr_space')
+            addr_space = nodeobj.get("addr_space")
             if addr_space is None:
-                raise ValueError(f"Node {node.name} has type "
-                                 f"'host' but no addr_space")
+                raise ValueError(f"Node {node.name} has type 'host' but no addr_space")
             else:
                 # This should have been checked because of the 's' typing
                 # defined by the node dictionary
@@ -176,20 +170,23 @@ def validate(obj: Dict[Any, Any]) -> Optional[Xbar]:
                         log.error(
                             "Address bases must be aligned to 0x%x blocks. "
                             "Check the config. Addr(0x%x - 0x%x)."
-                            % (MIN_DEVICE_SPACING, addr_entry[0], addr_entry[1]))
+                            % (MIN_DEVICE_SPACING, addr_entry[0], addr_entry[1])
+                        )
                         raise SystemExit("Base alignment error occurred")
 
                     if checkAddressOverlap(addr_entry, addr_range):
                         log.error(
                             "Address is overlapping. Check the config. Addr(0x%x - 0x%x). "
-                            % (addr_entry[0], addr_entry[1]))
+                            % (addr_entry[0], addr_entry[1])
+                        )
                         raise SystemExit("Address overlapping error occurred")
 
                     if checkAddressSpacing(addr_entry, addr_range):
                         log.error(
                             "Address bases must be spaced at least 0x%x apart. "
                             "Check the config. Addr(0x%x - 0x%x)."
-                            % (MIN_DEVICE_SPACING, addr_entry[0], addr_entry[1]))
+                            % (MIN_DEVICE_SPACING, addr_entry[0], addr_entry[1])
+                        )
                         raise SystemExit("Address overlapping error occurred")
 
                     addr_range.append(addr_entry)

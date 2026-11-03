@@ -5,6 +5,7 @@
 
 Communication with OpenTitan happens over the uJSON command interface.
 """
+
 import json
 import time
 from sw.host.penetrationtests.python.util import common_library
@@ -94,9 +95,7 @@ class OTFISymCrypto:
         }
         self.target.write(json.dumps(input_data).encode("ascii"))
 
-    def handle_cmac(
-        self, data, data_len, key, key_len, iv, cfg, trigger
-    ) -> None:
+    def handle_cmac(self, data, data_len, key, key_len, iv, cfg, trigger) -> None:
         """Call the cryptolib CMAC.
 
         Args:
@@ -156,9 +155,7 @@ class OTFISymCrypto:
         }
         self.target.write(json.dumps(input_data).encode("ascii"))
 
-    def handle_hmac(
-        self, data, data_len, key, key_len, hash_mode, mode, cfg, trigger
-    ) -> None:
+    def handle_hmac(self, data, data_len, key, key_len, hash_mode, mode, cfg, trigger) -> None:
         """Call the cryptolib HMAC.
 
         Args:
@@ -214,9 +211,7 @@ class OTFISymCrypto:
         }
         self.target.write(json.dumps(input_data).encode("ascii"))
 
-    def handle_drbg_generate(
-        self, nonce, nonce_len, data_len, mode, cfg, trigger
-    ) -> None:
+    def handle_drbg_generate(self, nonce, nonce_len, data_len, mode, cfg, trigger) -> None:
         """Call the cryptolib DRBG to generate randomness.
 
         Args:
@@ -240,9 +235,7 @@ class OTFISymCrypto:
         }
         self.target.write(json.dumps(input_data).encode("ascii"))
 
-    def handle_trng_init(
-        self, mode, cfg, trigger
-    ) -> None:
+    def handle_trng_init(self, mode, cfg, trigger) -> None:
         """Call the cryptolib TRNG to init.
 
         Args:
@@ -259,9 +252,7 @@ class OTFISymCrypto:
         }
         self.target.write(json.dumps(input_data).encode("ascii"))
 
-    def handle_trng_generate(
-        self, cfg, trigger
-    ) -> None:
+    def handle_trng_generate(self, cfg, trigger) -> None:
         """Call the cryptolib TRNG to generate randomness.
 
         Args:

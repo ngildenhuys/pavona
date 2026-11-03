@@ -7,7 +7,7 @@ from sw.host.penetrationtests.python.sca.communication.sca_prng_commands import 
 from sw.host.penetrationtests.python.sca.communication.sca_trigger_commands import OTTRIGGER
 
 
-def char_kmac_single(target, iterations, fpga, masking, key, text, reset = False):
+def char_kmac_single(target, iterations, fpga, masking, key, text, reset=False):
     kmacsca = OTKMAC(target)
     if reset:
         target.reset_target()
@@ -35,7 +35,7 @@ def char_kmac_single(target, iterations, fpga, masking, key, text, reset = False
 
 
 def char_kmac_batch_daisy_chain(
-    target, iterations, num_segments, fpga, masking, key, text, reset = False
+    target, iterations, num_segments, fpga, masking, key, text, reset=False
 ):
     kmacsca = OTKMAC(target)
     if reset:
@@ -61,7 +61,7 @@ def char_kmac_batch_daisy_chain(
     return response
 
 
-def char_kmac_batch(target, iterations, num_segments, fpga, masking, key, reset = False):
+def char_kmac_batch(target, iterations, num_segments, fpga, masking, key, reset=False):
     kmacsca = OTKMAC(target)
     if reset:
         target.reset_target()

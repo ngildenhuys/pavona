@@ -23,12 +23,10 @@ def parse_test_vectors(raw_data):
         key_len = group["keySize"]
 
         if group["tagSize"] not in SUPPORTED_TAG_LENS:
-            logging.info("Skipped group: unsupported tag size %d bits",
-                         group["tagSize"])
+            logging.info("Skipped group: unsupported tag size %d bits", group["tagSize"])
             continue
         if group["ivSize"] not in SUPPORTED_IV_LENS:
-            logging.info("Skipped group: unsupported IV size %d bits",
-                         group["ivSize"])
+            logging.info("Skipped group: unsupported IV size %d bits", group["ivSize"])
             continue
 
         for test in group["tests"]:
@@ -37,16 +35,17 @@ def parse_test_vectors(raw_data):
             ciphertext = list(bytes.fromhex(test["ct"]))
 
             if len(aad) >= MAX_MSG_BYTES:
-                logging.info("Skipped tcId %d: AAD too long (%d bytes)",
-                             test["tcId"], len(aad))
+                logging.info("Skipped tcId %d: AAD too long (%d bytes)", test["tcId"], len(aad))
                 continue
             if len(plaintext) >= MAX_MSG_BYTES:
-                logging.info("Skipped tcId %d: plaintext too long (%d bytes)",
-                             test["tcId"], len(plaintext))
+                logging.info(
+                    "Skipped tcId %d: plaintext too long (%d bytes)", test["tcId"], len(plaintext)
+                )
                 continue
             if len(ciphertext) >= MAX_MSG_BYTES:
-                logging.info("Skipped tcId %d: ciphertext too long (%d bytes)",
-                             test["tcId"], len(ciphertext))
+                logging.info(
+                    "Skipped tcId %d: ciphertext too long (%d bytes)", test["tcId"], len(ciphertext)
+                )
                 continue
 
             # "invalid" vectors have tampered ciphertext or tag,
@@ -79,7 +78,8 @@ def parse_test_vectors(raw_data):
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Parsing utility for Wycheproof AES-GCM testvectors.")
+        description="Parsing utility for Wycheproof AES-GCM testvectors."
+    )
     parser.add_argument(
         "--src",
         type=argparse.FileType("r"),

@@ -12,43 +12,55 @@ from mako.template import Template
 from shared.control_flow import program_control_graph
 from shared.decode import decode_elf
 from shared.instruction_count_range import program_insn_count_range
-'''
+
+"""
 Compute the range of instruction counts for each ACC program mode, and
 generate a header file with these ranges.
-'''
+"""
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=(
-        'Get the range of possible instruction counts for a top-level '
-        'ACC program for various provided modes, storing the results in an '
-        'auto-generated header. At runtime, one can read the instruction '
-        'count register and make sure the values fall within the correct '
-        'range to protect against certain fault injection attacks.'))
-    parser.add_argument('--elf',
-                        '-e',
-                        metavar='FILE',
-                        required=True,
-                        type=str,
-                        help='Read this file to determine instruction counts.')
-    parser.add_argument('--hjsonfile',
-                        '-j',
-                        metavar='FILE',
-                        required=True,
-                        type=argparse.FileType('r'),
-                        help='Read HJSON mode descriptions from this file')
-    parser.add_argument('--template',
-                        '-t',
-                        metavar='FILE',
-                        required=True,
-                        type=argparse.FileType('r'),
-                        help='Read header template from this file.')
-    parser.add_argument('--headerfile',
-                        '-o',
-                        metavar='FILE',
-                        required=True,
-                        type=argparse.FileType('w'),
-                        help='Write output to this file.')
+    parser = argparse.ArgumentParser(
+        description=(
+            "Get the range of possible instruction counts for a top-level "
+            "ACC program for various provided modes, storing the results in an "
+            "auto-generated header. At runtime, one can read the instruction "
+            "count register and make sure the values fall within the correct "
+            "range to protect against certain fault injection attacks."
+        )
+    )
+    parser.add_argument(
+        "--elf",
+        "-e",
+        metavar="FILE",
+        required=True,
+        type=str,
+        help="Read this file to determine instruction counts.",
+    )
+    parser.add_argument(
+        "--hjsonfile",
+        "-j",
+        metavar="FILE",
+        required=True,
+        type=argparse.FileType("r"),
+        help="Read HJSON mode descriptions from this file",
+    )
+    parser.add_argument(
+        "--template",
+        "-t",
+        metavar="FILE",
+        required=True,
+        type=argparse.FileType("r"),
+        help="Read header template from this file.",
+    )
+    parser.add_argument(
+        "--headerfile",
+        "-o",
+        metavar="FILE",
+        required=True,
+        type=argparse.FileType("w"),
+        help="Write output to this file.",
+    )
 
     args = parser.parse_args()
 
@@ -68,18 +80,17 @@ def main() -> int:
     for mode in modes:
         exclude_symbols = mode.get("exclude_symbols", [])
         min_count, max_count = program_insn_count_range(
-            program, mode.get("symbol"), exclude_labels=exclude_symbols,
-            program_graph=program_graph)
+            program, mode.get("symbol"), exclude_labels=exclude_symbols, program_graph=program_graph
+        )
         insn_counts.append((mode, min_count, max_count))
 
     # Write out the resulting filled header template.
-    args.headerfile.write(
-        Template(args.template.read()).render(counts=insn_counts))
+    args.headerfile.write(Template(args.template.read()).render(counts=insn_counts))
     args.headerfile.close()
     args.template.close()
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

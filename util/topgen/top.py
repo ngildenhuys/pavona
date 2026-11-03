@@ -1,7 +1,7 @@
 # Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-'''Code representing the entire chip for reggen'''
+"""Code representing the entire chip for reggen"""
 
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -15,20 +15,27 @@ _Triple = Tuple[int, str, IpBlock]
 
 
 class Top:
-    '''An object representing the entire chip, as seen by reggen.
+    """An object representing the entire chip, as seen by reggen.
 
     This contains instances of some blocks (possibly multiple instances of each
     block), starting at well-defined base addresses. It may also contain some
     windows. These are memories that don't have their own comportable IP (so
     aren't defined in a block), but still take up address space.
 
-    '''
+    """
 
-    def __init__(self, name: str, regwidth: int, addr_spaces: Set[str],
-                 blocks: Dict[str, IpBlock], instances: Dict[str, str],
-                 if_addrs: Dict[Tuple[str, Optional[str]], Dict[str, int]],
-                 windows: List[Window], attrs: Dict[str, str]):
-        '''Class initializer.
+    def __init__(
+        self,
+        name: str,
+        regwidth: int,
+        addr_spaces: Set[str],
+        blocks: Dict[str, IpBlock],
+        instances: Dict[str, str],
+        if_addrs: Dict[Tuple[str, Optional[str]], Dict[str, int]],
+        windows: List[Window],
+        attrs: Dict[str, str],
+    ):
+        """Class initializer.
 
         regwidth is the width of the registers (which must match for all the
         blocks) in bits.
@@ -49,7 +56,7 @@ class Top:
 
         attrs is a map from instance name to attr field of the block
 
-        '''
+        """
 
         self.name = name
         self.regwidth = regwidth
@@ -64,8 +71,7 @@ class Top:
         # Generate one list of base addresses and objects (with each object
         # either a block name and interface name or a window). While we're at
         # it, construct inst_to_block_name and if_addrs.
-        merged = [
-        ]  # type: List[Tuple[Dict[str, int], Union[_IFName, Window]]]
+        merged = []  # type: List[Tuple[Dict[str, int], Union[_IFName, Window]]]
         for full_if_name, addrs in if_addrs.items():
             merged.append((addrs, full_if_name))
 

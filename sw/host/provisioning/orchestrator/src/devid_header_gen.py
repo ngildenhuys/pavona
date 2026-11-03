@@ -66,13 +66,12 @@ def main(args_in):
     for _ in range(4):
         devid_list.append(util.format_hex(device_id_int & _MAX_UINT32, 8))
         device_id_int >>= 32
-    devid_str = ','.join(devid_list)
+    devid_str = ",".join(devid_list)
 
     # Fill template.
     template = Template(Path(args.template).read_text())
     Path(args.output).write_text(template.render(device_id=devid_str))
-    print("Computed {} device ID array: {}".format(args.mode.upper(),
-                                                   devid_str))
+    print("Computed {} device ID array: {}".format(args.mode.upper(), devid_str))
 
 
 if __name__ == "__main__":

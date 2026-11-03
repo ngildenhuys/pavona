@@ -5,8 +5,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from copy import deepcopy
 import logging as log
-from topgen.lib import (get_ipgen_params, num_rom_ctrl, find_module,
-                        find_modules, find_module_by_name)
+from topgen.lib import (
+    get_ipgen_params,
+    num_rom_ctrl,
+    find_module,
+    find_modules,
+    find_module_by_name,
+)
 from pathlib import Path
 
 from basegen.typing import ConfigT, ParamsT
@@ -32,10 +37,10 @@ def get_alert_handler_params(top: ConfigT, name: str) -> ParamsT:
     n_lpgs = n_lpgs_int
     n_lpgs_incoming_offset = n_lpgs
     # Add incoming alerts and their LPGs
-    for alerts in top['incoming_alert'].values():
+    for alerts in top["incoming_alert"].values():
         n_alerts += len(alerts)
         # Number of LPGs is maximum index + 1
-        n_lpgs += max(alert['lpg_idx'] for alert in alerts) + 1
+        n_lpgs += max(alert["lpg_idx"] for alert in alerts) + 1
 
     if n_alerts < 1:
         # set number of alerts to 1 such that the config is still valid
@@ -62,32 +67,31 @@ def get_alert_handler_params(top: ConfigT, name: str) -> ParamsT:
 
     if "incoming_alert" in top:
         lpg_prev_offset = n_lpgs_incoming_offset
-        for alerts in top['incoming_alert'].values():
+        for alerts in top["incoming_alert"].values():
             for alert in alerts:
                 for _ in range(alert["width"]):
-                    async_on.append(async_on_format.format(int(
-                        alert["async"])))
-                    lpg_map.append(
-                        lpg_idx_format.format(lpg_prev_offset +
-                                              int(alert["lpg_idx"])))
-            lpg_prev_offset += max(alert['lpg_idx'] for alert in alerts) + 1
+                    async_on.append(async_on_format.format(int(alert["async"])))
+                    lpg_map.append(lpg_idx_format.format(lpg_prev_offset + int(alert["lpg_idx"])))
+            lpg_prev_offset += max(alert["lpg_idx"] for alert in alerts) + 1
     module = find_module(top["module"], name, use_base_template_type=False)
 
     n_esc_sev = module["param_decl"]["EscNumSeverities"]
     ping_cnt_dw = module["param_decl"]["EscPingCountWidth"]
     ipgen_params = get_ipgen_params(module)
-    ipgen_params.update({
-        "module_instance_name": module["type"],
-        "n_alerts": n_alerts,
-        "esc_cnt_dw": esc_cnt_dw,
-        "accu_cnt_dw": accu_cnt_dw,
-        "async_on": async_on,
-        "n_classes": n_classes,
-        "n_esc_sev": n_esc_sev,
-        "ping_cnt_dw": ping_cnt_dw,
-        "n_lpg": n_lpgs,
-        "lpg_map": lpg_map,
-    })
+    ipgen_params.update(
+        {
+            "module_instance_name": module["type"],
+            "n_alerts": n_alerts,
+            "esc_cnt_dw": esc_cnt_dw,
+            "accu_cnt_dw": accu_cnt_dw,
+            "async_on": async_on,
+            "n_classes": n_classes,
+            "n_esc_sev": n_esc_sev,
+            "ping_cnt_dw": ping_cnt_dw,
+            "n_lpg": n_lpgs,
+            "lpg_map": lpg_map,
+        }
+    )
     return ipgen_params
 
 
@@ -107,8 +111,7 @@ def get_pinmux_params(top: ConfigT) -> ParamsT:
 
     if num_wkup_detect <= 0:
         # TODO: add support for no wakeup counter case
-        log.error("Topgen does currently not support generation of a top " +
-                  "without DIOs.")
+        log.error("Topgen does currently not support generation of a top " + "without DIOs.")
         return
 
     if "wkup_cnt_width" in pinmux:
@@ -125,21 +128,27 @@ def get_pinmux_params(top: ConfigT) -> ParamsT:
 
     # Total inputs/outputs
     # Reuse the counts from the merge phase
-    n_mio_periph_in = (pinmux["io_counts"]["muxed"]["inouts"] +
-                       pinmux["io_counts"]["muxed"]["inputs"])
-    n_mio_periph_out = (pinmux["io_counts"]["muxed"]["inouts"] +
-                        pinmux["io_counts"]["muxed"]["outputs"])
-    n_dio_periph_in = (pinmux["io_counts"]["dedicated"]["inouts"] +
-                       pinmux["io_counts"]["dedicated"]["inputs"])
-    n_dio_periph_out = (pinmux["io_counts"]["dedicated"]["inouts"] +
-                        pinmux["io_counts"]["dedicated"]["outputs"])
-    n_dio_pads = (pinmux["io_counts"]["dedicated"]["inouts"] +
-                  pinmux["io_counts"]["dedicated"]["inputs"] +
-                  pinmux["io_counts"]["dedicated"]["outputs"])
+    n_mio_periph_in = (
+        pinmux["io_counts"]["muxed"]["inouts"] + pinmux["io_counts"]["muxed"]["inputs"]
+    )
+    n_mio_periph_out = (
+        pinmux["io_counts"]["muxed"]["inouts"] + pinmux["io_counts"]["muxed"]["outputs"]
+    )
+    n_dio_periph_in = (
+        pinmux["io_counts"]["dedicated"]["inouts"] + pinmux["io_counts"]["dedicated"]["inputs"]
+    )
+    n_dio_periph_out = (
+        pinmux["io_counts"]["dedicated"]["inouts"] + pinmux["io_counts"]["dedicated"]["outputs"]
+    )
+    n_dio_pads = (
+        pinmux["io_counts"]["dedicated"]["inouts"]
+        + pinmux["io_counts"]["dedicated"]["inputs"]
+        + pinmux["io_counts"]["dedicated"]["outputs"]
+    )
 
     # Generation with zero MIO/DIO pads is currently not supported.
-    assert (n_mio_pads > 0)
-    assert (n_dio_pads > 0)
+    assert n_mio_pads > 0
+    assert n_dio_pads > 0
 
     log.info("Generating pinmux with following info from hjson:")
     log.info("num_wkup_detect: %d" % num_wkup_detect)
@@ -153,18 +162,20 @@ def get_pinmux_params(top: ConfigT) -> ParamsT:
     # Get the pinmux instance
     pinmux_module = find_module(top["module"], "pinmux")
     ipgen_params = get_ipgen_params(pinmux_module)
-    ipgen_params.update({
-        "n_wkup_detect": num_wkup_detect,
-        "wkup_cnt_width": wkup_cnt_width,
-        "n_mio_pads": n_mio_pads,
-        "n_mio_periph_in": n_mio_periph_in,
-        "n_mio_periph_out": n_mio_periph_out,
-        "n_dio_pads": n_dio_pads,
-        "n_dio_periph_in": n_dio_periph_in,
-        "n_dio_periph_out": n_dio_periph_out,
-        "enable_usb_wakeup": pinmux['enable_usb_wakeup'],
-        "enable_strap_sampling": pinmux['enable_strap_sampling'],
-    })
+    ipgen_params.update(
+        {
+            "n_wkup_detect": num_wkup_detect,
+            "wkup_cnt_width": wkup_cnt_width,
+            "n_mio_pads": n_mio_pads,
+            "n_mio_periph_in": n_mio_periph_in,
+            "n_mio_periph_out": n_mio_periph_out,
+            "n_dio_pads": n_dio_pads,
+            "n_dio_periph_in": n_dio_periph_in,
+            "n_dio_periph_out": n_dio_periph_out,
+            "enable_usb_wakeup": pinmux["enable_usb_wakeup"],
+            "enable_strap_sampling": pinmux["enable_strap_sampling"],
+        }
+    )
     return ipgen_params
 
 
@@ -176,8 +187,7 @@ def get_pwrmgr_params(top: ConfigT) -> ParamsT:
 
     if n_wkups < 1:
         n_wkups = 1
-        log.warning(
-            "The design has no wakeup sources. Low power not supported.")
+        log.warning("The design has no wakeup sources. Low power not supported.")
 
     # Count number of reset requests
     n_rstreqs = len(top["reset_requests"]["peripheral"])
@@ -185,14 +195,13 @@ def get_pwrmgr_params(top: ConfigT) -> ParamsT:
 
     if n_rstreqs < 1:
         n_rstreqs = 1
-        log.warning("The design has no reset request sources. "
-                    "Reset requests are not supported.")
+        log.warning("The design has no reset request sources. Reset requests are not supported.")
 
-    n_rom_ctrl = num_rom_ctrl(top['module'])
+    n_rom_ctrl = num_rom_ctrl(top["module"])
     assert n_rom_ctrl > 0
 
     # Add another artificial ROM_CTRL input to allow IBEX halting that input
-    if top['power'].get('halt_ibex_via_rom_ctrl', False):
+    if top["power"].get("halt_ibex_via_rom_ctrl", False):
         n_rom_ctrl += 1
 
     clocks = top["clocks"]
@@ -201,16 +210,18 @@ def get_pwrmgr_params(top: ConfigT) -> ParamsT:
 
     pwrmgr = find_module(top["module"], "pwrmgr")
     ipgen_params = get_ipgen_params(pwrmgr)
-    ipgen_params.update({
-        "NumWkups": n_wkups,
-        "Wkups": top["wakeups"],
-        "NumRstReqs": n_rstreqs,
-        "rst_reqs": top["reset_requests"],
-        "wait_for_external_reset": top['power']['wait_for_external_reset'],
-        "NumRomInputs": n_rom_ctrl,
-        "has_aon_clk": any(obj.aon for obj in clocks.srcs.values()),
-        "src_clks": src_clks
-    })
+    ipgen_params.update(
+        {
+            "NumWkups": n_wkups,
+            "Wkups": top["wakeups"],
+            "NumRstReqs": n_rstreqs,
+            "rst_reqs": top["reset_requests"],
+            "wait_for_external_reset": top["power"]["wait_for_external_reset"],
+            "NumRomInputs": n_rom_ctrl,
+            "has_aon_clk": any(obj.aon for obj in clocks.srcs.values()),
+            "src_clks": src_clks,
+        }
+    )
     return ipgen_params
 
 
@@ -233,8 +244,7 @@ def get_rstmgr_params(top: ConfigT) -> ParamsT:
     output_rsts = reset_obj.get_top_resets()
 
     # sw controlled resets: dict indexed by device containing the clock
-    sw_rsts = OrderedDict([(r.name, r.clock.name)
-                           for r in reset_obj.get_sw_resets()])
+    sw_rsts = OrderedDict([(r.name, r.clock.name) for r in reset_obj.get_sw_resets()])
     # rst_ni
     rstmgr = find_module(top["module"], "rstmgr")
     rst_ni = rstmgr["reset_connections"]
@@ -246,22 +256,23 @@ def get_rstmgr_params(top: ConfigT) -> ParamsT:
     n_rstreqs = len(top["reset_requests"]["peripheral"])
 
     # Will connect to alert_handler
-    with_alert_handler = find_module(top['module'],
-                                     'alert_handler') is not None
+    with_alert_handler = find_module(top["module"], "alert_handler") is not None
 
     ipgen_params = get_ipgen_params(rstmgr)
-    ipgen_params.update({
-        "clk_freqs": clk_freqs,
-        "reqs": top["reset_requests"],
-        "power_domains": top["power"]["domains"],
-        "num_rstreqs": n_rstreqs,
-        "sw_rsts": sw_rsts,
-        "output_rsts": output_rsts,
-        "leaf_rsts": leaf_rsts,
-        "rst_ni": rst_ni['rst_ni']['name'],
-        "export_rsts": top["exported_rsts"],
-        "with_alert_dump": with_alert_handler,
-    })
+    ipgen_params.update(
+        {
+            "clk_freqs": clk_freqs,
+            "reqs": top["reset_requests"],
+            "power_domains": top["power"]["domains"],
+            "num_rstreqs": n_rstreqs,
+            "sw_rsts": sw_rsts,
+            "output_rsts": output_rsts,
+            "leaf_rsts": leaf_rsts,
+            "rst_ni": rst_ni["rst_ni"]["name"],
+            "export_rsts": top["exported_rsts"],
+            "with_alert_dump": with_alert_handler,
+        }
+    )
     return ipgen_params
 
 
@@ -274,19 +285,17 @@ def get_flash_ctrl_params(top: ConfigT) -> ParamsT:
         log.error("This design does not currently support multiple flashes")
         return
     elif len(flash_mems) == 0:
-        raise ValueError(
-            "In _get_flash_ctrl_params for design with no flash_ctrl")
+        raise ValueError("In _get_flash_ctrl_params for design with no flash_ctrl")
 
     ipgen_params = get_ipgen_params(flash_mems[0])
     mem_cfg = flash_mems[0]["memory"]["mem"]["config"]
     ipgen_params.update(vars(mem_cfg) or mem_cfg)  # mem_cfg either EFlash obj or dict
-    ipgen_params.pop('base_addrs', None)
-    ipgen_params.pop('type', None)
+    ipgen_params.pop("base_addrs", None)
+    ipgen_params.pop("type", None)
     return ipgen_params
 
 
-def get_otp_ctrl_params(top: ConfigT,
-                        out_path: Path) -> ParamsT:
+def get_otp_ctrl_params(top: ConfigT, out_path: Path) -> ParamsT:
 
     def has_flash_keys(parts, path) -> bool:
         """Determines if the SECRET1 partition has flash key seeds.
@@ -302,9 +311,11 @@ def get_otp_ctrl_params(top: ConfigT,
                 break
         else:
             raise ValueError(f"SECRET1 partition not found in {path}")
-        flash_keys = [i for i in secret1_partition["items"]
-                      if i["name"].lower().startswith("flash")
-                      and i["name"].lower().endswith("key_seed")]
+        flash_keys = [
+            i
+            for i in secret1_partition["items"]
+            if i["name"].lower().startswith("flash") and i["name"].lower().endswith("key_seed")
+        ]
         return len(flash_keys) > 0
 
     def get_param(name: str, param_list: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -350,22 +361,20 @@ def get_otp_ctrl_params(top: ConfigT,
         rev_partitions = otp_mmap["partitions"][::-1]
         offset = int(rev_partitions[0]["offset"]) + int(rev_partitions[0]["size"])
         for part in rev_partitions:
-            part_data = {
-                "size": part["size"] * 8,
-                "items": []
-            }
+            part_data = {"size": part["size"] * 8, "items": []}
             for item in part["items"][::-1]:
                 if offset != item["offset"] + item["size"]:
-                    part_data["items"].append({
-                        "comment": "unallocated space",
-                        "size": (offset - item["size"] - item["offset"]) * 8,
-                        "inv_default": 0
-                    })
+                    part_data["items"].append(
+                        {
+                            "comment": "unallocated space",
+                            "size": (offset - item["size"] - item["offset"]) * 8,
+                            "inv_default": 0,
+                        }
+                    )
                     offset = item["offset"] + item["size"]
-                part_data["items"].append({
-                    "size": item["size"] * 8,
-                    "inv_default": item["inv_default"]
-                })
+                part_data["items"].append(
+                    {"size": item["size"] * 8, "inv_default": item["inv_default"]}
+                )
                 # Sanitize the seed dependent inv_default values.
                 if item["inv_default"] != 0:
                     item["inv_default"] = "<random>"
@@ -377,10 +386,12 @@ def get_otp_ctrl_params(top: ConfigT,
             p["default"] = part_inv_data
 
     ipgen_params = get_ipgen_params(otp_ctrl)
-    ipgen_params.update({
-        "otp_mmap": otp_mmap,
-        "enable_flash_key": enable_flash_keys,
-    })
+    ipgen_params.update(
+        {
+            "otp_mmap": otp_mmap,
+            "enable_flash_key": enable_flash_keys,
+        }
+    )
     return ipgen_params
 
 
@@ -392,16 +403,14 @@ def get_ac_range_check_params(top: ConfigT) -> ParamsT:
     if "racl_config" in top:
         racl_params = {
             "nr_role_bits": top["racl"]["nr_role_bits"],
-            "nr_ctn_uid_bits": top["racl"]["nr_ctn_uid_bits"]
+            "nr_ctn_uid_bits": top["racl"]["nr_ctn_uid_bits"],
         }
 
     # Get the AC Range Check instance
-    module = find_module(top['module'], 'ac_range_check')
+    module = find_module(top["module"], "ac_range_check")
     ipgen_params = get_ipgen_params(module)
     ipgen_params.update(racl_params)
-    ipgen_params.update({
-        "module_instance_name": module["type"]
-    })
+    ipgen_params.update({"module_instance_name": module["type"]})
     return ipgen_params
 
 
@@ -420,21 +429,21 @@ def get_racl_params(top: ConfigT) -> ParamsT:
     for m in top["module"]:
         racl_mappings = m.get("racl_mappings", {})
 
-        for group in set(
-            mapping['racl_group'] for mapping in racl_mappings.values()
-        ):
+        for group in set(mapping["racl_group"] for mapping in racl_mappings.values()):
             num_subscribing_ips[group] += 1
 
     ipgen_params = get_ipgen_params(module)
-    ipgen_params.update({
-        "module_instance_name": module["type"],
-        "nr_role_bits": top["racl"]["nr_role_bits"],
-        "nr_ctn_uid_bits": top["racl"]["nr_ctn_uid_bits"],
-        "nr_policies": top["racl"]["nr_policies"],
-        'nr_subscribing_ips': num_subscribing_ips[racl_group],
-        "racl_group": racl_group,
-        "policies": policies
-    })
+    ipgen_params.update(
+        {
+            "module_instance_name": module["type"],
+            "nr_role_bits": top["racl"]["nr_role_bits"],
+            "nr_ctn_uid_bits": top["racl"]["nr_ctn_uid_bits"],
+            "nr_policies": top["racl"]["nr_policies"],
+            "nr_subscribing_ips": num_subscribing_ips[racl_group],
+            "racl_group": racl_group,
+            "policies": policies,
+        }
+    )
     return ipgen_params
 
 
@@ -457,20 +466,24 @@ def get_rv_plic_params(top: ConfigT, name: str) -> ParamsT:
         log.warning(f"no interrupts are connected to {name}, is it needed?")
 
     if num_srcs > 1024:
-        log.error(f"RISC-V PLIC Error: Configured interrupt sources ({num_srcs}) "
-                  "exceed the maximum of 1024.")
+        log.error(
+            f"RISC-V PLIC Error: Configured interrupt sources ({num_srcs}) "
+            "exceed the maximum of 1024."
+        )
         return
 
     if num_targets < 1:
         log.warning(f"{name} specifies no targets, is it needed?")
 
     ipgen_params = get_ipgen_params(module)
-    ipgen_params.update({
-        "module_instance_name": name,
-        "src": num_srcs,
-        "target": num_targets,
-        "prio": 3,
-    })
+    ipgen_params.update(
+        {
+            "module_instance_name": name,
+            "src": num_srcs,
+            "target": num_targets,
+            "prio": 3,
+        }
+    )
     return ipgen_params
 
 
@@ -479,7 +492,5 @@ def get_basic_ipgen_params(topcfg: Dict[str, object], template_type: str) -> Dic
     module = find_module(topcfg["module"], template_type)
 
     ipgen_params = get_ipgen_params(module)
-    ipgen_params.update({
-        "module_instance_name": module["type"]
-    })
+    ipgen_params.update({"module_instance_name": module["type"]})
     return ipgen_params

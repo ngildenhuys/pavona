@@ -19,18 +19,26 @@ import hjson
 from CfgJson import set_target_attribute
 from LauncherFactory import get_launcher_cls
 from Scheduler import Scheduler
-from utils import (VERBOSE, clean_odirs, find_and_substitute_wildcards,
-                   md_results_to_html, mk_path, rm_path, subst_wildcards, cp_path)
+from utils import (
+    VERBOSE,
+    clean_odirs,
+    find_and_substitute_wildcards,
+    md_results_to_html,
+    mk_path,
+    rm_path,
+    subst_wildcards,
+    cp_path,
+)
 
 
 # Interface class for extensions.
-class FlowCfg():
-    '''Base class for the different flows supported by dvsim.py
+class FlowCfg:
+    """Base class for the different flows supported by dvsim.py
 
     The constructor expects some parsed hjson data. Create these objects with
     the factory function in CfgFactory.py, which loads the hjson data and picks
     a subclass of FlowCfg based on its contents.
-    '''
+    """
 
     # Set in subclasses. This is the key that must be used in an hjson file to
     # tell dvsim.py which subclass to use.
@@ -102,8 +110,7 @@ class FlowCfg():
         self.revision = ""
         self.results_server_prefix = ""
         self.results_server_cmd = ""
-        self.css_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "style.css")
+        self.css_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "style.css")
         # `self.results_*` below will be updated after `self.rel_path` and
         # `self.scratch_base_root` variables are updated.
         self.results_dir = ""
@@ -140,7 +147,7 @@ class FlowCfg():
         # configurations at this point. If not, we place ourselves into
         # self.cfgs and consider ourselves a sort of "degenerate primary
         # configuration".
-        self.is_primary_cfg = 'use_cfgs' in hjson_data
+        self.is_primary_cfg = "use_cfgs" in hjson_data
 
         # If it's a primary_cfg, it's results can be grouped for reporting
         # purposes in the 'use_cfgs' section of the hjson. If that's the case
@@ -159,13 +166,11 @@ class FlowCfg():
                 for entry in self.use_cfgs:
                     self._load_child_cfg(entry, mk_config)
             else:
-                log.error("use_cfgs must be either a dict of batchgroups",
-                          " or a list of configs")
+                log.error("use_cfgs must be either a dict of batchgroups", " or a list of configs")
                 sys.exit(1)
 
         if self.rel_path == "":
-            self.rel_path = os.path.dirname(self.flow_cfg_file).replace(
-                self.proj_root + '/', '')
+            self.rel_path = os.path.dirname(self.flow_cfg_file).replace(self.proj_root + "/", "")
 
         # Process overrides before substituting wildcards
         self._process_overrides()
@@ -176,11 +181,10 @@ class FlowCfg():
         self._expand()
 
         # Construct the path variables after variable expansion.
-        self.results_dir = (Path(self.scratch_path) / "reports" / "latest")
-        self.results_page = (self.results_dir / self.results_html_name)
+        self.results_dir = Path(self.scratch_path) / "reports" / "latest"
+        self.results_page = self.results_dir / self.results_html_name
 
-        tmp_path = (self.results_server + "/" + self.rel_path +
-                    "/latest/" + self.results_html_name)
+        tmp_path = self.results_server + "/" + self.rel_path + "/latest/" + self.results_html_name
         self.results_server_page = self.results_server_prefix + tmp_path
         self.results_server_url = "https://" + tmp_path
 
@@ -188,33 +192,32 @@ class FlowCfg():
         self._post_init()
 
     def _merge_hjson(self, hjson_data):
-        '''Take hjson data and merge it into self.__dict__
+        """Take hjson data and merge it into self.__dict__
 
         Subclasses that need to do something just before the merge should
         override this method and call super()._merge_hjson(..) at the end.
 
-        '''
+        """
         for key, value in hjson_data.items():
             set_target_attribute(self.flow_cfg_file, self.__dict__, key, value)
 
     def _expand(self):
-        '''Called to expand wildcards after merging hjson
+        """Called to expand wildcards after merging hjson
 
         Subclasses can override this to do something just before expansion.
 
-        '''
+        """
         # If this is a primary configuration, it doesn't matter if we don't
         # manage to expand everything.
         partial = self.is_primary_cfg
 
         # If custom dump script is exist, replace with run_script attribute.
         if self.args.dump_script is not None:
-            self.run_script = '{proj_root}/' + self.args.dump_script
+            self.run_script = "{proj_root}/" + self.args.dump_script
 
-        self.__dict__ = find_and_substitute_wildcards(self.__dict__,
-                                                      self.__dict__,
-                                                      self.ignored_wildcards,
-                                                      ignore_error=partial)
+        self.__dict__ = find_and_substitute_wildcards(
+            self.__dict__, self.__dict__, self.ignored_wildcards, ignore_error=partial
+        )
 
     def _post_init(self):
         # Run some post init checks
@@ -225,22 +228,26 @@ class FlowCfg():
                 sys.exit(1)
 
     def create_instance(self, mk_config, flow_cfg_file, batchgroup=None):
-        '''Create a new instance of this class for the given config file.
+        """Create a new instance of this class for the given config file.
 
         mk_config is a factory method (passed explicitly to avoid a circular
         dependency between this file and CfgFactory.py).
 
-        '''
+        """
         new_instance = mk_config(flow_cfg_file)
 
         # Sanity check to make sure the new object is the same class as us: we
         # don't yet support heterogeneous primary configurations.
         if type(self) is not type(new_instance):
-            log.error("{}: Loading child configuration at {!r}, but the "
-                      "resulting flow types don't match: ({} vs. {}).".format(
-                          self.flow_cfg_file, flow_cfg_file,
-                          type(self).__name__,
-                          type(new_instance).__name__))
+            log.error(
+                "{}: Loading child configuration at {!r}, but the "
+                "resulting flow types don't match: ({} vs. {}).".format(
+                    self.flow_cfg_file,
+                    flow_cfg_file,
+                    type(self).__name__,
+                    type(new_instance).__name__,
+                )
+            )
             sys.exit(1)
 
         new_instance.batchgroup = batchgroup
@@ -248,7 +255,7 @@ class FlowCfg():
         return new_instance
 
     def _load_child_cfg(self, entry, mk_config, batchgroup=None):
-        '''Load a child configuration for a primary cfg'''
+        """Load a child configuration for a primary cfg"""
         if type(entry) is str:
             # Treat this as a file entry. Substitute wildcards in cfg_file
             # files since we need to process them right away.
@@ -268,13 +275,13 @@ class FlowCfg():
 
         else:
             log.error(
-                "Type of entry \"%s\" in the \"use_cfgs\" key is invalid: %s",
-                entry, str(type(entry)))
+                'Type of entry "%s" in the "use_cfgs" key is invalid: %s', entry, str(type(entry))
+            )
             sys.exit(1)
 
     def _conv_inline_cfg_to_hjson(self, idict):
-        '''Dump a temp hjson file in the scratch space from input dict.
-        This method is to be called only by a primary cfg'''
+        """Dump a temp hjson file in the scratch space from input dict.
+        This method is to be called only by a primary cfg"""
 
         if not self.is_primary_cfg:
             log.fatal("This method can only be called by a primary cfg")
@@ -282,23 +289,28 @@ class FlowCfg():
 
         name = idict["name"] if "name" in idict.keys() else None
         if not name:
-            log.error("In-line entry in use_cfgs list does not contain a "
-                      "\"name\" key (will be skipped!):\n%s", idict)
+            log.error(
+                "In-line entry in use_cfgs list does not contain a "
+                '"name" key (will be skipped!):\n%s',
+                idict,
+            )
             return None
 
         # Check if temp cfg file already exists
-        temp_cfg_file = (self.scratch_root + "/." + self.branch + "__" + name +
-                         "_cfg.hjson")
+        temp_cfg_file = self.scratch_root + "/." + self.branch + "__" + name + "_cfg.hjson"
 
         # Create the file and dump the dict as hjson
-        log.log(VERBOSE, "Dumping inline cfg \"%s\" in hjson to:\n%s", name,
-                temp_cfg_file)
+        log.log(VERBOSE, 'Dumping inline cfg "%s" in hjson to:\n%s', name, temp_cfg_file)
         try:
             with open(temp_cfg_file, "w") as f:
                 f.write(hjson.dumps(idict, for_json=True))
         except Exception as e:
-            log.error("Failed to hjson-dump temp cfg file\"%s\" for \"%s\""
-                      "(will be skipped!) due to:\n%s", temp_cfg_file, name, e)
+            log.error(
+                'Failed to hjson-dump temp cfg file"%s" for "%s"(will be skipped!) due to:\n%s',
+                temp_cfg_file,
+                name,
+                e,
+            )
             return None
 
         # Return the temp cfg file created
@@ -312,28 +324,34 @@ class FlowCfg():
         if hasattr(self, "overrides"):
             overrides = getattr(self, "overrides")
             if type(overrides) is not list:
-                log.error("The type of key \"overrides\" is %s - it should be "
-                          "a list", type(overrides))
+                log.error(
+                    'The type of key "overrides" is %s - it should be a list', type(overrides)
+                )
                 sys.exit(1)
 
             # Process override one by one
             for item in overrides:
-                if type(item) is dict and set(
-                        item.keys()) == {"name", "value"}:
+                if type(item) is dict and set(item.keys()) == {"name", "value"}:
                     ov_name = item["name"]
                     ov_value = item["value"]
                     if ov_name not in overrides_dict.keys():
                         overrides_dict[ov_name] = ov_value
                         self._do_override(ov_name, ov_value)
                     else:
-                        log.error("Override for key \"%s\" already exists!\n"
-                                  "Old: %s\nNew: %s", ov_name,
-                                  overrides_dict[ov_name], ov_value)
+                        log.error(
+                            'Override for key "%s" already exists!\nOld: %s\nNew: %s',
+                            ov_name,
+                            overrides_dict[ov_name],
+                            ov_value,
+                        )
                         sys.exit(1)
                 else:
-                    log.error("\"overrides\" is a list of dicts with "
-                              "{\"name\": <name>, \"value\": <value>} pairs. "
-                              "Found this instead:\n%s", str(item))
+                    log.error(
+                        '"overrides" is a list of dicts with '
+                        '{"name": <name>, "value": <value>} pairs. '
+                        "Found this instead:\n%s",
+                        str(item),
+                    )
                     sys.exit(1)
 
     def _do_override(self, ov_name: str, ov_value: object) -> None:
@@ -341,39 +359,42 @@ class FlowCfg():
         if hasattr(self, ov_name):
             orig_value = getattr(self, ov_name)
             if isinstance(ov_value, type(orig_value)):
-                log.debug("Overriding \"%s\" value \"%s\" with \"%s\"",
-                          ov_name, orig_value, ov_value)
+                log.debug('Overriding "%s" value "%s" with "%s"', ov_name, orig_value, ov_value)
                 setattr(self, ov_name, ov_value)
             else:
-                log.error("The type of override value \"%s\" for \"%s\" "
-                          "doesn't match the type of original value \"%s\"",
-                          ov_value, ov_name, orig_value)
+                log.error(
+                    'The type of override value "%s" for "%s" '
+                    'doesn\'t match the type of original value "%s"',
+                    ov_value,
+                    ov_name,
+                    orig_value,
+                )
                 sys.exit(1)
         else:
-            log.error("Override key \"%s\" not found in the cfg!", ov_name)
+            log.error('Override key "%s" not found in the cfg!', ov_name)
             sys.exit(1)
 
     def _purge(self):
-        '''Purge the existing scratch areas in preparation for the new run.'''
+        """Purge the existing scratch areas in preparation for the new run."""
         return
 
     def purge(self):
-        '''Public facing API for _purge().'''
+        """Public facing API for _purge()."""
         for item in self.cfgs:
             item._purge()
 
     def _print_list(self):
-        '''Print the list of available items that can be kicked off.'''
+        """Print the list of available items that can be kicked off."""
         return
 
     def print_list(self):
-        '''Public facing API for _print_list().'''
+        """Public facing API for _print_list()."""
 
         for item in self.cfgs:
             item._print_list()
 
     def prune_selected_cfgs(self):
-        '''Prune the list of configs for a primary config file.'''
+        """Prune the list of configs for a primary config file."""
 
         # This should run after self.cfgs has been set
         assert self.cfgs
@@ -385,19 +406,22 @@ class FlowCfg():
         # Each entry is a dict with a 'cfgs' list plus optional overrides.
         if select is None and self.cfg_group_sel:
             if not self.is_primary_cfg:
-                log.error("--cfg-groups was passed, but {!r} is not a primary "
-                          "config.".format(self.flow_cfg_file))
+                log.error(
+                    "--cfg-groups was passed, but {!r} is not a primary config.".format(
+                        self.flow_cfg_file
+                    )
+                )
                 sys.exit(1)
             grouped = []
             for name in self.cfg_group_sel:
                 entry = (self.cfg_groups or {}).get(name)
                 if entry is None:
-                    log.error("Requested cfg_group %r is not defined in %r.",
-                              name, self.flow_cfg_file)
+                    log.error(
+                        "Requested cfg_group %r is not defined in %r.", name, self.flow_cfg_file
+                    )
                     sys.exit(1)
                 if not isinstance(entry, dict):
-                    log.error("cfg_groups entry %r must be a dict with a "
-                              "'cfgs' list.", name)
+                    log.error("cfg_groups entry %r must be a dict with a 'cfgs' list.", name)
                     sys.exit(1)
                 grouped += entry.get("cfgs", [])
                 for key, value in entry.items():
@@ -413,9 +437,11 @@ class FlowCfg():
         # If the user passed --select-cfgs, but this isn't a primary config
         # file, we should probably complain.
         if not self.is_primary_cfg:
-            log.error('The configuration file at {!r} is not a primary '
-                      'config, but --select-cfgs was passed on the command '
-                      'line.'.format(self.flow_cfg_file))
+            log.error(
+                "The configuration file at {!r} is not a primary "
+                "config, but --select-cfgs was passed on the command "
+                "line.".format(self.flow_cfg_file)
+            )
             sys.exit(1)
 
         # Filter configurations
@@ -436,15 +462,14 @@ class FlowCfg():
             c.group_overrides = self.group_overrides
 
     def _create_deploy_objects(self):
-        '''Create deploy objects from items that were passed on for being run.
+        """Create deploy objects from items that were passed on for being run.
         The deploy objects for build and run are created from the objects that
         were created from the create_objects() method.
-        '''
+        """
         return
 
     def create_deploy_objects(self):
-        '''Public facing API for _create_deploy_objects().
-        '''
+        """Public facing API for _create_deploy_objects()."""
         self.prune_selected_cfgs()
 
         # GUI, GUI debug or Interactive mode is allowed only for one cfg.
@@ -456,10 +481,10 @@ class FlowCfg():
             item._create_deploy_objects()
 
     def deploy_objects(self):
-        '''Public facing API for deploying all available objects.
+        """Public facing API for deploying all available objects.
 
         Runs each job and returns a map from item to status.
-        '''
+        """
         deploy = []
         for item in self.cfgs:
             deploy.extend(item.deploy)
@@ -476,8 +501,10 @@ class FlowCfg():
             # per-job numbers matter most, so losing them is not an option.
             # Hand back the statuses gathered so far and let the caller report
             # on them. Anything that never ran counts as killed.
-            log.exception("Run did not complete. Reporting on the %d job(s) "
-                          "that finished.", len(scheduler.item_to_status))
+            log.exception(
+                "Run did not complete. Reporting on the %d job(s) that finished.",
+                len(scheduler.item_to_status),
+            )
             results = scheduler.item_to_status
         finally:
             # Stash the run's wall-clock footprint so it can be shown in the
@@ -487,7 +514,7 @@ class FlowCfg():
         return results
 
     def _gen_results(self, results):
-        '''
+        """
         The function is called after the flow has completed. It collates
         the status of all run targets and generates a dict. It parses the log
         to identify the errors, warnings and failures as applicable. It also
@@ -495,45 +522,46 @@ class FlowCfg():
         report, which is in markdown format.
 
         results should be a dictionary mapping deployed item to result.
-        '''
+        """
         return
 
     def gen_results(self, results):
-        '''Public facing API for _gen_results().
+        """Public facing API for _gen_results().
 
         results should be a dictionary mapping deployed item to result.
 
-        '''
+        """
         for item in self.cfgs:
             item.target_runtime = self.target_runtime
             item.total_runtime = self.total_runtime
-            json_str = (item._gen_json_results(results)
-                        if hasattr(item, '_gen_json_results')
-                        else None)
+            json_str = (
+                item._gen_json_results(results) if hasattr(item, "_gen_json_results") else None
+            )
             result = item._gen_results(results)
             log.info("[results]: [%s]:\n%s\n", item.name, result)
             log.info("[scratch_path]: [%s] [%s]", item.name, item.scratch_path)
-            item.write_results(self.results_html_name, item.results_md,
-                               json_str, is_primary_cfg=False)
+            item.write_results(
+                self.results_html_name, item.results_md, json_str, is_primary_cfg=False
+            )
             log.info("[report]: [%s] [%s/report.html]\n\n", item.name, item.results_dir)
             self.errors_seen |= item.errors_seen
 
         if self.is_primary_cfg:
             self.gen_results_summary(self.batchgroups)
             if not self.build_only:
-                self.write_results(self.results_html_name,
-                                   self.results_summary_md, is_primary_cfg=True)
+                self.write_results(
+                    self.results_html_name, self.results_summary_md, is_primary_cfg=True
+                )
                 log.info("[report]: [%s] [%s/report.html]", self.name, self.results_dir)
 
     def gen_results_summary(self, batchgroups=False):
-        '''Public facing API to generate summary results for each IP/cfg file
-        '''
+        """Public facing API to generate summary results for each IP/cfg file"""
         return
 
     def _add_to_row_dict(self, row_dict, batch_flag, cfg, row):
-        '''Checks if the cfgs are divided into batchgroups and adds it to the
+        """Checks if the cfgs are divided into batchgroups and adds it to the
         corresponding batchgroup or to the default.
-        '''
+        """
         if batch_flag:
             if cfg.batchgroup not in row_dict:
                 row_dict[cfg.batchgroup] = []
@@ -557,20 +585,18 @@ class FlowCfg():
 
         # Write results to the report area.
         with open(self.results_dir / html_filename, "w") as f:
-            f.write(
-                md_results_to_html(self.results_title, self.css_file, text_md, is_primary_cfg))
+            f.write(md_results_to_html(self.results_title, self.css_file, text_md, is_primary_cfg))
 
         if json_str is not None:
-            filename = Path(html_filename).with_suffix('.json')
+            filename = Path(html_filename).with_suffix(".json")
             with open(self.results_dir / filename, "w") as f:
                 f.write(json_str)
 
-    def _get_results_page_link(self, relative_to, link_text=''):
+    def _get_results_page_link(self, relative_to, link_text=""):
         """Create a relative markdown link to the results page."""
 
         link_text = self.name.upper() if not link_text else link_text
-        relative_link = os.path.relpath(self.results_page,
-                                        relative_to)
+        relative_link = os.path.relpath(self.results_page, relative_to)
         return "[%s](%s)" % (link_text, relative_link)
 
     def publish_results(self, repository: str, test: str, mode: str):
@@ -589,64 +615,88 @@ class FlowCfg():
         env = self._setup_ssh_env()
         remote = self.clone_or_pull(repository, repo_dir, env)
 
-        latest_batch_report = os.path.join(self.scratch_path, 'reports', 'latest', 'report.html')
+        latest_batch_report = os.path.join(self.scratch_path, "reports", "latest", "report.html")
         # Destination directory should be
-        dest_batch_dir = os.path.join(repo_dir, f"{self.name}_{test}_{self.flow}",
-                                      f"{self.name}_{test}_{self.flow}_{self.timestamp}",
-                                      f"{self.name}", 'reports', 'latest')
+        dest_batch_dir = os.path.join(
+            repo_dir,
+            f"{self.name}_{test}_{self.flow}",
+            f"{self.name}_{test}_{self.flow}_{self.timestamp}",
+            f"{self.name}",
+            "reports",
+            "latest",
+        )
         os.makedirs(dest_batch_dir, exist_ok=True)
-        shutil.copy2(latest_batch_report, os.path.join(dest_batch_dir, 'report.html'))
+        shutil.copy2(latest_batch_report, os.path.join(dest_batch_dir, "report.html"))
         log.info("Copied report for %s", self.name)
         capitalized_test = test.capitalize()
 
-        self._write_index_html(os.path.join(repo_dir, f"{self.name}_{test}_{self.flow}"),
-                               f"{self.name}_{test}_{self.flow}",
-                               f"{self.name}_{test}_{self.flow}_index",
-                               f"{{entry}}/{self.name}/reports/latest/report.html",
-                               max_entries=10,
-                               embed_latest=(f"Latest {capitalized_test}",
-                                             f"{self.name}_{test}_{self.flow}_{self.timestamp}"))
+        self._write_index_html(
+            os.path.join(repo_dir, f"{self.name}_{test}_{self.flow}"),
+            f"{self.name}_{test}_{self.flow}",
+            f"{self.name}_{test}_{self.flow}_index",
+            f"{{entry}}/{self.name}/reports/latest/report.html",
+            max_entries=10,
+            embed_latest=(
+                f"Latest {capitalized_test}",
+                f"{self.name}_{test}_{self.flow}_{self.timestamp}",
+            ),
+        )
 
-        self._write_index_html(repo_dir,
-                               "Reports",
-                               "index",
-                               "{entry}/{entry}_index.html",
-                               embed_latest=("Latest {label}", "all_tops_batch_weekly_sim"))
+        self._write_index_html(
+            repo_dir,
+            "Reports",
+            "index",
+            "{entry}/{entry}_index.html",
+            embed_latest=("Latest {label}", "all_tops_batch_weekly_sim"),
+        )
 
-        shutil.copy2(os.path.join(self.proj_root, 'util', 'dvsim', 'style.css'), repo_dir)
+        shutil.copy2(os.path.join(self.proj_root, "util", "dvsim", "style.css"), repo_dir)
 
         for item in self.cfgs:
-            latest_report = os.path.join(item.scratch_path, 'reports', 'latest', 'report.html')
+            latest_report = os.path.join(item.scratch_path, "reports", "latest", "report.html")
             if not os.path.exists(latest_report):
                 log.warning("No report found for %s at %s, skipping.", item.name, latest_report)
                 continue
-            dest_dir = os.path.join(repo_dir,
-                                    f"{self.name}_{test}_{self.flow}",
-                                    f"{self.name}_{test}_{self.flow}_{self.timestamp}",
-                                    os.path.basename(item.scratch_path),
-                                    'reports',
-                                    'latest')
+            dest_dir = os.path.join(
+                repo_dir,
+                f"{self.name}_{test}_{self.flow}",
+                f"{self.name}_{test}_{self.flow}_{self.timestamp}",
+                os.path.basename(item.scratch_path),
+                "reports",
+                "latest",
+            )
             os.makedirs(dest_dir, exist_ok=True)
-            shutil.copy2(latest_report, os.path.join(dest_dir, 'report.html'))
+            shutil.copy2(latest_report, os.path.join(dest_dir, "report.html"))
 
             if mode == "private":
                 self._publish_native_artifacts(item, repo_dir, test)
-                latest_json = os.path.join(item.scratch_path, 'reports', 'latest', 'report.json')
+                latest_json = os.path.join(item.scratch_path, "reports", "latest", "report.json")
                 if os.path.exists(latest_json):
-                    shutil.copy2(latest_json, os.path.join(dest_dir, 'report.json'))
+                    shutil.copy2(latest_json, os.path.join(dest_dir, "report.json"))
                 else:
-                    log.warning("No report.json found for %s at %s, skipping.",
-                                item.name, latest_json)
+                    log.warning(
+                        "No report.json found for %s at %s, skipping.", item.name, latest_json
+                    )
             else:
-                self._strip_native_cov_link(Path(os.path.join(dest_dir, 'report.html')))
+                self._strip_native_cov_link(Path(os.path.join(dest_dir, "report.html")))
             log.info("Copied report for %s", item.name)
 
         subprocess.run(["git", "-C", repo_dir, "add", "-A"], check=True, env=env)
-        subprocess.run(["git", "-C", repo_dir, "commit", "-m",
-                        f"[dashboard] Update {self.name}_{test}_{self.flow} {self.timestamp}"],
-                       check=True, env=env)
-        subprocess.run(["git", "-C", repo_dir, "push", remote, f"HEAD:{self.branch}"],
-                       check=True, env=env)
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                repo_dir,
+                "commit",
+                "-m",
+                f"[dashboard] Update {self.name}_{test}_{self.flow} {self.timestamp}",
+            ],
+            check=True,
+            env=env,
+        )
+        subprocess.run(
+            ["git", "-C", repo_dir, "push", remote, f"HEAD:{self.branch}"], check=True, env=env
+        )
         log.info("Results published successfully.")
 
     def check_remote_branch_exists(self, repository: str, flag: str):
@@ -659,21 +709,32 @@ class FlowCfg():
         try:
             result = subprocess.run(
                 ["git", "ls-remote", "--heads", repository, self.branch],
-                check=True, capture_output=True, text=True, env=env,
+                check=True,
+                capture_output=True,
+                text=True,
+                env=env,
             )
         except FileNotFoundError:
             log.fatal("git is not installed or not on PATH. Cannot publish results.")
             sys.exit(1)
         except subprocess.CalledProcessError as e:
-            log.fatal("Could not query %s for branch %r (--%s):\n%s",
-                      repository, self.branch, flag,
-                      e.stderr.strip() if e.stderr else "")
+            log.fatal(
+                "Could not query %s for branch %r (--%s):\n%s",
+                repository,
+                self.branch,
+                flag,
+                e.stderr.strip() if e.stderr else "",
+            )
             sys.exit(1)
 
         if not result.stdout.strip():
-            log.fatal("Branch %r does not exist on dashboard repository %s. "
-                      "Create it there before publishing (--%s).",
-                      self.branch, repository, flag)
+            log.fatal(
+                "Branch %r does not exist on dashboard repository %s. "
+                "Create it there before publishing (--%s).",
+                self.branch,
+                repository,
+                flag,
+            )
             sys.exit(1)
 
         log.info("Dashboard branch %r found on %s.", self.branch, repository)
@@ -702,7 +763,7 @@ class FlowCfg():
             env = os.environ.copy()
             env.setdefault("GIT_SSH_COMMAND", "ssh")
             return env
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as f:
             f.write(f'#!/bin/sh\necho "{passphrase}"\n')
             askpass_script = f.name
         os.chmod(askpass_script, stat.S_IRWXU)
@@ -733,18 +794,19 @@ class FlowCfg():
         """
         name = repository.rstrip("/").rsplit("/", 1)[-1]
         if name.endswith(".git"):
-            name = name[:-len(".git")]
+            name = name[: -len(".git")]
         name = re.sub(r"[^A-Za-z0-9._-]", "-", name)
         return name or "dashboard"
 
-    def _ensure_remote(self, local_path: str, remote: str, repository: str,
-                       env: dict) -> None:
+    def _ensure_remote(self, local_path: str, remote: str, repository: str, env: dict) -> None:
         """Make `remote` exist in local_path and point at `repository`."""
-        result = subprocess.run(["git", "-C", local_path, "remote"],
-                                check=True, capture_output=True, text=True, env=env)
+        result = subprocess.run(
+            ["git", "-C", local_path, "remote"], check=True, capture_output=True, text=True, env=env
+        )
         action = "set-url" if remote in result.stdout.split() else "add"
-        subprocess.run(["git", "-C", local_path, "remote", action, remote, repository],
-                       check=True, env=env)
+        subprocess.run(
+            ["git", "-C", local_path, "remote", action, remote, repository], check=True, env=env
+        )
 
     def clone_or_pull(self, repository: str, local_path: str, env: dict) -> str:
         """Make local_path a checkout of `repository` at `self.branch`.
@@ -766,12 +828,13 @@ class FlowCfg():
             if not os.path.exists(local_path):
                 subprocess.run(
                     ["git", "clone", "-b", branch, "-o", remote, repository, local_path],
-                    check=True, env=env)
+                    check=True,
+                    env=env,
+                )
                 return remote
 
             self._ensure_remote(local_path, remote, repository, env)
-            subprocess.run(["git", "-C", local_path, "fetch", remote, branch],
-                           check=True, env=env)
+            subprocess.run(["git", "-C", local_path, "fetch", remote, branch], check=True, env=env)
             # Forced, because this directory is a staging area for reports and
             # never a place where work happens: whatever a previous run left
             # behind is of no value.
@@ -779,15 +842,15 @@ class FlowCfg():
             # below names HEAD. A local branch called `<remote>/<branch>` would
             # collide with the remote-tracking ref the fetch just wrote.
             subprocess.run(
-                ["git", "-C", local_path, "checkout", "-f", "--detach",
-                 "FETCH_HEAD"],
-                check=True, env=env)
+                ["git", "-C", local_path, "checkout", "-f", "--detach", "FETCH_HEAD"],
+                check=True,
+                env=env,
+            )
             # One directory can serve several dashboards, and the private one
             # receives native artifacts that the public one must never be
             # given. Everything untracked and everything ignored goes before
             # the caller's `git add -A` can sweep it into the wrong repository.
-            subprocess.run(["git", "-C", local_path, "clean", "-ffdx"],
-                           check=True, env=env)
+            subprocess.run(["git", "-C", local_path, "clean", "-ffdx"], check=True, env=env)
             return remote
         except FileNotFoundError:
             log.error("git is not installed or not on PATH. Cannot publish results.")
@@ -796,8 +859,11 @@ class FlowCfg():
             log.error("Timed out trying to reach repository: %s", repository)
             raise
         except subprocess.CalledProcessError as e:
-            log.error("git operation failed for %s:\n%s",
-                      repository, e.stderr.decode().strip() if e.stderr else "")
+            log.error(
+                "git operation failed for %s:\n%s",
+                repository,
+                e.stderr.decode().strip() if e.stderr else "",
+            )
             raise
 
     @staticmethod
@@ -809,6 +875,7 @@ class FlowCfg():
         When more than one, however, each also gets the first word of its configuration name
         (e.g. Weekly (Dragonfly), Nightly (Egret))
         """
+
         def item(flow_dir):
             words = flow_dir.split("_")
             if len(words) >= 3:
@@ -829,8 +896,15 @@ class FlowCfg():
             labels[d] = label
         return labels
 
-    def _write_index_html(self, repo_dir: str, title: str, filename: str,
-                          link_template: str, max_entries: int = None, embed_latest: tuple = None):
+    def _write_index_html(
+        self,
+        repo_dir: str,
+        title: str,
+        filename: str,
+        link_template: str,
+        max_entries: int = None,
+        embed_latest: tuple = None,
+    ):
         """Regenerate an index html file from the subdirectories of repo_dir.
 
         `link_template` is the relative link for each row, with `{entry}`
@@ -838,7 +912,7 @@ class FlowCfg():
         `"{entry}/{entry}_index.html"` at the top level, or
         `"{entry}/all_tops_batch/reports/latest/report.html"` per flow.
         """
-        style_src = os.path.join(os.path.dirname(__file__), 'style.css')
+        style_src = os.path.join(os.path.dirname(__file__), "style.css")
         shutil.copy2(style_src, repo_dir)
         filepath = os.path.join(repo_dir, f"{filename}.html")
 
@@ -884,14 +958,14 @@ class FlowCfg():
     </div>
 </body>
 </html>"""
-        soup = BeautifulSoup(html, 'html.parser')
-        tbody = soup.find('tbody')
+        soup = BeautifulSoup(html, "html.parser")
+        tbody = soup.find("tbody")
 
         labels = self._flow_labels(entries) if filename == "index" else {}
         for entry in entries:
-            tr = soup.new_tag('tr')
-            td = soup.new_tag('td')
-            a = soup.new_tag('a', href=link_for(entry))
+            tr = soup.new_tag("tr")
+            td = soup.new_tag("td")
+            a = soup.new_tag("a", href=link_for(entry))
             a.string = labels.get(entry, entry)
             td.append(a)
             tr.append(td)
@@ -901,14 +975,16 @@ class FlowCfg():
             # The label is set to differentiate two runs with the same item
             title, latest = embed_latest
             label = labels.get(latest) or self._flow_labels([latest])[latest]
-            self._embed_latest_table(soup, repo_dir, link_template,
-                                     (title.format(label=label), latest))
+            self._embed_latest_table(
+                soup, repo_dir, link_template, (title.format(label=label), latest)
+            )
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write(str(soup))
 
-    def _embed_latest_table(self, soup, repo_dir: str, link_template: str,
-                            embed_latest: tuple) -> None:
+    def _embed_latest_table(
+        self, soup, repo_dir: str, link_template: str, embed_latest: tuple
+    ) -> None:
         """Append the latest report's main <table> below the index page."""
         label, entry = embed_latest
         idx = Path(repo_dir) / link_template.format(entry=entry)
@@ -916,15 +992,15 @@ class FlowCfg():
         def first_table(path):
             if not path.exists():
                 return None
-            return BeautifulSoup(path.read_text(), 'html.parser').find('table')
+            return BeautifulSoup(path.read_text(), "html.parser").find("table")
 
-        if idx.name.endswith('_index.html'):
+        if idx.name.endswith("_index.html"):
             idx_table = first_table(idx)
-            latest_a = idx_table and idx_table.select_one('tbody tr:first-of-type a[href]')
+            latest_a = idx_table and idx_table.select_one("tbody tr:first-of-type a[href]")
             if latest_a is None:
                 log.warning("[index] embed_latest: no entries under %s", idx)
                 return
-            report = (idx.parent / latest_a['href']).resolve()
+            report = (idx.parent / latest_a["href"]).resolve()
         else:
             report = idx
 
@@ -934,17 +1010,17 @@ class FlowCfg():
             return
 
         base = Path(repo_dir).resolve()
-        for a in table.find_all('a', href=True):
-            href = a['href']
-            if href.startswith(('http', '#', '/')):
+        for a in table.find_all("a", href=True):
+            href = a["href"]
+            if href.startswith(("http", "#", "/")):
                 continue
             try:
-                a['href'] = os.path.relpath((report.parent / href).resolve(), base)
+                a["href"] = os.path.relpath((report.parent / href).resolve(), base)
             except ValueError:
                 log.warning("Could not resolve relative paths in embedded table.")
 
-        div = soup.find('div', class_='results')
-        h2 = soup.new_tag('h2', style='margin-top: 3.5em;')
+        div = soup.find("div", class_="results")
+        h2 = soup.new_tag("h2", style="margin-top: 3.5em;")
         h2.string = label
         div.extend([h2, table])
 
@@ -955,21 +1031,23 @@ class FlowCfg():
         so the dashboard link's existing relative path (../../cov_report/...)
         resolves correctly inside the repo without any HTML rewriting.
         """
-        item_dest_root = os.path.join(repo_dir,
-                                      f"{self.name}_{test}_{self.flow}",
-                                      f"{self.name}_{test}_{self.flow}_{self.timestamp}",
-                                      os.path.basename(item.scratch_path))
+        item_dest_root = os.path.join(
+            repo_dir,
+            f"{self.name}_{test}_{self.flow}",
+            f"{self.name}_{test}_{self.flow}_{self.timestamp}",
+            os.path.basename(item.scratch_path),
+        )
 
-        cov_src = os.path.join(item.scratch_path, 'cov_report')
-        cov_dest = os.path.join(item_dest_root, 'cov_report')
+        cov_src = os.path.join(item.scratch_path, "cov_report")
+        cov_dest = os.path.join(item_dest_root, "cov_report")
         try:
             cp_path(cov_src, cov_dest)
             log.info(f"Copied native coverage reports for {item.name}")
         except FileNotFoundError:
             log.warning(f"No native coverage reports found for {item.name} at {cov_src}.")
 
-        seed_src = os.path.join(item.scratch_path, 'seeds', 'latest')
-        seed_dest = os.path.join(item_dest_root, 'seeds', 'latest')
+        seed_src = os.path.join(item.scratch_path, "seeds", "latest")
+        seed_dest = os.path.join(item_dest_root, "seeds", "latest")
         try:
             cp_path(seed_src, seed_dest)
             log.info(f"Copied long seeds for {item.name}")
@@ -979,7 +1057,7 @@ class FlowCfg():
         # Coverage databases (merged .vdb / equivalent and knowledge DB) go
         # together under cov_data/ for downstream consumers to re-open in the
         # native GUI.
-        cov_data_dest = os.path.join(item_dest_root, 'cov_data')
+        cov_data_dest = os.path.join(item_dest_root, "cov_data")
 
         merged_src = item.cov_merge_db_dir
         if merged_src:

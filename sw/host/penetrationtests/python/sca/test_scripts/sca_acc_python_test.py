@@ -32,7 +32,6 @@ BOOTSTRAP = args.bootstrap
 
 
 class AccScaTest(unittest.TestCase):
-
     def test_init(self):
         accsca = OTACC(target)
         device_id, owner_page, boot_log, boot_measurements, version = accsca.init()
@@ -97,9 +96,7 @@ class AccScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -189,9 +186,7 @@ class AccScaTest(unittest.TestCase):
                 "result7": mult,
                 "result8": FG,
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             fixed_data1 = 1
             fixed_data2 = 1
@@ -267,9 +262,7 @@ class AccScaTest(unittest.TestCase):
                 "result7": mult,
                 "result8": FG,
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             fixed_data1 = random.getrandbits(32)
             fixed_data2 = random.getrandbits(32)
@@ -345,27 +338,19 @@ class AccScaTest(unittest.TestCase):
                 "result7": mult,
                 "result8": FG,
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
 
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:
-        bitstream_path = r.Rlocation(
-            "pavona_pavona/" + BITSTREAM
-        )
+        bitstream_path = r.Rlocation("pavona_pavona/" + BITSTREAM)
     # Get the firmware path.
-    firmware_path = r.Rlocation(
-        "pavona_pavona/" + BOOTSTRAP
-    )
+    firmware_path = r.Rlocation("pavona_pavona/" + BOOTSTRAP)
 
     if "fpga" in BOOTSTRAP:
         target_type = "fpga"
@@ -378,7 +363,7 @@ if __name__ == "__main__":
         fw_bin=firmware_path,
         opentitantool=opentitantool_path,
         bitstream=bitstream_path,
-        tool_args=config_args
+        tool_args=config_args,
     )
 
     target = targets.Target(target_cfg)

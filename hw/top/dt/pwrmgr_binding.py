@@ -4,6 +4,7 @@
 """This contains a class which is used to help generate the device tables (DT)
 files.
 """
+
 from dtgen.helper import IpHelper, Extension, StructType, ScalarType, ArrayMapType
 from topgen.lib import Name
 from typing import Optional
@@ -122,26 +123,26 @@ class PwrmgrExt(Extension):
         # Create a type to represent a wakeup.
         self.wakeup_src_struct = StructType(self.WAKEUP_SOURCE_STRUCT_NAME)
         self.wakeup_src_struct.add_field(
-            name = self.WAKEUP_SOURCE_INST_FIELD_NAME,
-            field_type = ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
-            docstring = "Instance ID of the source of this wakeup.",
+            name=self.WAKEUP_SOURCE_INST_FIELD_NAME,
+            field_type=ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
+            docstring="Instance ID of the source of this wakeup.",
         )
         self.wakeup_src_struct.add_field(
-            name = self.WAKEUP_SOURCE_WAKEUP_FIELD_NAME,
-            field_type = ScalarType("size_t"),
-            docstring = "Index of the wakeup signal for that instance.",
+            name=self.WAKEUP_SOURCE_WAKEUP_FIELD_NAME,
+            field_type=ScalarType("size_t"),
+            docstring="Index of the wakeup signal for that instance.",
         )
         # Create a type to represent a reset request.
         self.reset_req_src_struct = StructType(self.RSTREQ_SOURCE_STRUCT_NAME)
         self.reset_req_src_struct.add_field(
-            name = self.RSTREQ_SOURCE_INST_FIELD_NAME,
-            field_type = ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
-            docstring = "Instance ID of the source of this reset request.",
+            name=self.RSTREQ_SOURCE_INST_FIELD_NAME,
+            field_type=ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
+            docstring="Instance ID of the source of this reset request.",
         )
         self.reset_req_src_struct.add_field(
-            name = self.RSTREQ_SOURCE_REQ_FIELD_NAME,
-            field_type = ScalarType("size_t"),
-            docstring = "Index of the reset request signal for that instance.",
+            name=self.RSTREQ_SOURCE_REQ_FIELD_NAME,
+            field_type=ScalarType("size_t"),
+            docstring="Index of the reset request signal for that instance.",
         )
 
     @staticmethod
@@ -156,30 +157,30 @@ class PwrmgrExt(Extension):
         st = StructType()
         # Add field to list wakeup sources.
         st.add_field(
-            name = self.EXT_WAKEUP_SOURCES_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = self.wakeup_src_struct,
-                index_type = ScalarType("size_t"),
-                length = str(wakeup_count),
+            name=self.EXT_WAKEUP_SOURCES_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=self.wakeup_src_struct,
+                index_type=ScalarType("size_t"),
+                length=str(wakeup_count),
             ),
-            docstring = "List of wakeup sources, in the order of the register fields",
+            docstring="List of wakeup sources, in the order of the register fields",
         )
         # Add field to list reset requests.
         st.add_field(
-            name = self.EXT_RESET_REQS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = self.reset_req_src_struct,
-                index_type = ScalarType("size_t"),
-                length = str(rstreq_count),
+            name=self.EXT_RESET_REQS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=self.reset_req_src_struct,
+                index_type=ScalarType("size_t"),
+                length=str(rstreq_count),
             ),
-            docstring = "List of reset requests, in the order of the register fields",
+            docstring="List of reset requests, in the order of the register fields",
         )
         return Name(["pwrmgr_ext"]), st
 
     def fill_dt_ip(self, m) -> Optional[dict]:
         wakeup_srcs = {}
         self._extra_includes = OrderedDict()
-        for (idx, wakeup) in enumerate(self.ipconfig.wakeup_list()):
+        for idx, wakeup in enumerate(self.ipconfig.wakeup_list()):
             # We need to create the wakeup name from another module.
             module_type = self.ip_helper.top_helper.get_module_type(wakeup["module"])
             self._extra_includes[module_type] = None
@@ -189,10 +190,10 @@ class PwrmgrExt(Extension):
             wkup_name += Name.from_snake_case(wakeup["name"])
             wakeup_srcs[str(idx)] = {
                 self.WAKEUP_SOURCE_INST_FIELD_NAME: Name.from_snake_case(wakeup["module"]),
-                self.WAKEUP_SOURCE_WAKEUP_FIELD_NAME: wkup_name.as_c_enum()
+                self.WAKEUP_SOURCE_WAKEUP_FIELD_NAME: wkup_name.as_c_enum(),
             }
         rst_reqs = {}
-        for (idx, reset) in enumerate(self.ipconfig.peripheral_reset_req_list()):
+        for idx, reset in enumerate(self.ipconfig.peripheral_reset_req_list()):
             # We need to create the reset name from another module.
             module_type = self.ip_helper.top_helper.get_module_type(reset["module"])
             self._extra_includes[module_type] = None
@@ -200,10 +201,11 @@ class PwrmgrExt(Extension):
             rstreq += Name.from_snake_case(module_type)
             rstreq += Name(["reset", "req"])
             rstreq += Name.from_snake_case(
-                self.ip_helper.simplify_reset_request_name(reset["name"]))
+                self.ip_helper.simplify_reset_request_name(reset["name"])
+            )
             rst_reqs[str(idx)] = {
                 self.RSTREQ_SOURCE_INST_FIELD_NAME: Name.from_snake_case(reset["module"]),
-                self.RSTREQ_SOURCE_REQ_FIELD_NAME: rstreq.as_c_enum()
+                self.RSTREQ_SOURCE_REQ_FIELD_NAME: rstreq.as_c_enum(),
             }
 
         return {
@@ -214,19 +216,19 @@ class PwrmgrExt(Extension):
     def render_dt_ip(self, pos: Extension.DtIpPos) -> str:
         if pos == Extension.DtIpPos.HeaderEnd:
             subs = {
-                'wakeup_src_struct': self.wakeup_src_struct.render_type_def(),
-                'reset_req_src_struct': self.reset_req_src_struct.render_type_def(),
+                "wakeup_src_struct": self.wakeup_src_struct.render_type_def(),
+                "reset_req_src_struct": self.reset_req_src_struct.render_type_def(),
             }
             return HEADER_EXT_TEMPLATE % subs
         elif pos == Extension.DtIpPos.SourceIncludes:
             includes = ""
             for ip in self._extra_includes:
-                includes += f"#include \"hw/top/dt/{ip}.h\"\n"
+                includes += f'#include "hw/top/dt/{ip}.h"\n'
             return includes
         elif pos == Extension.DtIpPos.SourceEnd:
             subs = {
-                'wakeup_src_count': len(self.ipconfig.wakeup_list()),
-                'reset_reqs_count': len(self.ipconfig.peripheral_reset_req_list()),
+                "wakeup_src_count": len(self.ipconfig.wakeup_list()),
+                "reset_reqs_count": len(self.ipconfig.peripheral_reset_req_list()),
             }
             return SOURCE_EXT_TEMPLATE % subs
         else:

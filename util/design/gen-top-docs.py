@@ -25,26 +25,23 @@ def generate_pinout_table(top_level):
     """Generates top level pinout table."""
     header = ["ID", "Name", "Bank", "Type", "Connection Type", "Description"]
     table = [header]
-    colalign = ("left", ) * len(header)
+    colalign = ("left",) * len(header)
 
     for pad in top_level["pinout"]["pads"]:
         row = [pad["idx"], pad["name"], pad["bank"], pad["type"], pad["connection"], pad["desc"]]
         table.append(row)
 
-    return tabulate(table,
-                    headers="firstrow",
-                    tablefmt="pipe",
-                    colalign=colalign)
+    return tabulate(table, headers="firstrow", tablefmt="pipe", colalign=colalign)
 
 
 def main():
-    log.basicConfig(level=log.WARNING,
-                    format="%(levelname)s: %(message)s")
+    log.basicConfig(level=log.WARNING, format="%(levelname)s: %(message)s")
 
     parser = argparse.ArgumentParser(
         prog="gen-top-docs",
         description=common.wrapped_docstring(),
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
     parser.add_argument(
         "--topcfg",
@@ -63,7 +60,7 @@ def main():
     doc_generators = {
         "pinout": generate_pinout_table,
     }
-    with open(args.topcfg, 'r') as infile:
+    with open(args.topcfg, "r") as infile:
         top_level = hjson.load(infile)
         if gen not in doc_generators:
             sys.exit(f"Unknown generator {gen}")

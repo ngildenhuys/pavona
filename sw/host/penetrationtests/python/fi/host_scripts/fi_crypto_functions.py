@@ -6,15 +6,15 @@ from sw.host.penetrationtests.python.fi.communication.fi_crypto_commands import 
 from sw.host.penetrationtests.python.util import common_library
 
 
-def char_aes(target, iterations, plaintext, key, trigger, reset = False):
+def char_aes(target, iterations, plaintext, key, trigger, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         if trigger == 0:
@@ -34,15 +34,15 @@ def char_aes(target, iterations, plaintext, key, trigger, reset = False):
     return response
 
 
-def char_kmac(target, iterations, plaintext, key, trigger, reset = False):
+def char_kmac(target, iterations, plaintext, key, trigger, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         if trigger == 0:
@@ -62,15 +62,15 @@ def char_kmac(target, iterations, plaintext, key, trigger, reset = False):
     return response
 
 
-def char_sha3(target, iterations, plaintext, trigger, reset = False):
+def char_sha3(target, iterations, plaintext, trigger, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         if trigger == 0:
@@ -90,15 +90,15 @@ def char_sha3(target, iterations, plaintext, trigger, reset = False):
     return response
 
 
-def char_kmac_state(target, iterations, plaintext, key, reset = False):
+def char_kmac_state(target, iterations, plaintext, key, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         cryptofi.crypto_kmac_state(plaintext, key)
@@ -118,7 +118,7 @@ def char_hmac(
     digest_endianness_big,
     key_endianness_big,
     hash_mode,
-    reset = False
+    reset=False,
 ):
     cryptofi = OTFICrypto(target)
     if reset:
@@ -126,8 +126,8 @@ def char_hmac(
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         cryptofi.crypto_hmac(
@@ -145,15 +145,15 @@ def char_hmac(
     return response
 
 
-def char_shadow_reg_access(target, iterations, reset = False):
+def char_shadow_reg_access(target, iterations, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         cryptofi.crypto_shadow_reg_access()
@@ -162,15 +162,15 @@ def char_shadow_reg_access(target, iterations, reset = False):
     return response
 
 
-def char_shadow_reg_read(target, iterations, reset = False):
+def char_shadow_reg_read(target, iterations, reset=False):
     cryptofi = OTFICrypto(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        cryptofi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = cryptofi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         cryptofi.crypto_shadow_reg_read()

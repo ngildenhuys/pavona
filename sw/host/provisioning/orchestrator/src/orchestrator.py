@@ -26,9 +26,7 @@ def get_user_confirmation(
     args: argparse.Namespace,
 ) -> None:
     """Gets user confirmation after printing provisioning inputs to console."""
-    print(
-        "\nPlease confirm the following values (> indicates generated values):"
-    )
+    print("\nPlease confirm the following values (> indicates generated values):")
     print("[DEVICE ID]")
     device_id.pretty_print()
     print(f"""
@@ -63,17 +61,13 @@ def main(args_in):
     # Setup logging.
     logging.basicConfig(
         level=logging.DEBUG,
-        handlers=[
-            logging.FileHandler("orchestrator.log.txt"),
-            logging.StreamHandler(sys.stdout)
-        ],
+        handlers=[logging.FileHandler("orchestrator.log.txt"), logging.StreamHandler(sys.stdout)],
     )
 
     # Parse cmd line args.
     parser = argparse.ArgumentParser(
         prog=__doc__,
-        description=
-        """This tool runs the CP and FT provisioning flows on a benchtop
+        description="""This tool runs the CP and FT provisioning flows on a benchtop
         provisioning setup, and records the results into a local and/or remote
         provisioning database.""",
     )
@@ -141,8 +135,7 @@ def main(args_in):
     parser.add_argument(
         "--db-path",
         required=False,
-        help=
-        "Path to provisioning database. The database will be created if it does not exist.",
+        help="Path to provisioning database. The database will be created if it does not exist.",
     )
     args = parser.parse_args(args_in)
 
@@ -172,22 +165,27 @@ def main(args_in):
     # TODO: Setup remote and/or local DB connections.
 
     # Generate commit hash of current provisioning run.
-    commit_hash = subprocess.run(shlex.split("git rev-parse HEAD"),
-                                 capture_output=True,
-                                 text=True).stdout.strip() or "default"
+    commit_hash = (
+        subprocess.run(
+            shlex.split("git rev-parse HEAD"), capture_output=True, text=True
+        ).stdout.strip()
+        or "default"
+    )
 
     # Run all provisioning flows.
     get_user_confirmation(sku_config, device_id, commit_hash, args)
-    dut = OtDut(logs_root_dir=args.log_dir,
-                sku_config=sku_config,
-                device_id=device_id,
-                test_unlock_token=args.test_unlock_token,
-                test_exit_token=args.test_exit_token,
-                fpga=args.fpga,
-                ate_mode=args.use_ate_individ_bin,
-                fpga_dont_clear_bitstream=args.fpga_dont_clear_bitstream,
-                log_ujson_payloads=args.log_ujson_payloads,
-                require_confirmation=not args.non_interactive)
+    dut = OtDut(
+        logs_root_dir=args.log_dir,
+        sku_config=sku_config,
+        device_id=device_id,
+        test_unlock_token=args.test_unlock_token,
+        test_exit_token=args.test_exit_token,
+        fpga=args.fpga,
+        ate_mode=args.use_ate_individ_bin,
+        fpga_dont_clear_bitstream=args.fpga_dont_clear_bitstream,
+        log_ujson_payloads=args.log_ujson_payloads,
+        require_confirmation=not args.non_interactive,
+    )
     dut.run_cp()
     if args.cp_only:
         logging.info("FT skipped since --cp-only was provided")
@@ -201,8 +199,7 @@ def main(args_in):
 
     # Check device ID exists in the database.
     if db.DeviceRecord.query(db_handle, dut.device_id.to_hexstr()) is not None:
-        logging.warning(
-            "DeviceId already exists in database. Overwrite record?")
+        logging.warning("DeviceId already exists in database. Overwrite record?")
         confirm()
 
     # Register the DUT in the database.

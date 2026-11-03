@@ -5,6 +5,7 @@
 This contains a class to access the pwrmgr's configuration from its ipconfig
 files.
 """
+
 from typing import List, Dict
 
 

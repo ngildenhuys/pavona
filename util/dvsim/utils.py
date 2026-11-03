@@ -37,7 +37,7 @@ TS_FORMAT_LONG = "%A %B %d %Y %H:%M:%S UTC"
 def run_cmd(cmd):
     (status, output) = subprocess.getstatusoutput(cmd)
     if status:
-        print(f'cmd {cmd} returned with status {status}', file=sys.stderr)
+        print(f"cmd {cmd} returned with status {status}", file=sys.stderr)
         sys.exit(status)
     return output
 
@@ -47,9 +47,7 @@ def run_cmd(cmd):
 # command fails, it throws an exception and returns the stderr.
 def run_cmd_with_timeout(cmd, timeout=-1, exit_on_failure=1):
     args = shlex.split(cmd)
-    p = subprocess.Popen(args,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # If timeout is set, poll for the process to finish until timeout
     result = ""
@@ -61,18 +59,18 @@ def run_cmd_with_timeout(cmd, timeout=-1, exit_on_failure=1):
         while time.time() - start < timeout:
             if p.poll() is not None:
                 break
-            time.sleep(.01)
+            time.sleep(0.01)
 
     # Capture output and status if cmd exited, else kill it
     if p.poll() is not None:
         result = p.communicate()[0]
         status = p.returncode
     else:
-        log.error("cmd \"%s\" timed out!", cmd)
+        log.error('cmd "%s" timed out!', cmd)
         p.kill()
 
     if status != 0:
-        log.error("cmd \"%s\" exited with status %d", cmd, status)
+        log.error('cmd "%s" exited with status %d', cmd, status)
         if exit_on_failure == 1:
             sys.exit(status)
 
@@ -84,26 +82,26 @@ def parse_hjson(hjson_file):
     hjson_cfg_dict = None
     try:
         log.debug("Parsing %s", hjson_file)
-        f = open(hjson_file, 'r')
+        f = open(hjson_file, "r")
         text = f.read()
         hjson_cfg_dict = hjson.loads(text, use_decimal=True)
         f.close()
     except Exception as e:
         log.fatal(
-            "Failed to parse \"%s\" possibly due to bad path or syntax error.\n%s",
-            hjson_file, e)
+            'Failed to parse "%s" possibly due to bad path or syntax error.\n%s', hjson_file, e
+        )
         sys.exit(1)
     return hjson_cfg_dict
 
 
 def _stringify_wildcard_value(value):
-    '''Make sense of a wildcard value as a string (see subst_wildcards)
+    """Make sense of a wildcard value as a string (see subst_wildcards)
 
     Strings are passed through unchanged. Integer or boolean values are printed
     as numerical strings. Lists or other sequences have their items printed
     separated by spaces.
 
-    '''
+    """
     if type(value) is str:
         return value
 
@@ -111,14 +109,13 @@ def _stringify_wildcard_value(value):
         return str(int(value))
 
     try:
-        return ' '.join(_stringify_wildcard_value(x) for x in value)
+        return " ".join(_stringify_wildcard_value(x) for x in value)
     except TypeError:
-        raise ValueError('Wildcard had value {!r} which is not of a supported '
-                         'type.'.format(value))
+        raise ValueError("Wildcard had value {!r} which is not of a supported type.".format(value))
 
 
 def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
-    '''Worker function for subst_wildcards
+    """Worker function for subst_wildcards
 
     seen is a list of wildcards that have been expanded on the way to this call
     (used for spotting circular recursion).
@@ -126,7 +123,7 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
     Returns (expanded, seen_err) where expanded is the new value of the string
     and seen_err is true if we stopped early because of an ignored error.
 
-    '''
+    """
     wildcard_re = re.compile(r"{([A-Za-z0-9\_]+)}")
 
     # Work from left to right, expanding each wildcard we find. idx is where we
@@ -154,19 +151,19 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
         # If the name has been seen already, we've spotted circular recursion.
         # That's not allowed!
         if name in seen:
-            raise ValueError('String contains circular expansion of '
-                             'wildcard {!r}.'.format(match.group(0)))
+            raise ValueError(
+                "String contains circular expansion of wildcard {!r}.".format(match.group(0))
+            )
 
         # Treat eval_cmd specially
-        if name == 'eval_cmd':
-            cmd = _subst_wildcards(right_str[match.end():], mdict, ignored,
-                                   ignore_error, seen)[0]
+        if name == "eval_cmd":
+            cmd = _subst_wildcards(right_str[match.end() :], mdict, ignored, ignore_error, seen)[0]
 
             # Are there any wildcards left in cmd? If not, we can run the
             # command and we're done.
             cmd_matches = list(wildcard_re.finditer(cmd))
             if not cmd_matches:
-                var = var[:match.start()] + run_cmd(cmd)
+                var = var[: match.start()] + run_cmd(cmd)
                 continue
 
             # Otherwise, check that each of them is ignored, or that
@@ -178,15 +175,17 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
                         bad_names = True
 
             if bad_names:
-                raise ValueError('Cannot run eval_cmd because the command '
-                                 'expands to {!r}, which still contains a '
-                                 'wildcard.'.format(cmd))
+                raise ValueError(
+                    "Cannot run eval_cmd because the command "
+                    "expands to {!r}, which still contains a "
+                    "wildcard.".format(cmd)
+                )
 
             # We can't run the command (because it still has wildcards), but we
             # don't want to report an error either because ignore_error is true
             # or because each wildcard that's left is ignored. Return the
             # partially evaluated version.
-            return (var[:idx] + right_str[:match.end()] + cmd, True)
+            return (var[:idx] + right_str[: match.end()] + cmd, True)
 
         # Otherwise, look up name in mdict.
         value = mdict.get(name)
@@ -197,8 +196,8 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
 
         if value is None and name == "topname":
             self_dir = mdict.get("self_dir")
-            top_ip = re.match(r'.*?/hw/([^/]+)/ip_autogen(/.*)?', self_dir)
-            top_tlul = re.match(r'.*?/hw/([^/]+)/ip(/.*)?', self_dir)
+            top_ip = re.match(r".*?/hw/([^/]+)/ip_autogen(/.*)?", self_dir)
+            top_tlul = re.match(r".*?/hw/([^/]+)/ip(/.*)?", self_dir)
             if top_ip:
                 value = top_ip.group(1)
             elif top_tlul:
@@ -212,8 +211,9 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
                 idx += match.end()
                 continue
 
-            raise ValueError('String to be expanded contains '
-                             'unknown wildcard, {!r}.'.format(match.group(0)))
+            raise ValueError(
+                "String to be expanded contains unknown wildcard, {!r}.".format(match.group(0))
+            )
 
         if name == "variant" and value == "":
             value = "base"
@@ -222,20 +222,18 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
 
         # Do any recursive expansion of value, adding name to seen (to avoid
         # circular recursion).
-        value, saw_err = _subst_wildcards(value, mdict, ignored, ignore_error,
-                                          seen + [name])
+        value, saw_err = _subst_wildcards(value, mdict, ignored, ignore_error, seen + [name])
 
         # Replace the original match with the result and go around again. If
         # saw_err, increment idx past what we just inserted.
-        var = (var[:idx] + right_str[:match.start()] + value +
-               right_str[match.end():])
+        var = var[:idx] + right_str[: match.start()] + value + right_str[match.end() :]
         if saw_err:
             any_err = True
             idx += match.start() + len(value)
 
 
 def subst_wildcards(var, mdict, ignored_wildcards=[], ignore_error=False):
-    '''Substitute any "wildcard" variables in the string var.
+    """Substitute any "wildcard" variables in the string var.
 
     var is the string to be substituted. mdict is a dictionary mapping
     variables to strings. ignored_wildcards is a list of wildcards that
@@ -299,28 +297,25 @@ def subst_wildcards(var, mdict, ignored_wildcards=[], ignore_error=False):
     which returns 'a bee'. This is pretty hard to read though, so is probably
     not a good idea to use.
 
-    '''
+    """
     try:
-        return _subst_wildcards(var, mdict, ignored_wildcards, ignore_error,
-                                [])[0]
+        return _subst_wildcards(var, mdict, ignored_wildcards, ignore_error, [])[0]
     except ValueError as err:
         log.error(str(err))
         sys.exit(1)
 
 
-def find_and_substitute_wildcards(sub_dict,
-                                  full_dict,
-                                  ignored_wildcards=[],
-                                  ignore_error=False):
-    '''
+def find_and_substitute_wildcards(sub_dict, full_dict, ignored_wildcards=[], ignore_error=False):
+    """
     Recursively find key values containing wildcards in sub_dict in full_dict
     and return resolved sub_dict.
-    '''
+    """
     for key in sub_dict.keys():
         if type(sub_dict[key]) in [dict, OrderedDict]:
             # Recursively call this function in sub-dicts
             sub_dict[key] = find_and_substitute_wildcards(
-                sub_dict[key], full_dict, ignored_wildcards, ignore_error)
+                sub_dict[key], full_dict, ignored_wildcards, ignore_error
+            )
 
         elif type(sub_dict[key]) is list:
             sub_dict_key_values = list(sub_dict[key])
@@ -329,35 +324,35 @@ def find_and_substitute_wildcards(sub_dict,
             for i in range(len(sub_dict_key_values)):
                 if type(sub_dict_key_values[i]) in [dict, OrderedDict]:
                     # Recursively call this function in sub-dicts
-                    sub_dict_key_values[i] = \
-                        find_and_substitute_wildcards(sub_dict_key_values[i],
-                                                      full_dict, ignored_wildcards, ignore_error)
+                    sub_dict_key_values[i] = find_and_substitute_wildcards(
+                        sub_dict_key_values[i], full_dict, ignored_wildcards, ignore_error
+                    )
 
                 elif type(sub_dict_key_values[i]) is str:
                     sub_dict_key_values[i] = subst_wildcards(
-                        sub_dict_key_values[i], full_dict, ignored_wildcards,
-                        ignore_error)
+                        sub_dict_key_values[i], full_dict, ignored_wildcards, ignore_error
+                    )
 
             # Set the substituted key values back
             sub_dict[key] = sub_dict_key_values
 
         elif type(sub_dict[key]) is str:
-            sub_dict[key] = subst_wildcards(sub_dict[key], full_dict,
-                                            ignored_wildcards, ignore_error)
+            sub_dict[key] = subst_wildcards(
+                sub_dict[key], full_dict, ignored_wildcards, ignore_error
+            )
     return sub_dict
 
 
 def md_results_to_html(title, css_file, md_text, is_primary_cfg=False):
-    '''Convert results in md format to html. Add a little bit of styling.
-    '''
+    """Convert results in md format to html. Add a little bit of styling."""
     html_text = "<!DOCTYPE html>\n"
-    html_text += "<html lang=\"en\">\n"
+    html_text += '<html lang="en">\n'
     html_text += "<head>\n"
     if title != "":
         html_text += "  <title>{}</title>\n".format(title)
     html_text += "</head>\n"
-    html_text += "<body style=\"margin:0; padding:0;\">\n"
-    html_text += "<div class=\"results\">\n"
+    html_text += '<body style="margin:0; padding:0;">\n'
+    html_text += '<div class="results">\n'
     html_text += mistletoe.markdown(md_text)
     html_text += "</div>\n"
     html_text += "</body>\n"
@@ -365,18 +360,15 @@ def md_results_to_html(title, css_file, md_text, is_primary_cfg=False):
     html_text = htmc_color_pc_cells(html_text)
     # this function converts css style to inline html style
     html_text = transform(html_text, external_styles=css_file)
-    html_text = html_text.replace(
-        'width:80%',
-        'box-sizing:border-box; width:80%'
-    )
-    html_text = re.sub(r'(<div class="results"[^>]*) width="80%"', r'\1', html_text)
+    html_text = html_text.replace("width:80%", "box-sizing:border-box; width:80%")
+    html_text = re.sub(r'(<div class="results"[^>]*) width="80%"', r"\1", html_text)
     if is_primary_cfg:
         html_text = html_styling_batch_coverage(html_text)
     return html_text
 
 
 def htmc_color_pc_cells(text):
-    '''This function finds cells in a html table that contain numerical values
+    """This function finds cells in a html table that contain numerical values
     (and a few known strings) followed by a single space and an identifier.
     Depending on the identifier, it shades the cell in a specific way. A set of
     12 color palettes for setting those shades are encoded in ./style.css.
@@ -415,30 +407,28 @@ def htmc_color_pc_cells(text):
 
     '--', 'NA', 'N.A.', 'N.A', 'N/A', 'na', 'n.a.', 'n.a', 'n/a'
 
-    '''
+    """
 
     # Replace <td> with <td class="color-class"> based on the fp
     # value. "color-classes" are listed in ./style.css as follows: "cna"
     # for NA value, "c0" to "c10" for fp value falling between 0.00-9.99,
     # 10.00-19.99 ... 90.00-99.99, 100.0 respectively.
     def color_cell(cell, cclass, indicator="%"):
-        op = cell.replace("<td", "<td class=\"" + cclass + "\"")
+        op = cell.replace("<td", '<td class="' + cclass + '"')
         # Remove the indicator.
         op = re.sub(r"\s*" + indicator + r"\s*", "", op)
         return op
 
     # List of 'not applicable' identifiers.
-    na_list = ['--', 'NA', 'N.A.', 'N.A', 'N/A', 'na', 'n.a.', 'n.a', 'n/a']
-    na_list_patterns = '|'.join(na_list)
+    na_list = ["--", "NA", "N.A.", "N.A", "N/A", "na", "n.a.", "n.a", "n/a"]
+    na_list_patterns = "|".join(na_list)
 
     # List of floating point patterns: '0', '0.0' & '.0'
     fp_patterns = r"[\+\-]?\d+\.?\d*"
 
-    patterns = fp_patterns + '|' + na_list_patterns
+    patterns = fp_patterns + "|" + na_list_patterns
     indicators = "%|%u|G|B|E|W|I|EN|WN"
-    match = re.findall(
-        r"(<td.*>\s*(" + patterns + r")\s+(" + indicators + r")\s*</td>)",
-        text)
+    match = re.findall(r"(<td.*>\s*(" + patterns + r")\s+(" + indicators + r")\s*</td>)", text)
     if len(match) > 0:
         subst_list = {}
         fp_nums = []
@@ -460,8 +450,11 @@ def htmc_color_pc_cells(text):
                     fp = float(fp_num)
                 except ValueError:
                     log.error(
-                        "Percentage item \"%s\" in cell \"%s\" is not an "
-                        "integer or a floating point number", fp_num, cell)
+                        'Percentage item "%s" in cell "%s" is not an '
+                        "integer or a floating point number",
+                        fp_num,
+                        cell,
+                    )
                     continue
                 # Percentage, colored.
                 if indicator == "%":
@@ -536,7 +529,7 @@ def html_styling_batch_coverage(html_text):
 
 
 def print_msg_list(msg_list_title, msg_list, max_msg_count=-1):
-    '''This function prints a list of messages to Markdown.
+    """This function prints a list of messages to Markdown.
 
     The argument msg_list_title contains a string for the list title, whereas
     the msg_list argument contains the actual list of message strings.
@@ -546,7 +539,7 @@ def print_msg_list(msg_list_title, msg_list, max_msg_count=-1):
     Example:
 
     print_msg_list("### Tool Warnings", ["Message A", "Message B"], 10)
-    '''
+    """
     md_results = ""
     if msg_list:
         md_results += msg_list_title + "\n"
@@ -556,7 +549,8 @@ def print_msg_list(msg_list_title, msg_list, max_msg_count=-1):
                 md_results += msg + "\n\n"
             else:
                 md_results += "Note: %d more messages have been suppressed " % (
-                    len(msg_list) - max_msg_count)
+                    len(msg_list) - max_msg_count
+                )
                 md_results += "(max_msg_count = %d) \n\n" % (max_msg_count)
                 break
         md_results += "```\n"
@@ -564,12 +558,12 @@ def print_msg_list(msg_list_title, msg_list, max_msg_count=-1):
 
 
 def rm_path(path, ignore_error=False):
-    '''Removes the specified path if it exists.
+    """Removes the specified path if it exists.
 
     'path' is a Path-like object. If it does not exist, the function simply
     returns. If 'ignore_error' is set, then exception caught by the remove
     operation is raised, else it is ignored.
-    '''
+    """
 
     path = Path(path)
 
@@ -594,12 +588,12 @@ def rm_path(path, ignore_error=False):
 
 
 def mk_path(path):
-    '''Create the specified path if it does not exist.
+    """Create the specified path if it does not exist.
 
     'path' is a Path-like object. If it does exist, the function simply
     returns. If it does not exist, the function creates the path and its
     parent directories if necessary.
-    '''
+    """
     try:
         Path(path).mkdir(parents=True, exist_ok=True)
     except PermissionError as e:
@@ -608,13 +602,13 @@ def mk_path(path):
 
 
 def dir_size_mb(path):
-    '''Return the total apparent size of the files under path, in MB.
+    """Return the total apparent size of the files under path, in MB.
 
     'path' is a Path-like object. Returns None if the path cannot be walked at
     all. Symlinks are not followed, and files that vanish midway through are
     skipped rather than raising: a job's output directory may still be
     changing while it is measured.
-    '''
+    """
     # os.walk() reports nothing at all for a path it cannot read, so check up
     # front rather than returning a bogus zero for a directory that is missing.
     if not os.path.isdir(path):
@@ -631,12 +625,12 @@ def dir_size_mb(path):
 
 
 def mk_symlink(path, link):
-    '''Create a symlink from the given path.
+    """Create a symlink from the given path.
 
     'link' is a Path-like object. If it does exist, remove the existing link and
     create a new symlink with this given path.
     If it does not exist, the function creates the symlink with the given path.
-    '''
+    """
     while True:
         try:
             os.symlink(path, link)
@@ -646,7 +640,7 @@ def mk_symlink(path, link):
 
 
 def cp_path(src, dest):
-    '''Copy the specified source path to the destination path.
+    """Copy the specified source path to the destination path.
 
     'src' and 'dest' are Path-like objects. If src is a directory, it is
     copied recursively, merging into dest if dest already exists. If src is
@@ -656,7 +650,7 @@ def cp_path(src, dest):
     Raises FileNotFoundError if src does not exist. The caller is expected
     to handle this — depending on the situation, a missing source may be
     fatal or merely warrant a warning.
-    '''
+    """
     src = Path(src)
     dest = Path(dest)
 
@@ -692,33 +686,34 @@ def clean_odirs(odir, max_odirs, ts_format=TS_FORMAT):
     if not pdir.exists():
         return []
 
-    dirs = sorted([old for old in pdir.iterdir() if (old.is_dir() and
-                                                     old.name != 'summary')],
-                  key=os.path.getctime,
-                  reverse=True)
+    dirs = sorted(
+        [old for old in pdir.iterdir() if (old.is_dir() and old.name != "summary")],
+        key=os.path.getctime,
+        reverse=True,
+    )
 
-    for old in dirs[max(0, max_odirs - 1):]:
+    for old in dirs[max(0, max_odirs - 1) :]:
         shutil.rmtree(old, ignore_errors=True)
 
-    return [] if max_odirs == 0 else dirs[:max_odirs - 1]
+    return [] if max_odirs == 0 else dirs[: max_odirs - 1]
 
 
 def check_bool(x):
     """check_bool checks if input 'x' either a bool or
-       one of the following strings: ["true", "false"]
-        It returns value as Bool type.
+    one of the following strings: ["true", "false"]
+     It returns value as Bool type.
     """
     if isinstance(x, bool):
         return x
     if x.lower() not in ["true", "false"]:
         raise RuntimeError("{} is not a boolean value.".format(x))
     else:
-        return (x.lower() == "true")
+        return x.lower() == "true"
 
 
 def check_int(x):
     """check_int checks if input 'x' is decimal integer.
-        It returns value as an int type.
+    It returns value as an int type.
     """
     if isinstance(x, int):
         return x

@@ -34,8 +34,7 @@ def edge_coeffs(gamma2):
     alpha = 2 * gamma2
     vals = {0, 1, Q - 1, Q - 2}
     for k in range(Q // alpha + 1):
-        vals.update(v for v in (k * alpha, k * alpha + gamma2,
-                                k * alpha + gamma2 + 1) if v < Q)
+        vals.update(v for v in (k * alpha, k * alpha + gamma2, k * alpha + gamma2 + 1) if v < Q)
     return sorted(vals)
 
 
@@ -58,7 +57,7 @@ def pack_dense_shares(share_vals, nshares):
     buf = bytearray()
     for s in range(nshares):
         for v in share_vals[s]:
-            buf += int(v).to_bytes(4, 'little')
+            buf += int(v).to_bytes(4, "little")
     return bytes(buf)
 
 
@@ -69,13 +68,13 @@ def pack_stripes(vals, nbits):
         word = 0
         for i, v in enumerate(vals):
             word |= ((v >> bit) & 1) << i
-        buf += word.to_bytes(32, 'little')
+        buf += word.to_bytes(32, "little")
     return bytes(buf)
 
 
 def gen_seccompress_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -83,27 +82,30 @@ def gen_seccompress_test(
     fixed = edge_coeffs(ML_DSA_44.gamma_2)
     fixed += [v for v in PINNED_SHARE0 if v not in fixed]
     assert len(fixed) <= N_LANES
-    x_vals[:len(fixed)] = fixed
+    x_vals[: len(fixed)] = fixed
     share_vals = arith_share_modq(x_vals, NSHARES, PINNED_SHARE0)
 
     alpha = 2 * ML_DSA_44.gamma_2
     w1 = [high_bits(x, alpha, Q) for x in x_vals]
-    c_out = (DELTA - 1).bit_length()             # ceil(log2(delta)) = 6
+    c_out = (DELTA - 1).bit_length()  # ceil(log2(delta)) = 6
 
-    write_test_data({
-        'xa': pack_dense_shares(share_vals, NSHARES),
-        'zb': b'\x00' * (32 * NSHARES * 32),
-    }, data_file)
+    write_test_data(
+        {
+            "xa": pack_dense_shares(share_vals, NSHARES),
+            "zb": b"\x00" * (32 * NSHARES * 32),
+        },
+        data_file,
+    )
     write_test_exp({}, exp_file)
-    write_test_dexp({'r': pack_stripes(w1, c_out)}, dexp_file)
+    write_test_dexp({"r": pack_stripes(w1, c_out)}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_seccompress_test(args.seed, args.data, args.exp, args.dexp)

@@ -16,27 +16,34 @@ from typing import Any, TextIO
 from .lib import REPO_TOP, import_hjson
 
 
-SCHEMA_DIRS = {REPO_TOP / "util" / "basegen" / "schemas",
-               REPO_TOP / "util" / "ipgen" / "schemas",
-               REPO_TOP / "util" / "raclgen" / "schemas",
-               REPO_TOP / "util" / "reggen" / "schemas",
-               REPO_TOP / "util" / "tlgen" / "schemas",
-               REPO_TOP / "util" / "topgen" / "schemas"}
+SCHEMA_DIRS = {
+    REPO_TOP / "util" / "basegen" / "schemas",
+    REPO_TOP / "util" / "ipgen" / "schemas",
+    REPO_TOP / "util" / "raclgen" / "schemas",
+    REPO_TOP / "util" / "reggen" / "schemas",
+    REPO_TOP / "util" / "tlgen" / "schemas",
+    REPO_TOP / "util" / "topgen" / "schemas",
+}
 
 BUILTIN_SCHEMAS = []
 for sd in SCHEMA_DIRS:
     BUILTIN_SCHEMAS += list(import_hjson(hj) for hj in sd.rglob("*.hjson"))
-BUILTIN_SCHEMAS_REGISTRY = SchemaRegistry().with_resources(
-    (s["$id"], DRAFT202012.create_resource(s))
-    for s in BUILTIN_SCHEMAS).crawl()
+BUILTIN_SCHEMAS_REGISTRY = (
+    SchemaRegistry()
+    .with_resources((s["$id"], DRAFT202012.create_resource(s)) for s in BUILTIN_SCHEMAS)
+    .crawl()
+)
 
 
 ###############################
 # Schema validation functions #
 ###############################
 
-def _resolve_schema(schema: dict[str, Any] | str | SchemaResource,
-                    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY) -> dict[str, Any]:
+
+def _resolve_schema(
+    schema: dict[str, Any] | str | SchemaResource,
+    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
+) -> dict[str, Any]:
     """Flexibly get the correct schema from a dict, URN string, or SchemaResource. If the schema
     is a string, search the registry for that URN.
     """
@@ -48,26 +55,32 @@ def _resolve_schema(schema: dict[str, Any] | str | SchemaResource,
     return schema
 
 
-def validate_schema(data: dict[str, Any], schema: dict[str, Any] | str | Resource,
-                    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY) -> None:
+def validate_schema(
+    data: dict[str, Any],
+    schema: dict[str, Any] | str | Resource,
+    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
+) -> None:
     """Validate some data against a given schema."""
     schema = _resolve_schema(schema, registry)
     jsonschema.validate(data, schema, registry=registry)
 
 
-def create_validator(schema: dict[str, Any] | str | Resource,
-                     registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY) -> Draft202012Validator:
+def create_validator(
+    schema: dict[str, Any] | str | Resource, registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY
+) -> Draft202012Validator:
     """Create a Validator object for validating schemas (metaschema 2020-12)."""
     schema = _resolve_schema(schema, registry)
     return Draft202012Validator(schema, registry=registry)
 
 
 # validation method here can be schema or validator
-def all_validation_errors(data: dict[str, Any],
-                          validation: dict[str, Any] | str | Resource | Draft202012Validator,
-                          prefix: str | None = None,
-                          registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
-                          log_errors: bool = True) -> list[ValidationError]:
+def all_validation_errors(
+    data: dict[str, Any],
+    validation: dict[str, Any] | str | Resource | Draft202012Validator,
+    prefix: str | None = None,
+    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
+    log_errors: bool = True,
+) -> list[ValidationError]:
     if not isinstance(validation, Draft202012Validator):
         validation = create_validator(validation, registry)
 
@@ -77,8 +90,10 @@ def all_validation_errors(data: dict[str, Any],
             validation_path = err.absolute_path
             if prefix is not None:
                 validation_path.appendleft(prefix)
-            log.error(f"(validation error, {'.'.join(str(part) for part in validation_path)})"
-                      f" {err.message}")
+            log.error(
+                f"(validation error, {'.'.join(str(part) for part in validation_path)})"
+                f" {err.message}"
+            )
 
     return errors
 
@@ -87,11 +102,14 @@ def all_validation_errors(data: dict[str, Any],
 # Schema documentation #
 ########################
 
-def document_schema(outfile: TextIO | None,
-                    schema: dict[str, Any] | str | Resource,
-                    schema_parser: jsonschema2md.Parser = jsonschema2md.Parser(header_level=2),
-                    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
-                    link_correction: dict[str, Any] | None = None) -> str | None:
+
+def document_schema(
+    outfile: TextIO | None,
+    schema: dict[str, Any] | str | Resource,
+    schema_parser: jsonschema2md.Parser = jsonschema2md.Parser(header_level=2),
+    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY,
+    link_correction: dict[str, Any] | None = None,
+) -> str | None:
     """Document the requirements of a given schema in Markdown formatting.
 
     Output can either be directly written to text or returned as str. Schema documentation may be
@@ -112,9 +130,7 @@ def document_schema(outfile: TextIO | None,
 
 
 def correct_doc_links(
-    doc_text: str,
-    use_link: bool | None = None,
-    registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY
+    doc_text: str, use_link: bool | None = None, registry: SchemaRegistry = BUILTIN_SCHEMAS_REGISTRY
 ) -> str:
     """Correct jsonschema2md link rendering.
 
@@ -133,19 +149,15 @@ def correct_doc_links(
 
         # use_link can override heading search
         if use_link is None:
-            linked_heading = re.search(f"^#+\\s+{schema['title']}\\s*?$",
-                                       doc_text,
-                                       flags=re.M)
+            linked_heading = re.search(f"^#+\\s+{schema['title']}\\s*?$", doc_text, flags=re.M)
             link_exists = linked_heading is not None
         else:
             link_exists = use_link
 
         # replace broken link
         if link_exists:
-            cleaned_title = re.sub(r"[^A-Za-z -]", "", schema['title'].lower())
-            repl = re.sub(ref.group("badlink"),
-                          f"#{'-'.join(cleaned_title.split())}",
-                          ref.group(0))
+            cleaned_title = re.sub(r"[^A-Za-z -]", "", schema["title"].lower())
+            repl = re.sub(ref.group("badlink"), f"#{'-'.join(cleaned_title.split())}", ref.group(0))
         else:
             repl = f"Refer to *{urn}*."  # no link if no subsection
 

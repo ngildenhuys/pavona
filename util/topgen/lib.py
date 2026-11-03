@@ -29,7 +29,6 @@ from .typing import IpBlocksT
 
 
 class CEnum(object):
-
     def __init__(self, top_name: Optional[Name], name: Name, repr_type=None):
         self.name = top_name + name if top_name is not None else name
         self.repr_type = repr_type
@@ -48,7 +47,7 @@ class CEnum(object):
         # Check that we're not adding duplicates
         for const in self.constants:
             if full_name == const[0]:
-                raise ValueError('{} is already declared with value {}'.format(const[0], const[1]))
+                raise ValueError("{} is already declared with value {}".format(const[0], const[1]))
 
         self.constants.append((full_name, value, docstring))
 
@@ -80,16 +79,17 @@ class CEnum(object):
         self.finalized = True
 
     def render(self) -> str:
-        template = ("typedef enum ${enum.name.as_snake_case()} {\n"
-                    "% for name, value, docstring in enum.constants + enum.meta_constants:\n"
-                    "  ${name.as_c_enum()} = ${value}, /**< ${docstring} */\n"
-                    "% endfor\n"
-                    "} ${enum.name.as_c_type()};")
+        template = (
+            "typedef enum ${enum.name.as_snake_case()} {\n"
+            "% for name, value, docstring in enum.constants + enum.meta_constants:\n"
+            "  ${name.as_c_enum()} = ${value}, /**< ${docstring} */\n"
+            "% endfor\n"
+            "} ${enum.name.as_c_type()};"
+        )
         return Template(template).render(enum=self)
 
 
 class CArrayMapping(object):
-
     def __init__(self, top_name, name, output_type_name):
         self.name = top_name + name
         self.output_type_name = output_type_name
@@ -102,7 +102,8 @@ class CArrayMapping(object):
     def render_declaration(self) -> str:
         template = (
             "extern const ${mapping.output_type_name.as_c_type()}\n"
-            "    ${mapping.name.as_snake_case()}[${len(mapping.mapping)}];")
+            "    ${mapping.name.as_snake_case()}[${len(mapping.mapping)}];"
+        )
         return Template(template).render(mapping=self)
 
     def render_definition(self) -> str:
@@ -112,17 +113,15 @@ class CArrayMapping(object):
             "% for in_name, out_name in mapping.mapping.items():\n"
             "  [${in_name.as_c_enum()}] = ${out_name.as_c_enum()},\n"
             "% endfor\n"
-            "};")
+            "};"
+        )
         return Template(template).render(mapping=self)
 
 
 class RustEnum(object):
-
-    def __init__(self,
-                 top_name,
-                 name,
-                 repr_type=None,
-                 derive_list=["Copy", "Clone", "PartialEq", "Eq"]):
+    def __init__(
+        self, top_name, name, repr_type=None, derive_list=["Copy", "Clone", "PartialEq", "Eq"]
+    ):
         self.name = top_name + name
         self.short_name = name
         self.enum_counter = 0
@@ -158,7 +157,7 @@ class RustEnum(object):
         # Check that we're not adding duplicates
         for const in self.constants:
             if full_name == const[0]:
-                raise ValueError('{} is already declared with value {}'.format(const[0], const[1]))
+                raise ValueError("{} is already declared with value {}".format(const[0], const[1]))
         self.constants.append((full_name, value, docstring))
         return full_name
 
@@ -187,23 +186,26 @@ class RustEnum(object):
             "        ${name.as_rust_enum()} = ${value},\n"
             "% endfor\n"
             "        End = ${enum.last_value + 1},\n"
-            "    }")
+            "    }"
+        )
         return Template(body).render(enum=self)
 
     def render(self, gen_range=False, gen_cast=False, derive_list=None) -> str:
         if derive_list is not None:
             self.derive_list = derive_list
         self.calculate_range()
-        body = ("${enum.derive()}"
-                "#[repr(${enum.repr()})]\n"
-                "pub enum ${enum.short_name.as_rust_type()} {\n"
-                "% for name, value, docstring in enum.constants:\n"
-                "    % if len(docstring) > 0 : \n"
-                "    /// ${docstring}\n"
-                "    % endif \n"
-                "    ${name.as_rust_enum()} = ${value},\n"
-                "% endfor\n"
-                "}")
+        body = (
+            "${enum.derive()}"
+            "#[repr(${enum.repr()})]\n"
+            "pub enum ${enum.short_name.as_rust_type()} {\n"
+            "% for name, value, docstring in enum.constants:\n"
+            "    % if len(docstring) > 0 : \n"
+            "    /// ${docstring}\n"
+            "    % endif \n"
+            "    ${name.as_rust_enum()} = ${value},\n"
+            "% endfor\n"
+            "}"
+        )
 
         impl = (
             "\n\n"
@@ -220,7 +222,8 @@ class RustEnum(object):
             "    /// Enum last valid value\n"
             "    const LAST: ${enum.repr()} = "
             "Self::${enum.constants[-1][0].as_rust_enum()} as ${enum.repr()};\n"
-            "}")
+            "}"
+        )
 
         cast = (
             "\n\n"
@@ -235,7 +238,8 @@ class RustEnum(object):
             "            _ => Err(val),\n"
             "        }\n"
             "    }\n"
-            "}")
+            "}"
+        )
 
         if gen_range:
             body += impl
@@ -245,7 +249,6 @@ class RustEnum(object):
 
 
 class RustArrayMapping(object):
-
     def __init__(self, top_name, name, output_type_name):
         self.name = top_name + name
         self.short_name = name
@@ -265,12 +268,12 @@ class RustArrayMapping(object):
             " ${mapping.output_type_name.as_rust_type()}::${out_name.as_rust_enum()}\n"
             "    ${mapping.output_type_name.as_rust_type()}::${out_name.as_rust_enum()},\n"
             "% endfor\n"
-            "];")
+            "];"
+        )
         return Template(template).render(mapping=self)
 
 
 class RustFileHeader(object):
-
     def __init__(self, version_stamp: VersionInformation):
         self.data = version_stamp
 
@@ -279,8 +282,9 @@ class RustFileHeader(object):
         if self.data.scm_version() is not None:
             template += "// Built for ${header.data.scm_version()}\n"
         if self.data.scm_revision() is not None:
-            template += ("// https://github.com/lowRISC/opentitan/tree/"
-                         "${header.data.scm_revision()}\n")
+            template += (
+                "// https://github.com/lowRISC/opentitan/tree/${header.data.scm_revision()}\n"
+            )
         if self.data.scm_status() is not None:
             template += "// Tree status: ${header.data.scm_status()}\n"
         if template != "":
@@ -289,12 +293,12 @@ class RustFileHeader(object):
 
 
 class MemoryRegion(object):
-
-    def __init__(self, top_name: Name, name: Name, addr_space: str,
-                 base_addr: int, size_bytes: int):
+    def __init__(
+        self, top_name: Name, name: Name, addr_space: str, base_addr: int, size_bytes: int
+    ):
         assert isinstance(base_addr, int)
         self.addr_space = addr_space
-        addr_space_suffix = get_addr_space_suffix({'name': addr_space})
+        addr_space_suffix = get_addr_space_suffix({"name": addr_space})
         if len(addr_space_suffix) > 0:
             # Trim the beginning underscore.
             addr_space_suffix = addr_space_suffix[1:]
@@ -339,9 +343,7 @@ def load_cfg(cfg_path: str) -> Dict[str, object]:
     """
     try:
         with open(cfg_path, "r") as fcfg:
-            cfg = hjson.load(fcfg,
-                             use_decimal=True,
-                             object_pairs_hook=OrderedDict)
+            cfg = hjson.load(fcfg, use_decimal=True, object_pairs_hook=OrderedDict)
     except ValueError:
         raise SystemExit(f"Loading hjson at '{cfg_path}': {sys.exc_info()[1]}")
     except OSError:
@@ -363,7 +365,7 @@ def is_ipcfg(ip: Path) -> bool:
 
 def search_ips(ip_path: Path) -> List[str]:
     """Return a list with the path to every Hjson file as a string"""
-    p = ip_path.glob('*/data/*.hjson')
+    p = ip_path.glob("*/data/*.hjson")
 
     # filter only ip_name/data/ip_name{_reg|''}.hjson
     ips = [x for x in p if is_ipcfg(x)]
@@ -372,23 +374,18 @@ def search_ips(ip_path: Path) -> List[str]:
     return ips
 
 
-def get_ip_hjson_path(ip_name_snake: str, topcfg: ConfigT,
-                      repotop: Path) -> Path:
+def get_ip_hjson_path(ip_name_snake: str, topcfg: ConfigT, repotop: Path) -> Path:
     """Return the location of an IP's hjson file for a given top.
 
     This function should be called with the module['type'] for ipgen
     modules, since find_module is called with use_base_template_type
     set to False.
     """
-    m = find_module(topcfg["module"],
-                    ip_name_snake,
-                    use_base_template_type=False)
+    m = find_module(topcfg["module"], ip_name_snake, use_base_template_type=False)
     if is_ipgen(m):
-        data_dir = repotop / "hw/top_{}/ip_autogen/{}/data".format(
-            topcfg["name"], ip_name_snake)
+        data_dir = repotop / "hw/top_{}/ip_autogen/{}/data".format(topcfg["name"], ip_name_snake)
     elif is_top_reggen(m):
-        data_dir = repotop / "hw/top_{}/ip/{}/data/".format(
-            topcfg["name"], ip_name_snake)
+        data_dir = repotop / "hw/top_{}/ip/{}/data/".format(topcfg["name"], ip_name_snake)
     else:
         data_dir = repotop / "hw/ip/{}/data".format(ip_name_snake)
     return data_dir / "{}.hjson".format(ip_name_snake)
@@ -402,22 +399,21 @@ def is_xbarcfg(xbar_obj: ConfigT) -> bool:
 
 
 def get_hjsonobj_xbars(xbar_path: Path) -> Dict[str, ConfigT]:
-    """ Search crossbars Hjson files from given path.
+    """Search crossbars Hjson files from given path.
 
     Search every Hjson in the directory and check Hjson type.
     It could be type: "top" or type: "xbar"
     returns [(name, obj), ... ]
     """
-    paths = xbar_path.glob('*.hjson')
+    paths = xbar_path.glob("*.hjson")
     xbar_objs = [load_cfg(p) for p in paths]
-    xbar_objs = {x['name']: x for x in xbar_objs if is_xbarcfg(x)}
+    xbar_objs = {x["name"]: x for x in xbar_objs if is_xbarcfg(x)}
 
     return xbar_objs
 
 
 def get_module_by_name(top: ConfigT, name: str) -> Optional[ConfigT]:
-    """Search in top["module"] by name
-    """
+    """Search in top["module"] by name"""
     module = None
     for m in top["module"]:
         if m["name"] == name:
@@ -443,9 +439,7 @@ def get_package_name_by_intermodule_signal(top: ConfigT, struct: str) -> str:
     """
     instances = top["module"] + top["memory"]
 
-    intermodule_instances = [
-        x["inter_signal_list"] for x in instances if "inter_signal_list" in x
-    ]
+    intermodule_instances = [x["inter_signal_list"] for x in instances if "inter_signal_list" in x]
 
     for m in intermodule_instances:
         if m["name"] == struct and "package" in m:
@@ -454,11 +448,13 @@ def get_package_name_by_intermodule_signal(top: ConfigT, struct: str) -> str:
 
 
 def get_signal_by_name(module: ConfigT, name: str):
-    """Return the signal struct with the type input/output/inout
-    """
+    """Return the signal struct with the type input/output/inout"""
     result = None
-    for s in module["available_input_list"] + module[
-            "available_output_list"] + module["available_inout_list"]:
+    for s in (
+        module["available_input_list"]
+        + module["available_output_list"]
+        + module["available_inout_list"]
+    ):
         if s["name"] == name:
             result = s
             break
@@ -467,8 +463,7 @@ def get_signal_by_name(module: ConfigT, name: str):
 
 
 def add_module_prefix_to_signal(signal, module: str) -> str:
-    """Add module prefix to module signal format { name: "sig_name", width: NN }
-    """
+    """Add module prefix to module signal format { name: "sig_name", width: NN }"""
     result = deepcopy(signal)
 
     if "name" not in signal:
@@ -481,10 +476,9 @@ def add_module_prefix_to_signal(signal, module: str) -> str:
 
 
 def get_ms_name(name: str) -> Tuple[str, Optional[str]]:
-    """Split module_name.signal_name to module_name , signal_name
-    """
+    """Split module_name.signal_name to module_name , signal_name"""
 
-    tokens = name.split('.')
+    tokens = name.split(".")
 
     if len(tokens) == 0:
         raise SystemExit("This to be catched in validate.py")
@@ -498,9 +492,8 @@ def get_ms_name(name: str) -> Tuple[str, Optional[str]]:
 
 
 def parse_pad_field(padstr: str) -> Tuple[str, str, str]:
-    """Parse PadName[NN...NN] or PadName[NN] or just PadName
-    """
-    match = re.match(r'^([A-Za-z0-9_]+)(\[([0-9]+)(\.\.([0-9]+))?\]|)', padstr)
+    """Parse PadName[NN...NN] or PadName[NN] or just PadName"""
+    match = re.match(r"^([A-Za-z0-9_]+)(\[([0-9]+)(\.\.([0-9]+))?\]|)", padstr)
     return match.group(1), match.group(3), match.group(5)
 
 
@@ -563,119 +556,100 @@ def bitarray(d: int, width: int) -> str:
 
 
 def parameterize(text: str) -> str:
-    """Return the value wrapping with quote if not integer nor bits
-    """
-    if re.match(r'(\d+\'[hdb]\s*[0-9a-f_A-F]+|[0-9]+)', text) is None:
-        return "\"{}\"".format(text)
+    """Return the value wrapping with quote if not integer nor bits"""
+    if re.match(r"(\d+\'[hdb]\s*[0-9a-f_A-F]+|[0-9]+)", text) is None:
+        return '"{}"'.format(text)
 
     return text
 
 
 def index(i: int) -> str:
-    """Return index if it is not -1
-    """
+    """Return index if it is not -1"""
     return "[{}]".format(i) if i != -1 else ""
 
 
 def get_clk_name(clk: str) -> str:
-    """Return the appropriate clk name
-    """
-    if clk == 'main':
-        return 'clk_i'
+    """Return the appropriate clk name"""
+    if clk == "main":
+        return "clk_i"
     else:
         return "clk_{}_i".format(clk)
 
 
 def is_shadowed_port(block: IpBlock, port: str) -> bool:
-    """Return boolean indication whether a port is a shadow reset port
-    """
-    shadowed_port = block.clocking.primary.reset if block.has_shadowed_reg() \
-        else None
+    """Return boolean indication whether a port is a shadow reset port"""
+    shadowed_port = block.clocking.primary.reset if block.has_shadowed_reg() else None
 
     return port == shadowed_port
 
 
 def shadow_name(name: str) -> str:
-    """Return the appropriate shadow reset name based on port name
-    """
-    match = re.match(r'^rst_([A-Za-z0-9_]+)_ni?', name)
+    """Return the appropriate shadow reset name based on port name"""
+    match = re.match(r"^rst_([A-Za-z0-9_]+)_ni?", name)
     if match:
-        return f'rst_{match.group(1)}_shadowed_ni'
+        return f"rst_{match.group(1)}_shadowed_ni"
     else:
-        return 'rst_shadowed_ni'
+        return "rst_shadowed_ni"
 
 
-def get_clock_lpg_path(top: object,
-                       clk_name: str,
-                       unmanaged_clock: bool = False) -> str:
-    """Return the appropriate LPG clock path given name
-    """
+def get_clock_lpg_path(top: object, clk_name: str, unmanaged_clock: bool = False) -> str:
+    """Return the appropriate LPG clock path given name"""
     if unmanaged_clock:
-        return top['unmanaged_clocks'].get_clock_by_signal_name(
-            clk_name).cg_en_signal
+        return top["unmanaged_clocks"].get_clock_by_signal_name(clk_name).cg_en_signal
     else:
-        clk_name = clk_name.split('clk_')[-1]
-        return top['clocks'].hier_paths['lpg'] + clk_name
+        clk_name = clk_name.split("clk_")[-1]
+        return top["clocks"].hier_paths["lpg"] + clk_name
 
 
-def get_reset_path(top: object,
-                   reset: Union[str, object],
-                   shadow_sel: bool = False,
-                   unmanaged_reset: bool = False) -> str:
-    """Return the appropriate reset path given name
-    """
+def get_reset_path(
+    top: object, reset: Union[str, object], shadow_sel: bool = False, unmanaged_reset: bool = False
+) -> str:
+    """Return the appropriate reset path given name"""
     if unmanaged_reset:
-        return top['unmanaged_resets'].get(reset['name']).signal_name
+        return top["unmanaged_resets"].get(reset["name"]).signal_name
     else:
-        return top['resets'].get_path(reset['name'], reset['domain'],
-                                      shadow_sel)
+        return top["resets"].get_path(reset["name"], reset["domain"], shadow_sel)
 
 
-def get_reset_lpg_path(top: object,
-                       reset: Union[str, object],
-                       shadow_sel: bool = False,
-                       domain: bool = None,
-                       unmanaged_reset: bool = False) -> str:
-    """Return the appropriate LPG reset path given name
-    """
+def get_reset_lpg_path(
+    top: object,
+    reset: Union[str, object],
+    shadow_sel: bool = False,
+    domain: bool = None,
+    unmanaged_reset: bool = False,
+) -> str:
+    """Return the appropriate LPG reset path given name"""
     if unmanaged_reset:
-        return top['unmanaged_resets'].get(reset['name']).rst_en_signal_name
+        return top["unmanaged_resets"].get(reset["name"]).rst_en_signal_name
     else:
         if domain is not None:
-            return top['resets'].get_lpg_path(reset['name'], domain,
-                                              shadow_sel)
+            return top["resets"].get_lpg_path(reset["name"], domain, shadow_sel)
         else:
-            return top['resets'].get_lpg_path(reset['name'], reset['domain'],
-                                              shadow_sel)
+            return top["resets"].get_lpg_path(reset["name"], reset["domain"], shadow_sel)
 
 
 def get_unused_resets(top: ConfigT) -> Dict:
-    """Return dict of unused resets and associated domain
-    """
-    return top['resets'].get_unused_resets(top['power']['domains'])
+    """Return dict of unused resets and associated domain"""
+    return top["resets"].get_unused_resets(top["power"]["domains"])
 
 
 def get_ipgen_modules(top: ConfigT) -> List[ConfigT]:
-    """Returns list of all ipgen modules.
-    """
-    return [m['type'] for m in top['module'] if is_ipgen(m)]
+    """Returns list of all ipgen modules."""
+    return [m["type"] for m in top["module"] if is_ipgen(m)]
 
 
 def get_top_reggen_modules(top: ConfigT) -> List[ConfigT]:
-    """Returns list of all ipgen modules.
-    """
-    return [m['type'] for m in top['module'] if is_top_reggen(m)]
+    """Returns list of all ipgen modules."""
+    return [m["type"] for m in top["module"] if is_top_reggen(m)]
 
 
 def is_module_attr_valid(module: ConfigT) -> bool:
-    return ('attr' not in module or
-            module.get('attr') in ["ipgen", "reggen_top", "reggen_only"])
+    return "attr" not in module or module.get("attr") in ["ipgen", "reggen_top", "reggen_only"]
 
 
 def is_ipgen(module: ConfigT) -> bool:
-    """Returns an indication where a particular module is ipgen
-    """
-    return module.get('attr') in ["ipgen"]
+    """Returns an indication where a particular module is ipgen"""
+    return module.get("attr") in ["ipgen"]
 
 
 def get_ipgen_params(module: ConfigT) -> ParamsT:
@@ -685,22 +659,22 @@ def get_ipgen_params(module: ConfigT) -> ParamsT:
 
 def is_top_reggen(module: ConfigT) -> bool:
     """Returns an indication where a particular module is NOT generated
-       and requires top level specific reggen
+    and requires top level specific reggen
     """
-    return module.get('attr') in ["reggen_top", "reggen_only"]
+    return module.get("attr") in ["reggen_top", "reggen_only"]
 
 
 def is_reggen_only(module: ConfigT) -> bool:
     """Returns an indication where a particular module is NOT generated,
-       requires top level specific reggen and is NOT instantiated in the
-       top
+    requires top level specific reggen and is NOT instantiated in the
+    top
     """
-    return module.get('attr') == "reggen_only"
+    return module.get("attr") == "reggen_only"
 
 
 def is_inst(module: ConfigT) -> bool:
     """Returns an indication where a particular module should be instantiated
-       in the top level
+    in the top level
     """
     top_level_module = False
     top_level_mem = False
@@ -712,19 +686,19 @@ def is_inst(module: ConfigT) -> bool:
     elif module["attr"] in ["reggen_only"]:
         top_level_module = False
     else:
-        raise ValueError('Attribute {} in {} is not valid'.format(
-            module['attr'], module['name']))
+        raise ValueError("Attribute {} in {} is not valid".format(module["attr"], module["name"]))
 
-    if module['type'] in ['rom', 'ram_1p_scr', 'eflash']:
+    if module["type"] in ["rom", "ram_1p_scr", "eflash"]:
         top_level_mem = True
 
     return top_level_mem or top_level_module
 
 
-def get_base_and_size(name_to_block: IpBlocksT, inst: ConfigT,
-                      ifname: Optional[str]) -> Tuple[int, int]:
+def get_base_and_size(
+    name_to_block: IpBlocksT, inst: ConfigT, ifname: Optional[str]
+) -> Tuple[int, int]:
 
-    block = name_to_block.get(inst['type'])
+    block = name_to_block.get(inst["type"])
     assert block, f"No module named {inst['type']} (coming from instance {inst['name']})"
     # If inst is the instantiation of some block, find the register block
     # that corresponds to ifname
@@ -734,18 +708,19 @@ def get_base_and_size(name_to_block: IpBlocksT, inst: ConfigT,
         bytes_used = int(mem["size"], 0)
     else:
         raise RuntimeError(
-            'Cannot connect to non-existent {} device interface '
-            'on {!r} (an instance of the {!r} block).'.format(
-                'default' if ifname is None else repr(ifname),
-                inst['name'], block.name))
+            "Cannot connect to non-existent {} device interface "
+            "on {!r} (an instance of the {!r} block).".format(
+                "default" if ifname is None else repr(ifname), inst["name"], block.name
+            )
+        )
 
     if ifname is None:
-        base_addrs = deepcopy(inst['base_addrs'].get(ifname) or inst["base_addrs"].get("null"))
+        base_addrs = deepcopy(inst["base_addrs"].get(ifname) or inst["base_addrs"].get("null"))
     else:
-        base_addrs = deepcopy(inst['base_addrs'][ifname])
+        base_addrs = deepcopy(inst["base_addrs"][ifname])
     assert base_addrs is not None
 
-    for (asid, base_addr) in base_addrs.items():
+    for asid, base_addr in base_addrs.items():
         if isinstance(base_addr, str):
             base_addrs[asid] = int(base_addr, 0)
         else:
@@ -760,14 +735,14 @@ def get_io_enum_literal(sig: Dict, prefix: str) -> str:
     # In this case, the signal is a multibit signal, and hence
     # we have to make the signal index part of the parameter
     # name to uniquify it.
-    if sig['width'] > 1:
-        name += Name([str(sig['idx'])])
+    if sig["width"] > 1:
+        name += Name([str(sig["idx"])])
     return name.as_camel_case()
 
 
 def get_params(top: ConfigT, module: ConfigT) -> List[str]:
     """Return the parameters for a given module including implicit parameters
-       but excluding RACL parameters, which are handled in a separate template.
+    but excluding RACL parameters, which are handled in a separate template.
     """
     param_items = []
     alert_info = top["alert_connections"].get("module_" + module["name"], {})
@@ -786,9 +761,8 @@ def get_params(top: ConfigT, module: ConfigT) -> List[str]:
     return has_params, param_items
 
 
-def make_bit_concatenation(sig_name: str, indices: List[int],
-                           end_indent: int) -> str:
-    '''Return SV code for concatenating certain indices from a signal
+def make_bit_concatenation(sig_name: str, indices: List[int], end_indent: int) -> str:
+    """Return SV code for concatenating certain indices from a signal
 
     sig_name is the name of the signal and indices is a non-empty list of the
     indices to use, MSB first. So
@@ -811,7 +785,7 @@ def make_bit_concatenation(sig_name: str, indices: List[int],
     gives the indentation of the closing brace and the range selects in between
     get indented to end_indent + 2.
 
-    '''
+    """
     assert 0 <= end_indent
 
     ranges = []
@@ -834,69 +808,66 @@ def make_bit_concatenation(sig_name: str, indices: List[int],
         if range_start == range_end:
             select = str(range_start)
         else:
-            select = '{}:{}'.format(range_start, range_end)
-        items.append('{}[{}]'.format(sig_name, select))
+            select = "{}:{}".format(range_start, range_end)
+        items.append("{}[{}]".format(sig_name, select))
 
     if len(items) == 1:
         return items[0]
 
-    item_indent = '\n' + (' ' * (end_indent + 2))
+    item_indent = "\n" + (" " * (end_indent + 2))
 
-    acc = ['{', item_indent, items[0]]
+    acc = ["{", item_indent, items[0]]
     for item in items[1:]:
-        acc += [',', item_indent, item]
-    acc += ['\n', ' ' * end_indent, '}']
-    return ''.join(acc)
+        acc += [",", item_indent, item]
+    acc += ["\n", " " * end_indent, "}"]
+    return "".join(acc)
 
 
 def num_rom_ctrl(modules: List[ConfigT]) -> int:
-    '''Return number of rom_ctrl's instantiated in the design
-    '''
+    """Return number of rom_ctrl's instantiated in the design"""
     num = 0
     for m in modules:
-        if m['type'] == 'rom_ctrl':
+        if m["type"] == "rom_ctrl":
             num += 1
 
     return num
 
 
-def find_modules(modules: List[Dict[str, object]],
-                 type: str,
-                 use_base_template_type=True) -> List[Dict[str, object]]:
-    '''Returns the modules of a given type
+def find_modules(
+    modules: List[Dict[str, object]], type: str, use_base_template_type=True
+) -> List[Dict[str, object]]:
+    """Returns the modules of a given type
 
     If use_base_template_type is set to True, ipgen-based modules are
     searched using the "template_type" attribute. If set to False,
     the search uses the "type" attribute instead.
-    '''
+    """
     modules_found = []
     for m in modules:
-        if m.get('attr') == 'ipgen' and use_base_template_type:
-            if m['template_type'] == type:
+        if m.get("attr") == "ipgen" and use_base_template_type:
+            if m["template_type"] == type:
                 modules_found.append(m)
         else:
-            if m['type'] == type:
+            if m["type"] == type:
                 modules_found.append(m)
 
     return modules_found
 
 
 def find_module(
-        modules: List[Dict[str, object]],
-        type: str,
-        use_base_template_type=True) -> Optional[Dict[str, object]]:
-    '''Returns the first module of a given type
+    modules: List[Dict[str, object]], type: str, use_base_template_type=True
+) -> Optional[Dict[str, object]]:
+    """Returns the first module of a given type
 
     If use_base_template_type is set to True, ipgen-based modules are
     searched using the "template_type" attribute. If set to False,
     the search uses the "type" attribute instead.
-    '''
+    """
     mods = find_modules(modules, type, use_base_template_type)
     return mods[0] if mods else None
 
 
-def find_module_by_name(modules: List[Dict[str, object]],
-                        name: str) -> Optional[Dict[str, object]]:
+def find_module_by_name(modules: List[Dict[str, object]], name: str) -> Optional[Dict[str, object]]:
     """Return the (first) module with a given name, or None."""
     for m in modules:
         if m["name"] == name:
@@ -906,8 +877,8 @@ def find_module_by_name(modules: List[Dict[str, object]],
 
 def get_addr_space(top: ConfigT, addr_space_name: str) -> ConfigT:
     """Returns the address dict for a given address space name"""
-    for addr_space in top['addr_spaces']:
-        if addr_space['name'] == addr_space_name:
+    for addr_space in top["addr_spaces"]:
+        if addr_space["name"] == addr_space_name:
             return addr_space
     assert False, "Address space not found"
 
@@ -921,27 +892,26 @@ def get_device_ranges(devices, device_name):
 
 
 def get_addr_space_suffix(addr_space: str, default: str = "hart") -> str:
-    if addr_space['name'] == default:
+    if addr_space["name"] == default:
         return ""
-    return "_" + addr_space['name']
+    return "_" + addr_space["name"]
 
 
 def remove_prefix(s: str, prefix: str) -> str:
-    return s[len(prefix):] if s.startswith(prefix) else s
+    return s[len(prefix) :] if s.startswith(prefix) else s
 
 
 class TopGen:
-
-    def __init__(self, top_info: ConfigT, name_to_block: IpBlocksT, enum_type,
-                 array_mapping_type):
+    def __init__(self, top_info: ConfigT, name_to_block: IpBlocksT, enum_type, array_mapping_type):
         self.top = top_info
         self._top_name = Name(["top"]) + Name.from_snake_case(top_info["name"])
         self._name_to_block = name_to_block
         self.regwidth = int(top_info["datawidth"])
 
         assert enum_type in [CEnum, RustEnum], "Unsupported enum type"
-        assert array_mapping_type in [CArrayMapping, RustArrayMapping], \
-               "Unsupported array mapping type"
+        assert array_mapping_type in [CArrayMapping, RustArrayMapping], (
+            "Unsupported array mapping type"
+        )
         self._enum_type = enum_type
         self._array_mapping_type = array_mapping_type
 
@@ -949,67 +919,62 @@ class TopGen:
         self._init_plics()
 
         # Only generate alert_handler and mappings if there is an alert_handler
-        if find_module(self.top['module'], 'alert_handler'):
+        if find_module(self.top["module"], "alert_handler"):
             self._init_alert_mapping()
         # Only generate pinmux and pad mappings if there is a pinmux
-        if find_module(self.top['module'], 'pinmux'):
+        if find_module(self.top["module"], "pinmux"):
             self._init_pinmux_mapping()
             self._init_pad_mapping()
         # Only generate pwrmgr mappings if there is a pwrmgr
-        if find_module(self.top['module'], 'pwrmgr'):
+        if find_module(self.top["module"], "pwrmgr"):
             self._init_pwrmgr_wakeups()
             self._init_pwrmgr_reset_requests()
         # Only generate rstmgr mappings if there is a rstmgr
-        if find_module(self.top['module'], 'rstmgr'):
+        if find_module(self.top["module"], "rstmgr"):
             self._init_rstmgr_sw_rsts()
         # Only generate clkmgr mappings if there is a clkmgr
-        if find_module(self.top['module'], 'clkmgr'):
+        if find_module(self.top["module"], "clkmgr"):
             self._init_clkmgr_clocks()
 
         self.device_regions = defaultdict(dict)
         self.device_memories = defaultdict(dict)
         self.subranges = defaultdict(dict)
-        for addr_space in top_info['addr_spaces']:
-            self._init_device_regions(addr_space['name'])
-            self._init_device_memories(addr_space['name'])
-            self._init_subranges(addr_space['name'])
+        for addr_space in top_info["addr_spaces"]:
+            self._init_device_regions(addr_space["name"])
+            self._init_device_memories(addr_space["name"])
+            self._init_subranges(addr_space["name"])
 
     def _init_device_regions(self, addr_space):
-        '''Initialize the device_regions dictionary.
+        """Initialize the device_regions dictionary.
 
         The dictionary entry maps blocks to MemoryRegions for the given
         addr_space.
-        '''
+        """
         device_region = defaultdict(dict)
-        for inst in self.top['module']:
-            block = self._name_to_block[inst['type']]
+        for inst in self.top["module"]:
+            block = self._name_to_block[inst["type"]]
             for if_name in block.reg_blocks.keys():
-                full_if = (inst['name'], if_name)
+                full_if = (inst["name"], if_name)
                 full_if_name = Name.from_snake_case(full_if[0])
                 if if_name is not None:
                     full_if_name += Name.from_snake_case(if_name)
 
                 name = full_if_name
-                base, size = get_base_and_size(self._name_to_block, inst,
-                                               if_name)
+                base, size = get_base_and_size(self._name_to_block, inst, if_name)
                 if addr_space not in base:
                     continue
 
-                region = MemoryRegion(self._top_name, name, addr_space,
-                                      base[addr_space], size)
-                device_region[inst['name']].update({if_name: region})
+                region = MemoryRegion(self._top_name, name, addr_space, base[addr_space], size)
+                device_region[inst["name"]].update({if_name: region})
 
         self.device_regions[addr_space] = device_region
 
     def all_device_regions(self) -> Dict[str, Dict[str, MemoryRegion]]:
-        '''Return a list of MemoryRegion objects for all devices on the bus.
-        '''
+        """Return a list of MemoryRegion objects for all devices on the bus."""
         return self.device_regions
 
-    def devices(
-            self, addr_space
-    ) -> List[Tuple[Tuple[str, Optional[str]], MemoryRegion]]:
-        '''Return a list of MemoryRegion objects for devices on the bus.
+    def devices(self, addr_space) -> List[Tuple[Tuple[str, Optional[str]], MemoryRegion]]:
+        """Return a list of MemoryRegion objects for devices on the bus.
 
         The list returned is pairs (full_if, region) where full_if is itself a
         pair (inst_name, if_name). inst_name is the name of some IP block
@@ -1021,45 +986,46 @@ class TopGen:
 
         Parameters:
             addr_space: The address space representing the bus for generation.
-        '''
+        """
         ret = []  # type: List[Tuple[Tuple[str, Optional[str]], MemoryRegion]]
         # TODO: This method is invoked in templates, as well as in the extended
         # class TopGenCTest. We could refactor and optimize the implementation
         # a bit.
-        for (inst, regions) in self.device_regions[addr_space].items():
-            for (if_name, region) in regions.items():
+        for inst, regions in self.device_regions[addr_space].items():
+            for if_name, region in regions.items():
                 full_if = (inst, if_name)
                 ret.append((full_if, region))
 
         return ret
 
     def _init_device_memories(self, addr_space):
-        '''Initialize the device_memories dictionary.
+        """Initialize the device_memories dictionary.
 
         The dictionary entry maps memories to MemoryRegions for the given
         addr_space.
-        '''
+        """
         device_memories = defaultdict(dict)
 
-        for inst in self.top['module']:
+        for inst in self.top["module"]:
             if "memory" in inst:
                 for if_name, val in inst["memory"].items():
-                    base, size = get_base_and_size(self._name_to_block, inst,
-                                                   if_name)
+                    base, size = get_base_and_size(self._name_to_block, inst, if_name)
                     if addr_space not in base:
                         continue
 
-                    full_if_name = Name.from_snake_case(inst['name']) + \
-                        Name.from_snake_case(if_name)
-                    region = MemoryRegion(self._top_name, full_if_name, addr_space,
-                                          base[addr_space], size)
+                    full_if_name = Name.from_snake_case(inst["name"]) + Name.from_snake_case(
+                        if_name
+                    )
+                    region = MemoryRegion(
+                        self._top_name, full_if_name, addr_space, base[addr_space], size
+                    )
 
-                    device_memories[inst['name']].update({if_name: region})
+                    device_memories[inst["name"]].update({if_name: region})
 
         self.device_memories[addr_space] = device_memories
 
     def memories(self, addr_space) -> List[Tuple[Tuple[str, str], MemoryRegion]]:
-        '''Return a list of MemoryRegions objects for memories on the bus.
+        """Return a list of MemoryRegions objects for memories on the bus.
 
         The list returned is pairs (full_if, region) where full_if is itself a
         pair (inst_name, if_name). inst_name is the name of some IP block
@@ -1069,11 +1035,11 @@ class TopGen:
 
         Parameters:
             addr_space: The address space representing the bus for generation.
-        '''
+        """
         ret = []
 
-        for (inst, regions) in self.device_memories[addr_space].items():
-            for (if_name, region) in regions.items():
+        for inst, regions in self.device_memories[addr_space].items():
+            for if_name, region in regions.items():
                 full_if = (inst, if_name)
                 ret.append((full_if, region))
 
@@ -1108,8 +1074,9 @@ class TopGen:
         else:
             for target in targets:
                 shortened_target = remove_prefix(target, "rv_core_")
-                enum.add_constant(Name.from_snake_case(shortened_target),
-                                  docstring="Ibex {}".format(target))
+                enum.add_constant(
+                    Name.from_snake_case(shortened_target), docstring="Ibex {}".format(target)
+                )
 
         if isinstance(enum, RustEnum):
             enum.add_number_of_variants("Final number of PLIC target")
@@ -1135,34 +1102,37 @@ class TopGen:
         """
         # A lot of code counts on this being named "Plic" and not "RvPlic"
         unsnaked_name = Name.from_snake_case(remove_prefix(plic["name"], "rv_"))
-        sources = self._enum_type(self._top_name, unsnaked_name + Name(["peripheral"]),
-                                  self.regwidth)
-        interrupts = self._enum_type(self._top_name,
-                                     unsnaked_name + Name(["irq", "id"]), self.regwidth)
+        sources = self._enum_type(
+            self._top_name, unsnaked_name + Name(["peripheral"]), self.regwidth
+        )
+        interrupts = self._enum_type(
+            self._top_name, unsnaked_name + Name(["irq", "id"]), self.regwidth
+        )
         plic_mapping = self._array_mapping_type(
-            self._top_name, unsnaked_name + Name(["interrupt", "for", "peripheral"]),
-            sources.short_name
-            if isinstance(sources, RustEnum) else sources.name)
+            self._top_name,
+            unsnaked_name + Name(["interrupt", "for", "peripheral"]),
+            sources.short_name if isinstance(sources, RustEnum) else sources.name,
+        )
 
-        unknown_source = sources.add_constant(Name(["unknown"]),
-                                              docstring="Unknown Peripheral")
-        none_irq_id = interrupts.add_constant(Name(["none"]),
-                                              docstring="No Interrupt")
+        unknown_source = sources.add_constant(Name(["unknown"]), docstring="Unknown Peripheral")
+        none_irq_id = interrupts.add_constant(Name(["none"]), docstring="No Interrupt")
         plic_mapping.add_entry(none_irq_id, unknown_source)
 
         # When we generate the `interrupts` enum, the only info we have about
         # the source is the module name. We'll use `source_name_map` to map a
         # short module name to the full name object used for the enum constant.
-        source_name_map = {'unknown': unknown_source}
+        source_name_map = {"unknown": unknown_source}
 
-        my_modules = {x["name"] for x in self.top["module"]
-                      if x.get("plic", self.default_plic) == plic["name"]}
+        my_modules = {
+            x["name"]
+            for x in self.top["module"]
+            if x.get("plic", self.default_plic) == plic["name"]
+        }
         for name in self.top["interrupt_module"]:
             if name not in my_modules:
                 continue
 
-            source_name = sources.add_constant(Name.from_snake_case(name),
-                                               docstring=name)
+            source_name = sources.add_constant(Name.from_snake_case(name), docstring=name)
             source_name_map[name] = source_name
 
         if isinstance(sources, RustEnum):
@@ -1181,20 +1151,19 @@ class TopGen:
             if "width" in intr and int(intr["width"]) != 1:
                 for i in range(int(intr["width"])):
                     name = Name.from_snake_case(intr["name"]) + Name([str(i)])
-                    irq_id = interrupts.add_constant(name,
-                                                     docstring="{} {}".format(
-                                                         intr["name"], i))
-                    source_name_key = 'unknown' if intr['incoming'] else intr[
-                        'module_name']
+                    irq_id = interrupts.add_constant(
+                        name, docstring="{} {}".format(intr["name"], i)
+                    )
+                    source_name_key = "unknown" if intr["incoming"] else intr["module_name"]
                     source_name = source_name_map[source_name_key]
                     plic_mapping.add_entry(irq_id, source_name)
-                    self.device_irqs[plic["name"]][intr["module_name"]].append(intr["name"] +
-                                                                               str(i))
+                    self.device_irqs[plic["name"]][intr["module_name"]].append(
+                        intr["name"] + str(i)
+                    )
             else:
                 name = Name.from_snake_case(intr["name"])
                 irq_id = interrupts.add_constant(name, docstring=intr["name"])
-                source_name_key = 'unknown' if intr['incoming'] else intr[
-                    'module_name']
+                source_name_key = "unknown" if intr["incoming"] else intr["module_name"]
                 source_name = source_name_map[source_name_key]
                 plic_mapping.add_entry(irq_id, source_name)
                 self.device_irqs[plic["name"]][intr["module_name"]].append(intr["name"])
@@ -1221,26 +1190,23 @@ class TopGen:
         right registers and bits.
         """
         # TODO: Model alert domains with explicit connectivity.
-        sources = self._enum_type(self._top_name,
-                                  Name(["alert", "peripheral"]), self.regwidth)
-        alerts = self._enum_type(self._top_name, Name(["alert", "id"]),
-                                 self.regwidth)
+        sources = self._enum_type(self._top_name, Name(["alert", "peripheral"]), self.regwidth)
+        alerts = self._enum_type(self._top_name, Name(["alert", "id"]), self.regwidth)
         alert_mapping = self._array_mapping_type(
-            self._top_name, Name(["alert", "for", "peripheral"]),
-            sources.short_name
-            if isinstance(sources, RustEnum) else sources.name)
+            self._top_name,
+            Name(["alert", "for", "peripheral"]),
+            sources.short_name if isinstance(sources, RustEnum) else sources.name,
+        )
 
-        external_source = sources.add_constant(Name(["external"]),
-                                               docstring="External Peripheral")
+        external_source = sources.add_constant(Name(["external"]), docstring="External Peripheral")
 
         # When we generate the `alerts` enum, the only info we have about the
         # source is the module name. We'll use `source_name_map` to map a short
         # module name to the full name object used for the enum constant.
-        source_name_map = {'external': external_source}
+        source_name_map = {"external": external_source}
 
         for name in self.top["alert_module"]:
-            source_name = sources.add_constant(Name.from_snake_case(name),
-                                               docstring=name)
+            source_name = sources.add_constant(Name.from_snake_case(name), docstring=name)
             source_name_map[name] = source_name
 
         if isinstance(sources, RustEnum):
@@ -1249,32 +1215,28 @@ class TopGen:
             sources.add_last_constant("Final Alert peripheral")
 
         def add_alert(alert, name_prefix=None):
-            alert_module = alert['module_name']
+            alert_module = alert["module_name"]
 
-            if 'width' in alert and int(alert['width']) != 1:
-                for i in range(int(alert['width'])):
-                    name = Name.from_snake_case(alert['name']) + Name([str(i)])
+            if "width" in alert and int(alert["width"]) != 1:
+                for i in range(int(alert["width"])):
+                    name = Name.from_snake_case(alert["name"]) + Name([str(i)])
                     if name_prefix:
                         name = Name.from_snake_case(name_prefix) + name
-                        alert_module = f'{name_prefix}_{alert_module}'
+                        alert_module = f"{name_prefix}_{alert_module}"
 
-                    alert_id = alerts.add_constant(
-                        name, docstring=name.as_snake_case())
-                    source_name_key = ('external'
-                                       if name_prefix else alert_module)
+                    alert_id = alerts.add_constant(name, docstring=name.as_snake_case())
+                    source_name_key = "external" if name_prefix else alert_module
                     source_name = source_name_map[source_name_key]
                     alert_mapping.add_entry(alert_id, source_name)
-                    self.device_alerts[alert_module].append(
-                        name.as_snake_case() + str(i))
+                    self.device_alerts[alert_module].append(name.as_snake_case() + str(i))
             else:
-                name = Name.from_snake_case(alert['name'])
+                name = Name.from_snake_case(alert["name"])
                 if name_prefix:
                     name = Name.from_snake_case(name_prefix) + name
-                    alert_module = f'{name_prefix}_{alert_module}'
+                    alert_module = f"{name_prefix}_{alert_module}"
 
-                alert_id = alerts.add_constant(name,
-                                               docstring=name.as_snake_case())
-                source_name_key = 'external' if name_prefix else alert_module
+                alert_id = alerts.add_constant(name, docstring=name.as_snake_case())
+                source_name_key = "external" if name_prefix else alert_module
                 source_name = source_name_map[source_name_key]
                 alert_mapping.add_entry(alert_id, source_name)
                 self.device_alerts[alert_module].append(name.as_snake_case())
@@ -1283,9 +1245,9 @@ class TopGen:
         for alert in self.top["alert"]:
             add_alert(alert)
 
-        for alert_group, incoming_alerts in self.top['incoming_alert'].items():
+        for alert_group, incoming_alerts in self.top["incoming_alert"].items():
             for alert in incoming_alerts:
-                add_alert(alert, f'incoming_{alert_group}')
+                add_alert(alert, f"incoming_{alert_group}")
 
         if isinstance(alerts, RustEnum):
             alerts.add_number_of_variants("The number of Alert ID.")
@@ -1314,86 +1276,70 @@ class TopGen:
 
         Insel and outsel have some special values which are captured here too.
         """
-        pinmux_info = self.top['pinmux']
-        pinout_info = self.top['pinout']
+        pinmux_info = self.top["pinmux"]
+        pinout_info = self.top["pinout"]
 
         # Peripheral Inputs
-        peripheral_in = self._enum_type(self._top_name,
-                                        Name(['pinmux', 'peripheral', 'in']),
-                                        self.regwidth)
+        peripheral_in = self._enum_type(
+            self._top_name, Name(["pinmux", "peripheral", "in"]), self.regwidth
+        )
         i = 0
-        for sig in pinmux_info['ios']:
-            if sig['connection'] == 'muxed' and sig['type'] in [
-                    'inout', 'input'
-            ]:
-                index = Name([str(sig['idx'])]) if sig['idx'] != -1 else Name(
-                    [])
-                name = Name.from_snake_case(sig['name']) + index
-                peripheral_in.add_constant(
-                    name, docstring='Peripheral Input {}'.format(i))
+        for sig in pinmux_info["ios"]:
+            if sig["connection"] == "muxed" and sig["type"] in ["inout", "input"]:
+                index = Name([str(sig["idx"])]) if sig["idx"] != -1 else Name([])
+                name = Name.from_snake_case(sig["name"]) + index
+                peripheral_in.add_constant(name, docstring="Peripheral Input {}".format(i))
                 i += 1
 
         if isinstance(peripheral_in, RustEnum):
-            peripheral_in.add_number_of_variants('Number of peripheral input')
+            peripheral_in.add_number_of_variants("Number of peripheral input")
         else:
-            peripheral_in.add_last_constant('Last valid peripheral input')
+            peripheral_in.add_last_constant("Last valid peripheral input")
 
         # Pinmux Input Selects
-        insel = self._enum_type(self._top_name, Name(['pinmux', 'insel']),
-                                self.regwidth)
-        insel.add_constant(Name(['constant', 'zero']),
-                           docstring='Tie constantly to zero')
-        insel.add_constant(Name(['constant', 'one']),
-                           docstring='Tie constantly to one')
+        insel = self._enum_type(self._top_name, Name(["pinmux", "insel"]), self.regwidth)
+        insel.add_constant(Name(["constant", "zero"]), docstring="Tie constantly to zero")
+        insel.add_constant(Name(["constant", "one"]), docstring="Tie constantly to one")
         i = 0
-        for pad in pinout_info['pads']:
-            if pad['connection'] == 'muxed':
-                insel.add_constant(Name([pad['name']]),
-                                   docstring='MIO Pad {}'.format(i))
+        for pad in pinout_info["pads"]:
+            if pad["connection"] == "muxed":
+                insel.add_constant(Name([pad["name"]]), docstring="MIO Pad {}".format(i))
                 i += 1
         if isinstance(insel, RustEnum):
-            insel.add_number_of_variants('Number of valid insel value')
+            insel.add_number_of_variants("Number of valid insel value")
         else:
-            insel.add_last_constant('Last valid insel value')
+            insel.add_last_constant("Last valid insel value")
         # MIO Outputs
-        mio_out = self._enum_type(self._top_name,
-                                  Name(['pinmux', 'mio', 'out']))
+        mio_out = self._enum_type(self._top_name, Name(["pinmux", "mio", "out"]))
         i = 0
-        for pad in pinout_info['pads']:
-            if pad['connection'] == 'muxed':
-                mio_out.add_constant(Name.from_snake_case(pad['name']),
-                                     docstring='MIO Pad {}'.format(i))
+        for pad in pinout_info["pads"]:
+            if pad["connection"] == "muxed":
+                mio_out.add_constant(
+                    Name.from_snake_case(pad["name"]), docstring="MIO Pad {}".format(i)
+                )
                 i += 1
         if isinstance(mio_out, RustEnum):
-            mio_out.add_number_of_variants('Number of valid mio output')
+            mio_out.add_number_of_variants("Number of valid mio output")
         else:
-            mio_out.add_last_constant('Last valid mio output')
+            mio_out.add_last_constant("Last valid mio output")
 
         # Pinmux Output Selects
-        outsel = self._enum_type(self._top_name, Name(['pinmux', 'outsel']),
-                                 self.regwidth)
-        outsel.add_constant(Name(['constant', 'zero']),
-                            docstring='Tie constantly to zero')
-        outsel.add_constant(Name(['constant', 'one']),
-                            docstring='Tie constantly to one')
-        outsel.add_constant(Name(['constant', 'high', 'z']),
-                            docstring='Tie constantly to high-Z')
+        outsel = self._enum_type(self._top_name, Name(["pinmux", "outsel"]), self.regwidth)
+        outsel.add_constant(Name(["constant", "zero"]), docstring="Tie constantly to zero")
+        outsel.add_constant(Name(["constant", "one"]), docstring="Tie constantly to one")
+        outsel.add_constant(Name(["constant", "high", "z"]), docstring="Tie constantly to high-Z")
         i = 0
-        for sig in pinmux_info['ios']:
-            if sig['connection'] == 'muxed' and sig['type'] in [
-                    'inout', 'output'
-            ]:
-                index = Name([str(sig['idx'])]) if sig['idx'] != -1 else Name(
-                    [])
-                name = Name.from_snake_case(sig['name']) + index
-                outsel.add_constant(name,
-                                    docstring='Peripheral Output {}'.format(i))
+        for sig in pinmux_info["ios"]:
+            if sig["connection"] == "muxed" and sig["type"] in ["inout", "output"]:
+                index = Name([str(sig["idx"])]) if sig["idx"] != -1 else Name([])
+                name = Name.from_snake_case(sig["name"]) + index
+                outsel.add_constant(name, docstring="Peripheral Output {}".format(i))
                 i += 1
 
         if isinstance(outsel, RustEnum):
-            outsel.add_number_of_variants('Number of valid outsel value')
+            outsel.add_number_of_variants("Number of valid outsel value")
         else:
-            outsel.add_last_constant('Last valid outsel value')
+            outsel.add_last_constant("Last valid outsel value")
 
         self.pinmux_peripheral_in = peripheral_in
         self.pinmux_insel = insel
@@ -1409,21 +1355,19 @@ class TopGen:
         direct_enum = self._enum_type(self._top_name, Name(["direct", "pads"]))
         muxed_enum = self._enum_type(self._top_name, Name(["muxed", "pads"]))
 
-        pads_info = self.top['pinout']['pads']
-        muxed = [
-            pad['name'] for pad in pads_info if pad['connection'] == 'muxed'
-        ]
+        pads_info = self.top["pinout"]["pads"]
+        muxed = [pad["name"] for pad in pads_info if pad["connection"] == "muxed"]
 
         # The logic here follows the sequence done in toplevel_pkg.sv.tpl.
         # The direct pads do not enumerate directly from the pinout like the
         # muxed ios.  Instead it follows a direction from the pinmux
         # perspective.
-        pads_info = self.top['pinmux']['ios']
-        direct = [pad for pad in pads_info if pad['connection'] != 'muxed']
+        pads_info = self.top["pinmux"]["ios"]
+        direct = [pad for pad in pads_info if pad["connection"] != "muxed"]
 
-        for pad in (direct):
+        for pad in direct:
             name = f"{pad['name']}"
-            if pad['width'] > 1:
+            if pad["width"] > 1:
                 name = f"{name}{pad['idx']}"
 
             direct_enum.add_constant(Name.from_snake_case(name))
@@ -1432,7 +1376,7 @@ class TopGen:
         else:
             direct_enum.add_last_constant("Last valid direct pad")
 
-        for pad in (muxed):
+        for pad in muxed:
             muxed_enum.add_constant(Name.from_snake_case(pad))
         if isinstance(muxed_enum, RustEnum):
             muxed_enum.add_number_of_variants("Number of valid muxed pad")
@@ -1443,13 +1387,12 @@ class TopGen:
         self.muxed_pads = muxed_enum
 
     def _init_pwrmgr_wakeups(self):
-        enum = self._enum_type(self._top_name,
-                               Name(["power", "manager", "wake", "ups"]))
+        enum = self._enum_type(self._top_name, Name(["power", "manager", "wake", "ups"]))
 
         for signal in self.top["wakeups"]:
             enum.add_constant(
-                Name.from_snake_case(signal["module"]) +
-                Name.from_snake_case(signal["name"]))
+                Name.from_snake_case(signal["module"]) + Name.from_snake_case(signal["name"])
+            )
 
         if isinstance(enum, RustEnum):
             enum.add_number_of_variants("Number of valid pwrmgr wakeup signal")
@@ -1460,34 +1403,30 @@ class TopGen:
 
     # Enumerates the positions of all software controllable resets
     def _init_rstmgr_sw_rsts(self):
-        sw_rsts = [r.name for r in self.top['resets'].get_sw_resets()]
+        sw_rsts = [r.name for r in self.top["resets"].get_sw_resets()]
 
-        enum = self._enum_type(self._top_name,
-                               Name(["reset", "manager", "sw", "resets"]))
+        enum = self._enum_type(self._top_name, Name(["reset", "manager", "sw", "resets"]))
 
         for rst in sw_rsts:
             enum.add_constant(Name.from_snake_case(rst))
 
         if isinstance(enum, RustEnum):
-            enum.add_number_of_variants(
-                "Number of valid rstmgr software reset request")
+            enum.add_number_of_variants("Number of valid rstmgr software reset request")
         else:
             enum.add_last_constant("Last valid rstmgr software reset request")
 
         self.rstmgr_sw_rsts = enum
 
     def _init_pwrmgr_reset_requests(self):
-        enum = self._enum_type(self._top_name,
-                               Name(["power", "manager", "reset", "requests"]))
+        enum = self._enum_type(self._top_name, Name(["power", "manager", "reset", "requests"]))
 
         for signal in self.top["reset_requests"]["peripheral"]:
             enum.add_constant(
-                Name.from_snake_case(signal["module"]) +
-                Name.from_snake_case(signal["name"]))
+                Name.from_snake_case(signal["module"]) + Name.from_snake_case(signal["name"])
+            )
 
         if isinstance(enum, RustEnum):
-            enum.add_number_of_variants(
-                "Number of valid pwrmgr reset_request signal")
+            enum.add_number_of_variants("Number of valid pwrmgr reset_request signal")
         else:
             enum.add_last_constant("Last valid pwrmgr reset_request signal")
 
@@ -1504,12 +1443,10 @@ class TopGen:
         We differentiate "gateable" clocks and "hintable" clocks because the
         clock manager has separate register interfaces for each group.
         """
-        clocks = self.top['clocks']
+        clocks = self.top["clocks"]
 
-        gateable_clocks = self._enum_type(self._top_name,
-                                          Name(["gateable", "clocks"]))
-        hintable_clocks = self._enum_type(self._top_name,
-                                          Name(["hintable", "clocks"]))
+        gateable_clocks = self._enum_type(self._top_name, Name(["gateable", "clocks"]))
+        hintable_clocks = self._enum_type(self._top_name, Name(["hintable", "clocks"]))
 
         c2g = clocks.make_clock_to_group()
         by_type = clocks.typed_clocks()
@@ -1520,8 +1457,7 @@ class TopGen:
             docstring = "Clock {} in group {}".format(name, c2g[name].name)
             gateable_clocks.add_constant(clock_name, docstring)
         if isinstance(gateable_clocks, RustEnum):
-            gateable_clocks.add_number_of_variants(
-                "Number of Valid Gateable Clock")
+            gateable_clocks.add_number_of_variants("Number of Valid Gateable Clock")
         else:
             gateable_clocks.add_last_constant("Last Valid Gateable Clock")
 
@@ -1531,8 +1467,7 @@ class TopGen:
             docstring = "Clock {} in group {}".format(name, c2g[name].name)
             hintable_clocks.add_constant(clock_name, docstring)
         if isinstance(hintable_clocks, RustEnum):
-            hintable_clocks.add_number_of_variants(
-                "Number of Valid Hintable Clock")
+            hintable_clocks.add_number_of_variants("Number of Valid Hintable Clock")
         else:
             hintable_clocks.add_last_constant("Last Valid Hintable Clock")
 
@@ -1545,22 +1480,22 @@ class TopGen:
         """
         subspace_regions = []
         addr_space = get_addr_space(self.top, addr_space_name)
-        for subspace in addr_space.get('subspaces', []):
+        for subspace in addr_space.get("subspaces", []):
             regions = []
-            for node in subspace['nodes']:
+            for node in subspace["nodes"]:
                 # Get the dot-delimited interface name. If no interface
                 # name is given, all device interfaces are considered for
                 # this subspace range.
-                split_dev = node.rsplit('.', 1)
+                split_dev = node.rsplit(".", 1)
                 dev_name = split_dev[0]
                 if_name = None
                 if len(split_dev) > 1:
                     if_name = split_dev[1]
 
                 # Include both register blocks and memories.
-                ranges = get_device_ranges(self.devices(addr_space_name) +
-                                           self.memories(addr_space_name),
-                                           dev_name)
+                ranges = get_device_ranges(
+                    self.devices(addr_space_name) + self.memories(addr_space_name), dev_name
+                )
                 if if_name:
                     # Only a single interface, if name contained an interface
                     # name
@@ -1571,19 +1506,21 @@ class TopGen:
 
             subspace_range = range(
                 min([r.base_addr for r in regions]),
-                max([r.base_addr + r.size_bytes for r in regions]))
+                max([r.base_addr + r.size_bytes for r in regions]),
+            )
             subspace_region = MemoryRegion(
-                self._top_name, Name([subspace['name']]), addr_space_name,
+                self._top_name,
+                Name([subspace["name"]]),
+                addr_space_name,
                 subspace_range.start,
-                subspace_range.stop - subspace_range.start)
-            subspace_regions.append(
-                (subspace['name'], subspace['desc'], subspace_region))
+                subspace_range.stop - subspace_range.start,
+            )
+            subspace_regions.append((subspace["name"], subspace["desc"], subspace_region))
 
         self.subranges[addr_space_name] = subspace_regions
 
 
-def write_file_secure(file_path: Path, content: str,
-                      mode: int = 0o600) -> None:
+def write_file_secure(file_path: Path, content: str, mode: int = 0o600) -> None:
     """
     Write content to a file with secure permissions.
 

@@ -20,15 +20,21 @@ def generate_selfdocs(tool: str, fout: TextIO):
     if tool == "reggen":
         reggen_selfdoc.document(fout)
     elif tool == "tlgen":
-        fout.write(tlgen.selfdoc(heading=2, cmd='tlgen.py --doc'))
+        fout.write(tlgen.selfdoc(heading=2, cmd="tlgen.py --doc"))
     elif tool == "topgen":
         topgen_selfdoc.document(fout)
     else:  # document tool stdout
         cmd_input = tool.removeprefix("quote:")
         format_as_code = tool.startswith("quote:")
         try:
-            usage = subprocess.run(cmd_input.split(), capture_output=True, cwd=REPO_ROOT,
-                                   check=True, timeout=180, encoding="utf-8")
+            usage = subprocess.run(
+                cmd_input.split(),
+                capture_output=True,
+                cwd=REPO_ROOT,
+                check=True,
+                timeout=180,
+                encoding="utf-8",
+            )
             if format_as_code:
                 fout.write("```\n" + f"$ {cmd_input}\n" + usage.stdout + "```")
             else:

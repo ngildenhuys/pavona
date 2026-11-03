@@ -11,40 +11,46 @@ from basegen.validate import create_validator
 from basegen.lib import cast_hjson_values
 
 
-PARAM_VALIDATOR = create_validator('urn:reggen:parameter')
+PARAM_VALIDATOR = create_validator("urn:reggen:parameter")
 
 
 class BaseParam:
-
-    def __init__(self, name: str, desc: Optional[str], param_type: str,
-                 unpacked_dimensions: Optional[str]):
+    def __init__(
+        self, name: str, desc: Optional[str], param_type: str, unpacked_dimensions: Optional[str]
+    ):
         self.name = name
         self.desc = desc
         self.param_type = param_type
         self.unpacked_dimensions = unpacked_dimensions
 
     def apply_default(self, value: str) -> None:
-        if self.param_type[:3] == 'int':
+        if self.param_type[:3] == "int":
             check_int(
-                value, f'default value for parameter {self.name} (which has '
-                f'(type {self.param_type})')
+                value,
+                f"default value for parameter {self.name} (which has (type {self.param_type})",
+            )
         self.default: Union[str, int] = value
 
     def as_dict(self) -> Dict[str, object]:
         rd = {}  # type: Dict[str, object]
-        rd['name'] = self.name
+        rd["name"] = self.name
         if self.desc is not None:
-            rd['desc'] = self.desc
-        rd['type'] = self.param_type
+            rd["desc"] = self.desc
+        rd["type"] = self.param_type
         if self.unpacked_dimensions is not None:
-            rd['unpacked_dimensions'] = self.unpacked_dimensions
+            rd["unpacked_dimensions"] = self.unpacked_dimensions
         return rd
 
 
 class LocalParam(BaseParam):
-
-    def __init__(self, name: str, desc: Optional[str], param_type: str,
-                 unpacked_dimensions: Optional[str], value: str):
+    def __init__(
+        self,
+        name: str,
+        desc: Optional[str],
+        param_type: str,
+        unpacked_dimensions: Optional[str],
+        value: str,
+    ):
         super().__init__(name, desc, param_type, unpacked_dimensions)
         self.value = value
 
@@ -58,20 +64,28 @@ class LocalParam(BaseParam):
         except ValueError:
             raise ValueError(
                 f"When {when}, the {self.name} value expanded as "
-                f"{self.value}, which doesn't parse as an integer.") from None
+                f"{self.value}, which doesn't parse as an integer."
+            ) from None
 
     def as_dict(self) -> Dict[str, object]:
         rd = super().as_dict()
-        rd['local'] = True
-        rd['default'] = self.value
+        rd["local"] = True
+        rd["default"] = self.value
         return rd
 
 
 class Parameter(BaseParam):
-
-    def __init__(self, name: str, desc: Optional[str], param_type: str,
-                 unpacked_dimensions: Optional[str], default: str, local: bool,
-                 expose: bool, name_top: Optional[str] = None):
+    def __init__(
+        self,
+        name: str,
+        desc: Optional[str],
+        param_type: str,
+        unpacked_dimensions: Optional[str],
+        default: str,
+        local: bool,
+        expose: bool,
+        name_top: Optional[str] = None,
+    ):
         super().__init__(name, desc, param_type, unpacked_dimensions)
         self.default = default
         self.local = local
@@ -80,17 +94,17 @@ class Parameter(BaseParam):
 
     def as_dict(self) -> Dict[str, object]:
         rd = super().as_dict()
-        rd['default'] = self.default
-        rd['local'] = 'true' if self.local else 'false'
-        rd['expose'] = 'true' if self.expose else 'false'
-        rd['name_top'] = self.name_top
+        rd["default"] = self.default
+        rd["local"] = "true" if self.local else "false"
+        rd["expose"] = "true" if self.expose else "false"
+        rd["name_top"] = self.name_top
         return rd
 
 
 class RandParameter(BaseParam):
-
-    def __init__(self, name: str, desc: Optional[str], param_type: str,
-                 randcount: int, randtype: str):
+    def __init__(
+        self, name: str, desc: Optional[str], param_type: str, randcount: int, randtype: str
+    ):
         assert randcount > 0
         assert randtype in ["perm", "data", "extdata"]
         super().__init__(name, desc, param_type, None)
@@ -99,164 +113,168 @@ class RandParameter(BaseParam):
 
     def apply_default(self, value: str) -> None:
         raise ValueError(
-            f'Cannot apply a default value of {value!r} to parameter '
-            f'{self.name}: it is a random netlist constant.')
+            f"Cannot apply a default value of {value!r} to parameter "
+            f"{self.name}: it is a random netlist constant."
+        )
 
     def as_dict(self) -> Dict[str, object]:
         rd = super().as_dict()
-        rd['randcount'] = self.randcount
-        rd['randtype'] = self.randtype
+        rd["randcount"] = self.randcount
+        rd["randtype"] = self.randtype
         return rd
 
 
 class MemSizeParameter(BaseParam):
-
     def __init__(self, name: str, desc: Optional[str], param_type: str):
         super().__init__(name, desc, param_type, None)
 
 
 def _parse_parameter(where: str, raw: object) -> BaseParam:
     if not isinstance(raw, dict):
-        raise TypeError('must parse parameter from dict: param at ' + where)
+        raise TypeError("must parse parameter from dict: param at " + where)
     PARAM_VALIDATOR.validate(cast_hjson_values(raw))
 
     # TODO: Check if PascalCase or ALL_CAPS
-    name = check_str(raw['name'], 'name field of ' + where)
+    name = check_str(raw["name"], "name field of " + where)
 
-    r_desc = raw.get('desc')
+    r_desc = raw.get("desc")
     if r_desc is None:
         desc = None
     else:
-        desc = check_str(r_desc, 'desc field of ' + where)
+        desc = check_str(r_desc, "desc field of " + where)
 
-    r_unpacked_dimensions = raw.get('unpacked_dimensions')
+    r_unpacked_dimensions = raw.get("unpacked_dimensions")
     if r_unpacked_dimensions is None:
         unpacked_dimensions = None
     else:
-        unpacked_dimensions = \
-            check_str(r_unpacked_dimensions,
-                      'unpacked_dimensions field of ' + where)
+        unpacked_dimensions = check_str(
+            r_unpacked_dimensions, "unpacked_dimensions field of " + where
+        )
 
     # TODO: We should probably check that any register called RndCnstFoo has
     #       randtype and randcount.
-    if name.lower().startswith('rndcnst') and 'randtype' in raw:
+    if name.lower().startswith("rndcnst") and "randtype" in raw:
         # This is a random netlist constant and should be parsed as a
         # RandParameter.
-        randtype = check_str(raw.get('randtype', 'none'),
-                             'randtype field of ' + where)
+        randtype = check_str(raw.get("randtype", "none"), "randtype field of " + where)
         if randtype not in ["perm", "data", "extdata"]:
             raise ValueError(
-                f'At {where}, parameter {name} has a name that implies it '
-                'is a random netlist constant, which means it must specify a '
-                f'randtype of "perm" or "data", rather than {randtype!r}.')
+                f"At {where}, parameter {name} has a name that implies it "
+                "is a random netlist constant, which means it must specify a "
+                f'randtype of "perm" or "data", rather than {randtype!r}.'
+            )
 
-        r_randcount = raw.get('randcount')
+        r_randcount = raw.get("randcount")
         if r_randcount is None:
             raise ValueError(
-                f'At {where}, the random netlist constant {name} has no '
-                'randcount field.')
-        randcount = check_int(r_randcount, 'randcount field of ' + where)
+                f"At {where}, the random netlist constant {name} has no randcount field."
+            )
+        randcount = check_int(r_randcount, "randcount field of " + where)
         if randcount <= 0:
             raise ValueError(
-                f'At {where}, the random netlist constant {name} has a '
-                f'randcount of {randcount}, which is not positive.')
+                f"At {where}, the random netlist constant {name} has a "
+                f"randcount of {randcount}, which is not positive."
+            )
 
-        r_type = raw.get('type')
+        r_type = raw.get("type")
         if r_type is None:
             raise ValueError(
-                f'At {where}, parameter {name} has no type field (which is '
-                'required for random netlist constants).')
-        param_type = check_str(r_type, 'type field of ' + where)
+                f"At {where}, parameter {name} has no type field (which is "
+                "required for random netlist constants)."
+            )
+        param_type = check_str(r_type, "type field of " + where)
 
-        local = check_bool(raw.get('local', 'false'), 'local field of ' + where)
+        local = check_bool(raw.get("local", "false"), "local field of " + where)
         if local:
             raise ValueError(
-                f'At {where}, the parameter {name} specifies local = true, '
-                'meaning that it is a localparam. This is incompatible with '
-                'being a random netlist constant (how would it be set?)')
+                f"At {where}, the parameter {name} specifies local = true, "
+                "meaning that it is a localparam. This is incompatible with "
+                "being a random netlist constant (how would it be set?)"
+            )
 
-        r_default = raw.get('default')
+        r_default = raw.get("default")
         if r_default is not None:
             raise ValueError(
-                f'At {where}, the parameter {name} specifies a value for '
+                f"At {where}, the parameter {name} specifies a value for "
                 'the "default" field. This is incompatible with being a '
-                'random netlist constant: the value will be set by the '
-                'random generator.')
+                "random netlist constant: the value will be set by the "
+                "random generator."
+            )
 
-        expose = check_bool(raw.get('expose', 'false'),
-                            'expose field of ' + where)
+        expose = check_bool(raw.get("expose", "false"), "expose field of " + where)
         if expose:
             raise ValueError(
-                f'At {where}, the parameter {name} specifies expose = true, '
-                'meaning that the parameter is exposed to the top-level. '
-                'This is incompatible with being a random netlist constant.')
+                f"At {where}, the parameter {name} specifies expose = true, "
+                "meaning that the parameter is exposed to the top-level. "
+                "This is incompatible with being a random netlist constant."
+            )
 
         return RandParameter(name, desc, param_type, randcount, randtype)
 
     # This doesn't have a name like a random netlist constant. Check that it
     # doesn't define randcount or randtype.
-    for fld in ['randcount', 'randtype']:
+    for fld in ["randcount", "randtype"]:
         if fld in raw:
-            raise ValueError("At {where}, the parameter {name} specifies "
-                             "{fld} but the name doesn't look like a random "
-                             "netlist constant. To use {fld}, prefix the name "
-                             "with RndCnst.")
+            raise ValueError(
+                "At {where}, the parameter {name} specifies "
+                "{fld} but the name doesn't look like a random "
+                "netlist constant. To use {fld}, prefix the name "
+                "with RndCnst."
+            )
 
-    if name.lower().startswith('memsize'):
-        r_type = raw.get('type')
+    if name.lower().startswith("memsize"):
+        r_type = raw.get("type")
         if r_type is None:
             raise ValueError(
-                f'At {where}, parameter {name} has no type field (which is '
-                'required for memory size parameters).')
-        param_type = check_str(r_type, 'type field of ' + where)
+                f"At {where}, parameter {name} has no type field (which is "
+                "required for memory size parameters)."
+            )
+        param_type = check_str(r_type, "type field of " + where)
 
-        if raw.get('type') != "int":
-            raise ValueError(f'At {where}, memory size parameter {name} must '
-                             'be of type integer.')
+        if raw.get("type") != "int":
+            raise ValueError(f"At {where}, memory size parameter {name} must be of type integer.")
 
-        local = check_bool(raw.get('local', 'false'), 'local field of ' + where)
+        local = check_bool(raw.get("local", "false"), "local field of " + where)
         if local:
             raise ValueError(
-                f'At {where}, the parameter {name} specifies local = true, '
-                'meaning that it is a localparam. This is incompatible with '
-                'being a memory size parameter.')
+                f"At {where}, the parameter {name} specifies local = true, "
+                "meaning that it is a localparam. This is incompatible with "
+                "being a memory size parameter."
+            )
 
-        expose = check_bool(raw.get('expose', 'false'),
-                            'expose field of ' + where)
+        expose = check_bool(raw.get("expose", "false"), "expose field of " + where)
         if expose:
             raise ValueError(
-                f'At {where}, the parameter {name} specifies expose = true, '
-                'meaning that the parameter is exposed to the top-level. '
-                'This is incompatible with being a memory size parameter.')
+                f"At {where}, the parameter {name} specifies expose = true, "
+                "meaning that the parameter is exposed to the top-level. "
+                "This is incompatible with being a memory size parameter."
+            )
 
         return MemSizeParameter(name, desc, param_type)
 
-    r_type = raw.get('type')
+    r_type = raw.get("type")
     if r_type is None:
-        param_type = 'int'
+        param_type = "int"
     else:
-        param_type = check_str(r_type, 'type field of ' + where)
+        param_type = check_str(r_type, "type field of " + where)
 
-    local = check_bool(raw.get('local', 'true'), 'local field of ' + where)
-    expose = check_bool(raw.get('expose', 'false'), 'expose field of ' + where)
+    local = check_bool(raw.get("local", "true"), "local field of " + where)
+    expose = check_bool(raw.get("expose", "false"), "expose field of " + where)
 
-    r_default = raw.get('default')
+    r_default = raw.get("default")
     if r_default is None:
-        raise ValueError(f'At {where}, the {name} param has no default field.')
+        raise ValueError(f"At {where}, the {name} param has no default field.")
     else:
-        default = check_str(r_default, 'default field of ' + where)
-        if param_type[:3] == 'int':
-            check_int(default,
-                      f'default field of {name}, (an integer parameter)')
+        default = check_str(r_default, "default field of " + where)
+        if param_type[:3] == "int":
+            check_int(default, f"default field of {name}, (an integer parameter)")
 
     if local and expose:
-        return Parameter(name, desc, param_type, unpacked_dimensions, default,
-                         local, expose)
+        return Parameter(name, desc, param_type, unpacked_dimensions, default, local, expose)
     elif local:
         return LocalParam(name, desc, param_type, unpacked_dimensions, default)
     else:
-        return Parameter(name, desc, param_type, unpacked_dimensions, default,
-                         local, expose)
+        return Parameter(name, desc, param_type, unpacked_dimensions, default, local, expose)
 
 
 # Note: With a modern enough Python, we'd like this to derive from
@@ -264,7 +282,6 @@ def _parse_parameter(where: str, raw: object) -> BaseParam:
 #       class only become subscriptable in Python 3.9. So we derive from just
 #       "MutableMapping" and tell mypy not to worry about it.
 class Params(MutableMapping):  # type: ignore
-
     def __init__(self) -> None:
         self.by_name = {}  # type: Dict[str, BaseParam]
 
@@ -294,8 +311,7 @@ class Params(MutableMapping):  # type: ignore
         for idx, (key, value) in enumerate(defaults):
             param = self.by_name[key]
             if param is None:
-                raise KeyError(
-                    f'Cannot find parameter {key} to set default value.')
+                raise KeyError(f"Cannot find parameter {key} to set default value.")
 
             param.apply_default(value)
 
@@ -309,14 +325,14 @@ class Params(MutableMapping):  # type: ignore
         param = self.by_name.get(value)
         if param is None:
             raise ValueError(
-                f'Cannot find a parameter called {value} when {when}. '
-                f'Known parameters: {", ".join(self.by_name.keys())}.')
+                f"Cannot find a parameter called {value} when {when}. "
+                f"Known parameters: {', '.join(self.by_name.keys())}."
+            )
 
         # Only allow localparams in the expansion (because otherwise we're at
         # the mercy of whatever instantiates the block).
         if not isinstance(param, LocalParam):
-            raise ValueError(
-                f"When {when}, {value} is a not a local parameter.")
+            raise ValueError(f"When {when}, {value} is a not a local parameter.")
 
         return param.expand_value(when)
 
@@ -333,15 +349,14 @@ class Params(MutableMapping):  # type: ignore
         acc = 0
         is_neg = False
 
-        for idx, tok in enumerate(re.split(r'([+-])', value)):
+        for idx, tok in enumerate(re.split(r"([+-])", value)):
             if idx == 0 and not tok:
                 continue
             if idx % 2:
-                is_neg = (tok == '-')
+                is_neg = tok == "-"
                 continue
 
-            term = self._expand_one(tok.strip(),
-                                    f'expanding term {idx // 2} of {where}')
+            term = self._expand_one(tok.strip(), f"expanding term {idx // 2} of {where}")
             acc += -term if is_neg else term
 
         return acc
@@ -351,18 +366,17 @@ class Params(MutableMapping):  # type: ignore
 
 
 class ReggenParams(Params):
-
     @staticmethod
-    def from_raw(where: str, raw: object) -> 'ReggenParams':
+    def from_raw(where: str, raw: object) -> "ReggenParams":
         ret = ReggenParams()
         rl = check_list(raw, where)
         for idx, r_param in enumerate(rl):
-            entry_where = f'entry {idx + 1} in {where}'
+            entry_where = f"entry {idx + 1} in {where}"
             param = _parse_parameter(entry_where, r_param)
             if param.name in ret:
                 raise ValueError(
-                    f'At {entry_where}, found a duplicate parameter with '
-                    f'name {param.name}.')
+                    f"At {entry_where}, found a duplicate parameter with name {param.name}."
+                )
             ret.add(param)
         return ret
 

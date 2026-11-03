@@ -3,7 +3,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-'''Tool for generating updatemem-compatible MEM files for ROM or OTP splicing.
+"""Tool for generating updatemem-compatible MEM files for ROM or OTP splicing.
 
 This script takes a .vmem file as input and converts that into a format usable
 by Vivado for splicing FPGA bitstreams via updatemem. For details on the
@@ -13,7 +13,7 @@ https://www.xilinx.com/support/documentation/sw_manuals/xilinx2020_2/ug898-vivad
 
 Typical usage:
 >>> ./gen_vivado_mem_image.py test_rom.scr.32.vmem test_rom.updatemem.mem
-'''
+"""
 
 import argparse
 import sys
@@ -24,7 +24,7 @@ from typing import List
 
 from mem import MemFile
 
-logger = logging.getLogger('gen_vivado_mem_image')
+logger = logging.getLogger("gen_vivado_mem_image")
 
 
 class UpdatememSimulator:
@@ -92,7 +92,7 @@ def parse_otp_init_strings(
     for i, lines in enumerate(init_line_groups):
         bram_scratch = []
         for line in lines:
-            match = re.search('INIT_.*h([0-9a-fA-F]+)$', line)
+            match = re.search("INIT_.*h([0-9a-fA-F]+)$", line)
             if not match:
                 continue
 
@@ -122,7 +122,7 @@ def parse_otp_init_strings(
         for bit in reversed(bits):
             value = (value << 1) | bit
 
-        logger.debug(f'@{i:06x}: {value:06x} = {bits}')
+        logger.debug(f"@{i:06x}: {value:06x} = {bits}")
         out.append(value)
 
     return out
@@ -139,7 +139,7 @@ def otp_words_to_updatemem_pieces(otp_size: int, otp_padding: int, words: List[i
     # The first line indicates that we're starting from the zero address. For
     # simplicity and to make `updatemem` more efficient, we will not print
     # any subsequent addresses.
-    mem_pieces = ['@0']
+    mem_pieces = ["@0"]
     words_to_write = []
     for word in words:
         # Examining the INIT_XX strings from a full Vivado bitstream build, it
@@ -170,7 +170,7 @@ def otp_words_to_updatemem_pieces(otp_size: int, otp_padding: int, words: List[i
 
             # Write 44 bits in hexadecimal.
             value = word1 << 22 | word2
-            col_string = f'{value:011X}'
+            col_string = f"{value:011X}"
             mem_pieces.append(col_string)
 
     # Self-check: test the correctness of `mem_pieces` by feeding into a model
@@ -184,7 +184,7 @@ def otp_words_to_updatemem_pieces(otp_size: int, otp_padding: int, words: List[i
     init_lines = updatemem_sim.render_init_lines()
 
     reconstructed = parse_otp_init_strings(otp_size, otp_padding, init_lines)
-    if len(reconstructed) != len(words) or reconstructed[:len(words)] != words:
+    if len(reconstructed) != len(words) or reconstructed[: len(words)] != words:
         raise Exception("Generated updatemem data for OTP failed self-check.")
 
     return mem_pieces
@@ -194,36 +194,35 @@ def swap_bytes(width: int, orig: int, swap_nibbles: bool, swap_crumbs: bool) -> 
     num_bytes = math.ceil(width / 8)
     swapped = 0
     for i in range(num_bytes):
-        byte_value = ((orig >> (i * 8)) & 0xFF)
+        byte_value = (orig >> (i * 8)) & 0xFF
         if swap_nibbles:
             byte_value = ((byte_value << 4) | (byte_value >> 4)) & 0xFF
         if swap_crumbs:
             mask_evens = 0x33333333
             mask_odds = 0xCCCCCCCC
             byte_value = ((byte_value & mask_evens) << 2) | ((byte_value & mask_odds) >> 2)
-        swapped |= (byte_value << ((num_bytes - i - 1) * 8))
+        swapped |= byte_value << ((num_bytes - i - 1) * 8)
     return swapped
 
 
 def main() -> int:
-    logging.basicConfig(format='%(asctime)s [%(filename)s] %(message)s')
+    logging.basicConfig(format="%(asctime)s [%(filename)s] %(message)s")
     logger.setLevel(logging.INFO)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('infile', type=argparse.FileType('rb'))
-    parser.add_argument('outfile', type=argparse.FileType('w'))
-    parser.add_argument('--swap-nibbles', dest='swap_nibbles', action='store_true')
-    parser.add_argument('--swap-crumbs', dest='swap_crumbs', action='store_true')
-    parser.add_argument('--otp-size', dest='otp_size', type=int)
-    parser.add_argument('--otp-padding', dest='otp_padding', type=int)
+    parser.add_argument("infile", type=argparse.FileType("rb"))
+    parser.add_argument("outfile", type=argparse.FileType("w"))
+    parser.add_argument("--swap-nibbles", dest="swap_nibbles", action="store_true")
+    parser.add_argument("--swap-crumbs", dest="swap_crumbs", action="store_true")
+    parser.add_argument("--otp-size", dest="otp_size", type=int)
+    parser.add_argument("--otp-padding", dest="otp_padding", type=int)
 
     args = parser.parse_args()
 
     # Extract width from ROM file name.
-    match = re.search(r'([0-9]+)(\.scr)?\.vmem', args.infile.name)
+    match = re.search(r"([0-9]+)(\.scr)?\.vmem", args.infile.name)
     if not match:
-        raise ValueError('Cannot extract ROM word width from file name ' +
-                         args.infile.name)
+        raise ValueError("Cannot extract ROM word width from file name " + args.infile.name)
     else:
         width = int(match.group(1))
 
@@ -237,8 +236,8 @@ def main() -> int:
     if width == 24:
         logger.info("Generating updatemem-compatible MEM file for OTP image.")
         updatemem_pieces = otp_words_to_updatemem_pieces(args.otp_size, args.otp_padding, words)
-        updatemem_line = ' '.join(updatemem_pieces)
-        args.outfile.write(updatemem_line + '\n')
+        updatemem_line = " ".join(updatemem_pieces)
+        args.outfile.write(updatemem_line + "\n")
         return 0
 
     logger.info("Generating updatemem-compatible MEM file for ROM.")
@@ -259,14 +258,14 @@ def main() -> int:
         # address to speed up `updatemem` operation.
         toks = []
         if prev_addr is None or addr != (prev_addr + word_bytes):
-            toks.append(f'@{addr:0{addr_chars}X}')
+            toks.append(f"@{addr:0{addr_chars}X}")
         prev_addr = addr
         # Write to file.
-        toks.append(f'{data:0{word_chars}X}')
-        args.outfile.write(' '.join(toks) + '\n')
+        toks.append(f"{data:0{word_chars}X}")
+        args.outfile.write(" ".join(toks) + "\n")
 
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

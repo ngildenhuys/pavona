@@ -34,14 +34,21 @@ This includes (relative to <outdir>/rtl/autogen):
 Tool generates, from templates and complete top config info, top level RTL, random constants, and
 other needed hardware files (e.g., FuseSoC cores).
 """
+
 import argparse
 from pathlib import Path
 import logging as log
 from mako.template import Template
 from mako.lookup import TemplateLookup
 from mako import exceptions
-from topgen.lib import (load_cfg, write_file_secure, get_ip_hjson_path, find_module,
-                        find_module_by_name, get_addr_space_suffix)
+from topgen.lib import (
+    load_cfg,
+    write_file_secure,
+    get_ip_hjson_path,
+    find_module,
+    find_module_by_name,
+    get_addr_space_suffix,
+)
 from basegen.typing import ConfigT
 from topgen.typing import IpBlocksT
 from reggen.ip_block import IpBlock
@@ -66,10 +73,10 @@ IP_RAW_PATH = REPO_TOP / "hw" / "ip"
 TOPGEN_TEMPLATE_PATH = Path(__file__).parent.resolve() / "topgen" / "templates"
 
 
-def generate_top(top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str,
-                 **kwargs: dict[str, object]) -> None:
-    top_tpl = Template(filename=tpl_filename,
-                       lookup=TemplateLookup([TOPGEN_TEMPLATE_PATH, "/"]))
+def generate_top(
+    top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str, **kwargs: dict[str, object]
+) -> None:
+    top_tpl = Template(filename=tpl_filename, lookup=TemplateLookup([TOPGEN_TEMPLATE_PATH, "/"]))
 
     try:
         return top_tpl.render(top=top, name_to_block=name_to_block, **kwargs)
@@ -78,11 +85,16 @@ def generate_top(top: ConfigT, name_to_block: IpBlocksT, tpl_filename: str,
         return ""
 
 
-def render_template(top: ConfigT, name_to_block: IpBlocksT, template_path: str, rendered_path: Path,
-                    secure: bool = False, **other_info):
+def render_template(
+    top: ConfigT,
+    name_to_block: IpBlocksT,
+    template_path: str,
+    rendered_path: Path,
+    secure: bool = False,
+    **other_info,
+):
     """Render template to file, optionally with secure permissions for sensitive files"""
-    template_contents = generate_top(top, name_to_block,
-                                     str(template_path), **other_info)
+    template_contents = generate_top(top, name_to_block, str(template_path), **other_info)
 
     if secure:
         # Use the write_file_secure for writting file with restricted file permissions
@@ -92,54 +104,68 @@ def render_template(top: ConfigT, name_to_block: IpBlocksT, template_path: str, 
         rendered_path.write_text(template_contents, encoding="UTF-8")
 
 
-def generate_sv(topcfg, seedcfg, out_path, name_to_block, top_template_path,
-                gencmd_sv=HEADER.format("", "")):
+def generate_sv(
+    topcfg, seedcfg, out_path, name_to_block, top_template_path, gencmd_sv=HEADER.format("", "")
+):
     topname = topcfg["name"]
     top_name = "top_" + topname
 
     # SystemVerilog Top:
     # "toplevel.sv.tpl" -> "rtl/autogen/{top_name}.sv"
-    render_template(topcfg, name_to_block,
-                    top_template_path / "toplevel.sv.tpl",
-                    out_path / "rtl" / "autogen" / f"{top_name}.sv",
-                    gencmd=gencmd_sv)
+    render_template(
+        topcfg,
+        name_to_block,
+        top_template_path / "toplevel.sv.tpl",
+        out_path / "rtl" / "autogen" / f"{top_name}.sv",
+        gencmd=gencmd_sv,
+    )
 
     # Multiple chip-levels (ASIC, FPGA, Verilator, etc)
     for target in topcfg["targets"]:
         target_name = target["name"]
-        render_template(topcfg, name_to_block,
-                        top_template_path / "chiplevel.sv.tpl",
-                        out_path /
-                        f"rtl/autogen/chip_{topname}_{target_name}.sv",
-                        gencmd=gencmd_sv,
-                        target=target)
+        render_template(
+            topcfg,
+            name_to_block,
+            top_template_path / "chiplevel.sv.tpl",
+            out_path / f"rtl/autogen/chip_{topname}_{target_name}.sv",
+            gencmd=gencmd_sv,
+            target=target,
+        )
 
     # RACL
-    racl_config = topcfg.get('racl', DEFAULT_RACL_CONFIG)
-    render_template(topcfg, name_to_block,
-                    TOPGEN_TEMPLATE_PATH / 'top_racl_pkg.sv.tpl',
-                    out_path / 'rtl' / 'autogen' / 'top_racl_pkg.sv',
-                    gencmd=gencmd_sv,
-                    topcfg=topcfg,
-                    racl_config=racl_config)
-    render_template(topcfg, name_to_block,
-                    TOPGEN_TEMPLATE_PATH / 'toplevel_racl_pkg.sv.tpl',
-                    out_path / 'rtl' / 'autogen' /
-                    f'top_{topname}_racl_pkg.sv',
-                    gencmd=gencmd_sv,
-                    topcfg=topcfg,
-                    racl_config=racl_config)
+    racl_config = topcfg.get("racl", DEFAULT_RACL_CONFIG)
+    render_template(
+        topcfg,
+        name_to_block,
+        TOPGEN_TEMPLATE_PATH / "top_racl_pkg.sv.tpl",
+        out_path / "rtl" / "autogen" / "top_racl_pkg.sv",
+        gencmd=gencmd_sv,
+        topcfg=topcfg,
+        racl_config=racl_config,
+    )
+    render_template(
+        topcfg,
+        name_to_block,
+        TOPGEN_TEMPLATE_PATH / "toplevel_racl_pkg.sv.tpl",
+        out_path / "rtl" / "autogen" / f"top_{topname}_racl_pkg.sv",
+        gencmd=gencmd_sv,
+        topcfg=topcfg,
+        racl_config=racl_config,
+    )
 
     # "toplevel_pkg.sv.tpl" -> "rtl/autogen/{top_name}{addr_space_suffix}_pkg.sv"
     c_helper = TopGenCTest(topcfg, name_to_block)
-    for addr_space in topcfg['addr_spaces']:
+    for addr_space in topcfg["addr_spaces"]:
         addr_space_suffix = get_addr_space_suffix(addr_space)
-        render_template(topcfg, name_to_block,
-                        TOPGEN_TEMPLATE_PATH / "toplevel_pkg.sv.tpl",
-                        out_path / "rtl" / "autogen" / f"{top_name}{addr_space_suffix}_pkg.sv",
-                        helper=c_helper,
-                        addr_space=addr_space,
-                        gencmd=gencmd_sv)
+        render_template(
+            topcfg,
+            name_to_block,
+            TOPGEN_TEMPLATE_PATH / "toplevel_pkg.sv.tpl",
+            out_path / "rtl" / "autogen" / f"{top_name}{addr_space_suffix}_pkg.sv",
+            helper=c_helper,
+            addr_space=addr_space,
+            gencmd=gencmd_sv,
+        )
 
     # lc_ctrl
     if find_module(topcfg["module"], "lc_ctrl"):
@@ -148,31 +174,41 @@ def generate_sv(topcfg, seedcfg, out_path, name_to_block, top_template_path,
         lc_st_enc = LcStEnc(lc_state_def_file, int(lc_seed["value"]))
         lc_st_enc_path = f"rtl/autogen/{lc_seed['seed_mode']}"
         lc_st_enc_file = "lc_ctrl_token_pkg.sv"
-        render_template(topcfg, name_to_block,
-                        IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_state_pkg.sv.tpl",
-                        IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_state_pkg.sv",
-                        lc_st_enc=lc_st_enc)
-        render_template(topcfg, name_to_block,
-                        IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_token_pkg.sv.tpl",
-                        out_path / lc_st_enc_path / lc_st_enc_file,
-                        secure=True, lc_st_enc=lc_st_enc)
-        render_template(topcfg, name_to_block,
-                        TOPGEN_TEMPLATE_PATH / "core_file.core.tpl",
-                        out_path / lc_st_enc_path /
-                        f"top_{topname}_{lc_seed['seed_mode']}_lc_ctrl_token_pkg.core",
-                        package=(
-                            f"lowrisc:{topname}_constants:"
-                            f"{lc_seed['seed_mode']}_lc_ctrl_token_pkg:0.1"
-                        ),
-                        description="LC Controller Token Package",
-                        virtual_package="lowrisc:virtual_constants:lc_ctrl_token_pkg",
-                        dependencies=["lowrisc:ip:lc_ctrl_state_pkg"],
-                        files=[lc_st_enc_file])
+        render_template(
+            topcfg,
+            name_to_block,
+            IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_state_pkg.sv.tpl",
+            IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_state_pkg.sv",
+            lc_st_enc=lc_st_enc,
+        )
+        render_template(
+            topcfg,
+            name_to_block,
+            IP_RAW_PATH / "lc_ctrl" / "rtl" / "lc_ctrl_token_pkg.sv.tpl",
+            out_path / lc_st_enc_path / lc_st_enc_file,
+            secure=True,
+            lc_st_enc=lc_st_enc,
+        )
+        render_template(
+            topcfg,
+            name_to_block,
+            TOPGEN_TEMPLATE_PATH / "core_file.core.tpl",
+            out_path
+            / lc_st_enc_path
+            / f"top_{topname}_{lc_seed['seed_mode']}_lc_ctrl_token_pkg.core",
+            package=(f"lowrisc:{topname}_constants:{lc_seed['seed_mode']}_lc_ctrl_token_pkg:0.1"),
+            description="LC Controller Token Package",
+            virtual_package="lowrisc:virtual_constants:lc_ctrl_token_pkg",
+            dependencies=["lowrisc:ip:lc_ctrl_state_pkg"],
+            files=[lc_st_enc_file],
+        )
 
     # generate chip level xbar and alert_handler TB
     tb_files = [
-        "xbar_env_pkg__params.sv", "tb__xbar_connect.sv",
-        "xbar_tgl_excl.cfg", "rstmgr_tgl_excl.cfg"
+        "xbar_env_pkg__params.sv",
+        "tb__xbar_connect.sv",
+        "xbar_tgl_excl.cfg",
+        "rstmgr_tgl_excl.cfg",
     ]
     if topcfg["alert"]:
         tb_files += ["tb__alert_handler_connect.sv"]
@@ -180,10 +216,9 @@ def generate_sv(topcfg, seedcfg, out_path, name_to_block, top_template_path,
     for fname in tb_files:
         tpl_fname = "%s.tpl" % (fname)
         xbar_chip_data_path = TOPGEN_TEMPLATE_PATH / tpl_fname
-        template_contents = generate_top(topcfg,
-                                         name_to_block,
-                                         str(xbar_chip_data_path),
-                                         gencmd=gencmd_sv)
+        template_contents = generate_top(
+            topcfg, name_to_block, str(xbar_chip_data_path), gencmd=gencmd_sv
+        )
 
         rendered_dir = out_path / "dv/autogen"
         rendered_dir.mkdir(parents=True, exist_ok=True)
@@ -195,8 +230,7 @@ def generate_sv(topcfg, seedcfg, out_path, name_to_block, top_template_path,
     # generate parameters for chip-level environment package
     tpl_fname = "chip_env_pkg__params.sv.tpl"
     alert_handler_chip_data_path = TOPGEN_TEMPLATE_PATH / tpl_fname
-    template_contents = generate_top(topcfg, name_to_block,
-                                     str(alert_handler_chip_data_path))
+    template_contents = generate_top(topcfg, name_to_block, str(alert_handler_chip_data_path))
 
     rendered_dir = out_path / "dv/env/autogen"
     rendered_dir.mkdir(parents=True, exist_ok=True)
@@ -214,16 +248,20 @@ def reapply_random_params(topcfg, seedcfg):
             top_module["param_list"].append(p)
 
 
-def generate_from_random(topcfg, seedcfg, out_path, name_to_block, seed_path,
-                         gencmd_sv=HEADER.format("", "")):
+def generate_from_random(
+    topcfg, seedcfg, out_path, name_to_block, seed_path, gencmd_sv=HEADER.format("", "")
+):
     topname = topcfg["name"]
     top_name = "top_" + topname
 
     # compile-time random netlist constants
-    gencmd_rnd_cnst_sv = gencmd_sv + f"""//
+    gencmd_rnd_cnst_sv = (
+        gencmd_sv
+        + f"""//
 // File is generated based on the following seed configuration:
 //   {seed_path.resolve().relative_to(REPO_TOP)}
 """
+    )
     topgen_seed = seedcfg["seed"]["topgen_seed"]
     seed_mode = topgen_seed["seed_mode"]
     rnd_cnst_path = f"rtl/autogen/{seed_mode}"
@@ -238,13 +276,9 @@ def generate_from_random(topcfg, seedcfg, out_path, name_to_block, seed_path,
     RND_CNST_DEPENDENCIES = {
         # ipgen-based modules (using template_type)
         "flash_ctrl": [f"lowrisc:{topname}_ip:flash_ctrl"],
-        "otp_ctrl": [
-            f"lowrisc:{topname}_ip:otp_ctrl_top_specific_pkg",
-            "lowrisc:ip:otp_ctrl_pkg"
-        ],
+        "otp_ctrl": [f"lowrisc:{topname}_ip:otp_ctrl_top_specific_pkg", "lowrisc:ip:otp_ctrl_pkg"],
         "alert_handler": [f"lowrisc:{topname}_ip:alert_handler_pkg"],
         "rv_core_ibex": ["lowrisc:ibex:ibex_pkg"],
-
         # Direct IP modules (using type)
         "lc_ctrl": ["lowrisc:ip:lc_ctrl_pkg"],
         "sram_ctrl": ["lowrisc:ip:sram_ctrl_pkg"],
@@ -270,31 +304,41 @@ def generate_from_random(topcfg, seedcfg, out_path, name_to_block, seed_path,
     # Ensure the dependencies are unique and sorted
     rnd_cnst_deps = sorted(list(set(rnd_cnst_deps)))
 
-    render_template(topcfg, name_to_block,
-                    TOPGEN_TEMPLATE_PATH / "toplevel_rnd_cnst_pkg.sv.tpl",
-                    out_path / rnd_cnst_path / rnd_cnst_sv_file,
-                    secure=True, gencmd=gencmd_rnd_cnst_sv)
+    render_template(
+        topcfg,
+        name_to_block,
+        TOPGEN_TEMPLATE_PATH / "toplevel_rnd_cnst_pkg.sv.tpl",
+        out_path / rnd_cnst_path / rnd_cnst_sv_file,
+        secure=True,
+        gencmd=gencmd_rnd_cnst_sv,
+    )
 
     # Create verible waiver file for the random constant package for long lines.
     rnd_cnst_vbl_file_path = out_path / rnd_cnst_path / f"{rnd_cnst_file}.vbl"
     with rnd_cnst_vbl_file_path.open(mode="w", encoding="UTF-8") as fout:
-        fout.write("""# Copyright lowRISC contributors (OpenTitan project).
+        fout.write(
+            """# Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 """
-                   + (gencmd_rnd_cnst_sv).replace("//", "#") + f"""
+            + (gencmd_rnd_cnst_sv).replace("//", "#")
+            + f"""
 # These lines are too long due to templating
 waive --rule=line-length --location="{rnd_cnst_sv_file}"
-""")
-    render_template(topcfg, name_to_block,
-                    TOPGEN_TEMPLATE_PATH / "core_file.core.tpl",
-                    out_path / rnd_cnst_path / f"top_{topname}_{seed_mode}_rnd_cnst_pkg.core",
-                    package=f"lowrisc:{topname}_constants:{seed_mode}_rnd_cnst_pkg:0.1",
-                    description="Random netlist constant package",
-                    virtual_package="lowrisc:virtual_constants:rnd_cnst_pkg",
-                    dependencies=rnd_cnst_deps,
-                    files=[rnd_cnst_sv_file],
-                    files_veriblelint_waiver=rnd_cnst_vbl_file)
+"""
+        )
+    render_template(
+        topcfg,
+        name_to_block,
+        TOPGEN_TEMPLATE_PATH / "core_file.core.tpl",
+        out_path / rnd_cnst_path / f"top_{topname}_{seed_mode}_rnd_cnst_pkg.core",
+        package=f"lowrisc:{topname}_constants:{seed_mode}_rnd_cnst_pkg:0.1",
+        description="Random netlist constant package",
+        virtual_package="lowrisc:virtual_constants:rnd_cnst_pkg",
+        dependencies=rnd_cnst_deps,
+        files=[rnd_cnst_sv_file],
+        files_veriblelint_waiver=rnd_cnst_vbl_file,
+    )
 
 
 def recast_widths(intersignals: list):
@@ -311,7 +355,8 @@ def recast_widths(intersignals: list):
                 width["default"],
                 width["local"],
                 width["expose"],
-                width.get("name_top"))
+                width.get("name_top"),
+            )
             intersig["width"].name_top = width["name_top"]
         else:
             intersig["width"] = int(width)
@@ -333,25 +378,29 @@ def correct_null(from_hjson):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--completecfg", "-t",
-                        required=True,
-                        type=Path,
-                        help="Complete top configuration Hjson.")
-    parser.add_argument("--seedcfg", "-s",
-                        required=True,
-                        type=Path,
-                        help="Top level random seed configuration.")
-    parser.add_argument("--toplevel-template-path", "-p",
-                        type=Path,
-                        default=None,
-                        help="Path to top-specific templates. Defaults to"
-                        " $(dirname completecfg)/../../templates.")
-    parser.add_argument("--outdir", "-o",
-                        type=Path,
-                        default=None,
-                        help="Target output directory. Defaults to $(dirname completecfg)/../..")
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--completecfg", "-t", required=True, type=Path, help="Complete top configuration Hjson."
+    )
+    parser.add_argument(
+        "--seedcfg", "-s", required=True, type=Path, help="Top level random seed configuration."
+    )
+    parser.add_argument(
+        "--toplevel-template-path",
+        "-p",
+        type=Path,
+        default=None,
+        help="Path to top-specific templates. Defaults to $(dirname completecfg)/../../templates.",
+    )
+    parser.add_argument(
+        "--outdir",
+        "-o",
+        type=Path,
+        default=None,
+        help="Target output directory. Defaults to $(dirname completecfg)/../..",
+    )
     args = parser.parse_args()
 
     completecfg = load_cfg(args.completecfg)
@@ -376,14 +425,16 @@ def main():
             recast_widths(module["inter_signal_list"])
 
     # correctly handle other arguments
-    toplevel_template_path = (args.toplevel_template_path
-                              or args.completecfg.parents[2] / "templates").resolve()
+    toplevel_template_path = (
+        args.toplevel_template_path or args.completecfg.parents[2] / "templates"
+    ).resolve()
     outdir = args.outdir or args.completecfg.parents[2].resolve()
 
     # set random seed and generated file header
     SecurePrngFactory.create("topgen", int(seedcfg["seed"]["topgen_seed"]["value"]))
-    gencmd_sv = HEADER.format(args.completecfg.relative_to(REPO_TOP),
-                              args.seedcfg.relative_to(REPO_TOP))
+    gencmd_sv = HEADER.format(
+        args.completecfg.relative_to(REPO_TOP), args.seedcfg.relative_to(REPO_TOP)
+    )
 
     # generate files
     generate_sv(completecfg, seedcfg, outdir, name_to_block, toplevel_template_path, gencmd_sv)

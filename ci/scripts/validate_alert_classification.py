@@ -224,7 +224,7 @@ def perform_update(owner_sw_cfg_file: str, expected_digests: Dict[str, str]):
         active_digest_to_update = None
 
         for line in lines:
-            is_new_item_line = 'name:' in line and re.search(r'^\s*name:', line)
+            is_new_item_line = "name:" in line and re.search(r"^\s*name:", line)
 
             if is_new_item_line:
                 # If we were looking for a value but found a new item, stop looking.
@@ -236,11 +236,10 @@ def perform_update(owner_sw_cfg_file: str, expected_digests: Dict[str, str]):
                         break
 
             # If we are inside a digest block, look for its value line to replace.
-            elif active_digest_to_update and 'value:' in line and re.search(r'^\s*value:', line):
+            elif active_digest_to_update and "value:" in line and re.search(r"^\s*value:", line):
                 new_value = expected_digests[active_digest_to_update]
                 # Replace the old value using regex, preserving surrounding text.
-                line = re.sub(r'(value:\s*)"0x[0-9a-fA-F]*"',
-                              fr'\1"{new_value}"', line)
+                line = re.sub(r'(value:\s*)"0x[0-9a-fA-F]*"', rf'\1"{new_value}"', line)
                 # Reset state after the update is done for this item.
                 active_digest_to_update = None
 
@@ -263,15 +262,11 @@ def main():
         action="store_true",
         help="Update the digest values in the owner_sw_cfg.hjson file.",
     )
-    parser.add_argument("top_name",
-                        type=str,
-                        help="Name of the hardware top.")
-    parser.add_argument("alert_handler_file",
-                        type=Path,
-                        help="Path to alert_handler_ipconfig.hjson file.")
-    parser.add_argument("owner_sw_cfg_file",
-                        type=Path,
-                        help="Path to owner_sw_cfg.hjson file.")
+    parser.add_argument("top_name", type=str, help="Name of the hardware top.")
+    parser.add_argument(
+        "alert_handler_file", type=Path, help="Path to alert_handler_ipconfig.hjson file."
+    )
+    parser.add_argument("owner_sw_cfg_file", type=Path, help="Path to owner_sw_cfg.hjson file.")
     args = parser.parse_args()
 
     try:
@@ -292,7 +287,10 @@ def main():
         sys.exit(1)
 
     digest_match, expected_digests = validate_digest_values(
-        args.alert_handler_file, args.owner_sw_cfg_file, owner_cfg_data, args.top_name,
+        args.alert_handler_file,
+        args.owner_sw_cfg_file,
+        owner_cfg_data,
+        args.top_name,
     )
 
     if digest_match:

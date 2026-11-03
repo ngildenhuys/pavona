@@ -6,12 +6,19 @@ from basegen.lib import REPO_TOP, import_hjson
 from jsonschema.exceptions import ValidationError
 from referencing.jsonschema import SchemaRegistry, SchemaResource, DRAFT202012
 
-from basegen.validate import (validate_schema, all_validation_errors,
-                              TOPCFG_VALIDATOR, IP_BLOCK_VALIDATOR,
-                              XBAR_VALIDATOR,
-                              TPL_PARAM_VALIDATOR, IP_CONFIG_VALIDATOR,
-                              RACL_VALIDATOR, RACL_MAPPING_VALIDATOR,
-                              document_schema, correct_doc_links)
+from basegen.validate import (
+    validate_schema,
+    all_validation_errors,
+    TOPCFG_VALIDATOR,
+    IP_BLOCK_VALIDATOR,
+    XBAR_VALIDATOR,
+    TPL_PARAM_VALIDATOR,
+    IP_CONFIG_VALIDATOR,
+    RACL_VALIDATOR,
+    RACL_MAPPING_VALIDATOR,
+    document_schema,
+    correct_doc_links,
+)
 import sys
 import pytest
 
@@ -19,7 +26,7 @@ import pytest
 # test_topcfg_validation
 KNOWN_GOOD_TOPCFGS = (
     import_hjson(REPO_TOP / "hw/top_dragonfly/data/top_dragonfly.hjson"),
-    import_hjson(REPO_TOP / "hw/top_egret/data/top_egret.hjson")
+    import_hjson(REPO_TOP / "hw/top_egret/data/top_egret.hjson"),
 )
 KNOWN_BAD_TOPCFGS = ({}, {"foo": 2})
 
@@ -27,15 +34,14 @@ KNOWN_BAD_TOPCFGS = ({}, {"foo": 2})
 KNOWN_GOOD_IPDESCS = tuple(
     import_hjson(ipdesc)
     for ipdesc in REPO_TOP.glob("hw/ip/*/data/*.hjson")
-    if (ipdesc.stem == ipdesc.parents[1].name
-        and ipdesc.stem != "tlul"))  # tlul is not an IP
+    if (ipdesc.stem == ipdesc.parents[1].name and ipdesc.stem != "tlul")
+)  # tlul is not an IP
 KNOWN_BAD_IPDESCS = ({}, {"name": "foo", "clocking": {}})
 
 # test_xbarcfg_validation
 KNOWN_GOOD_XBARCFGS = tuple(
     import_hjson(xbar_cfg)
-    for xbar_cfg in REPO_TOP.glob(
-        "hw/top_*/ip/xbar_*/data/autogen/xbar_*.gen.hjson")
+    for xbar_cfg in REPO_TOP.glob("hw/top_*/ip/xbar_*/data/autogen/xbar_*.gen.hjson")
 )
 KNOWN_BAD_XBARCFGS = ({},)
 
@@ -49,22 +55,19 @@ KNOWN_BAD_TPLPARAMS = ({},)
 
 # test_ipcfg_validation
 KNOWN_GOOD_IPCFGS = tuple(
-    import_hjson(ipcfg)
-    for ipcfg in REPO_TOP.glob("hw/top_*/ip_autogen/*/data/*.ipconfig.hjson")
+    import_hjson(ipcfg) for ipcfg in REPO_TOP.glob("hw/top_*/ip_autogen/*/data/*.ipconfig.hjson")
 )
 KNOWN_BAD_IPCFGS = ({},)
 
 # test_racl_validation
 KNOWN_GOOD_RACLS = tuple(
-    import_hjson(racl)
-    for racl in REPO_TOP.glob("hw/top_*/data/racl/racl.hjson")
+    import_hjson(racl) for racl in REPO_TOP.glob("hw/top_*/data/racl/racl.hjson")
 )
 KNOWN_BAD_RACLS = ({},)
 
 # test_mapping_validation
 KNOWN_GOOD_MAPPINGS = tuple(
-    import_hjson(racl)
-    for racl in REPO_TOP.glob("hw/top_*/data/racl/*_mapping.hjson")
+    import_hjson(racl) for racl in REPO_TOP.glob("hw/top_*/data/racl/*_mapping.hjson")
 )
 KNOWN_BAD_MAPPINGS = ({}, {"null": 1})
 
@@ -74,20 +77,26 @@ NESTED_SCHEMAS = (
         "$id": "urn:test_basegen:parent",
         "title": "Parent",
         "description": "This schema references another schema.",
-        "properties": {
-            "my_child": {"$ref": "urn:test_basegen:child"}}},
+        "properties": {"my_child": {"$ref": "urn:test_basegen:child"}},
+    },
     {
         "$id": "urn:test_basegen:child",
         "title": "Child of parent",
         "required": ["foo"],
-        "properties": {
-            "foo": {"type": "integer"}}}
+        "properties": {"foo": {"type": "integer"}},
+    },
 )
 _PARENT, _CHILD = NESTED_SCHEMAS
-TEST_REGISTRY = SchemaRegistry().with_resources((
-    (_PARENT["$id"], SchemaResource(_PARENT, DRAFT202012)),
-    (_CHILD["$id"], SchemaResource(_CHILD, DRAFT202012))
-)).crawl()
+TEST_REGISTRY = (
+    SchemaRegistry()
+    .with_resources(
+        (
+            (_PARENT["$id"], SchemaResource(_PARENT, DRAFT202012)),
+            (_CHILD["$id"], SchemaResource(_CHILD, DRAFT202012)),
+        )
+    )
+    .crawl()
+)
 
 # test_document_schema
 # test_document_schema_links
@@ -97,8 +106,7 @@ DOC_KEY = TEST_DIR / "doc_key.md"
 
 # test_nested_schemas
 GOOD_PARENTS = ({}, {"my_child": {"foo": 3}})
-BAD_PARENTS = ({"my_child": {}},
-               {"my_child": {"foo": "3"}})
+BAD_PARENTS = ({"my_child": {}}, {"my_child": {"foo": "3"}})
 
 
 def test_topcfg_validation():
@@ -111,8 +119,7 @@ def test_topcfg_validation():
             TOPCFG_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("top config validation (direct) incorrectly approved"
-                        f" bad config!\n\t{bad}")
+        raise Exception(f"top config validation (direct) incorrectly approved bad config!\n\t{bad}")
 
 
 def test_ip_block_validation():
@@ -124,8 +131,9 @@ def test_ip_block_validation():
             IP_BLOCK_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("IP block description validation incorrectly approved"
-                        f" bad description!\n\t{bad}")
+        raise Exception(
+            f"IP block description validation incorrectly approved bad description!\n\t{bad}"
+        )
 
 
 def test_xbarcfg_validation():
@@ -137,8 +145,9 @@ def test_xbarcfg_validation():
             XBAR_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("Crossbar configuration validation incorrectly"
-                        f" approved bad xbar config!\n\t{bad}")
+        raise Exception(
+            f"Crossbar configuration validation incorrectly approved bad xbar config!\n\t{bad}"
+        )
 
 
 def test_tplparam_validation():
@@ -150,8 +159,9 @@ def test_tplparam_validation():
             TPL_PARAM_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("Template parameter validation incorrectly approved"
-                        f" bad template param input!\n\t{bad}")
+        raise Exception(
+            f"Template parameter validation incorrectly approved bad template param input!\n\t{bad}"
+        )
 
 
 def test_ipcfg_validation():
@@ -163,8 +173,9 @@ def test_ipcfg_validation():
             IP_CONFIG_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("IP template config validation incorrectly approved"
-                        f" bad IP config!\n\t{bad}")
+        raise Exception(
+            f"IP template config validation incorrectly approved bad IP config!\n\t{bad}"
+        )
 
 
 def test_racl_validation():
@@ -176,8 +187,7 @@ def test_racl_validation():
             RACL_VALIDATOR.validate(bad)
         except ValidationError:
             continue
-        raise Exception("RACL configuration validation incorrectly approved"
-                        f" bad config!\n\t{bad}")
+        raise Exception(f"RACL configuration validation incorrectly approved bad config!\n\t{bad}")
 
 
 def test_mapping_validation():
@@ -195,30 +205,33 @@ def test_mapping_validation():
             RACL_MAPPING_VALIDATOR.validate(list(bad.values())[0])
         except ValidationError:
             continue
-        raise Exception("RACL mapping validation incorrectly approved bad"
-                        f" mapping input!\n\t{bad}")
+        raise Exception(f"RACL mapping validation incorrectly approved bad mapping input!\n\t{bad}")
 
 
 def test_document_schema():
     expected = "\n".join(DOC_KEY.read_text().splitlines()[8:])
-    result = document_schema(
-        outfile=None, schema=_CHILD, registry=TEST_REGISTRY)
+    result = document_schema(outfile=None, schema=_CHILD, registry=TEST_REGISTRY)
     assert result.splitlines() == expected.splitlines()
 
 
 def test_document_schema_links():
     expected = "\n".join(DOC_KEY.read_text().splitlines()[:7])
     result = document_schema(
-        outfile=None, schema=_PARENT, registry=TEST_REGISTRY,
-        link_correction={"use_link": True, "registry": TEST_REGISTRY})
+        outfile=None,
+        schema=_PARENT,
+        registry=TEST_REGISTRY,
+        link_correction={"use_link": True, "registry": TEST_REGISTRY},
+    )
     assert result.splitlines() == expected.splitlines()
 
 
 def test_correct_doc_links():
-    text = "\n".join([document_schema(outfile=None, schema=_PARENT,
-                                      registry=TEST_REGISTRY),
-                      document_schema(outfile=None, schema=_CHILD,
-                                      registry=TEST_REGISTRY)])
+    text = "\n".join(
+        [
+            document_schema(outfile=None, schema=_PARENT, registry=TEST_REGISTRY),
+            document_schema(outfile=None, schema=_CHILD, registry=TEST_REGISTRY),
+        ]
+    )
     result = correct_doc_links(text, registry=TEST_REGISTRY)
     assert result == DOC_KEY.read_text()
 
@@ -231,8 +244,7 @@ def test_nested_schemas():
             validate_schema(bad, "urn:test_basegen:parent", TEST_REGISTRY)
         except ValidationError:
             continue
-        raise Exception("nested schema failed to catch bad dataset:"
-                        f"\n\t{bad}")
+        raise Exception(f"nested schema failed to catch bad dataset:\n\t{bad}")
 
 
 def test_all_validation_errors():

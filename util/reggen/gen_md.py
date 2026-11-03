@@ -8,8 +8,16 @@ from typing import List, TextIO, Dict, Any, Optional
 
 from reggen.ip_block import IpBlock
 from reggen.md_helpers import (
-    coderef, mono, italic, list_item, table,
-    regref_to_link, first_line, title, url, wavejson,
+    coderef,
+    mono,
+    italic,
+    list_item,
+    table,
+    regref_to_link,
+    first_line,
+    title,
+    url,
+    wavejson,
 )
 from reggen.multi_register import MultiRegister
 from reggen.reg_block import RegBlock
@@ -34,13 +42,11 @@ def gen_md(block: IpBlock, output: TextIO) -> int:
     return 0
 
 
-def gen_md_reg_block(output: TextIO,
-                     rb: RegBlock,
-                     comp: str,
-                     width: int,
-                     iface_name: Optional[str] = None) -> None:
+def gen_md_reg_block(
+    output: TextIO, rb: RegBlock, comp: str, width: int, iface_name: Optional[str] = None
+) -> None:
     if len(rb.entries) == 0:
-        output.write('This interface does not expose any registers.')
+        output.write("This interface does not expose any registers.")
         return
 
     # Generate overview table.
@@ -57,14 +63,15 @@ def gen_md_reg_block(output: TextIO,
             gen_md_window(output, x, comp, width)
 
 
-def gen_md_register_summary(output: TextIO,
-                            entries: List[object],
-                            comp: str,
-                            width: int,
-                            iface_name: Optional[str] = None) -> None:
+def gen_md_register_summary(
+    output: TextIO, entries: List[object], comp: str, width: int, iface_name: Optional[str] = None
+) -> None:
 
-    heading = "Summary" if iface_name is None \
+    heading = (
+        "Summary"
+        if iface_name is None
         else "Summary of the " + coderef(iface_name) + " interface's registers"
+    )
     output.write(title(heading, 2))
 
     bytew = width // 8
@@ -72,14 +79,15 @@ def gen_md_register_summary(output: TextIO,
     header = ["Name", "Offset", "Length", "Description"]
     rows: List[List[str]] = []
 
-    def add_row(name: str, anchor: str, offset: int, length: int,
-                description: str) -> None:
-        rows.append([
-            comp + "." + url(mono(name), "#" + anchor),
-            hex(offset),
-            str(length),
-            regref_to_link(first_line(description)),
-        ])
+    def add_row(name: str, anchor: str, offset: int, length: int, description: str) -> None:
+        rows.append(
+            [
+                comp + "." + url(mono(name), "#" + anchor),
+                hex(offset),
+                str(length),
+                regref_to_link(first_line(description)),
+            ]
+        )
 
     for entry in entries:
         if isinstance(entry, MultiRegister):
@@ -93,18 +101,15 @@ def gen_md_register_summary(output: TextIO,
                 add_row(reg.name, anchor, reg.offset, bytew, reg.desc)
         elif isinstance(entry, Window):
             length = bytew * entry.items
-            add_row(entry.name, entry.name.lower(), entry.offset, length,
-                    entry.desc)
+            add_row(entry.name, entry.name.lower(), entry.offset, length, entry.desc)
         else:
             assert isinstance(entry, Register)
-            add_row(entry.name, entry.name.lower(), entry.offset, bytew,
-                    entry.desc)
+            add_row(entry.name, entry.name.lower(), entry.offset, bytew, entry.desc)
 
     output.write(table(header, rows))
 
 
-def gen_md_window(output: TextIO, win: Window, comp: str,
-                  regwidth: int) -> None:
+def gen_md_window(output: TextIO, win: Window, comp: str, regwidth: int) -> None:
     assert win.name
     wname = win.name
 
@@ -113,14 +118,19 @@ def gen_md_window(output: TextIO, win: Window, comp: str,
     end_addr = start_addr + 4 * win.items - 4
 
     output.write(
-        title(wname, 2) + regref_to_link(win.desc) + "\n\n" +
-        list_item("Word Aligned Offset Range: " + mono(f"{start_addr:#x}") +
-                  "to" + mono(f"{end_addr:#x}")) +
-        list_item("Size (words): " + mono(f"{win.items}") + "") +
-        list_item("Access: " + mono(f"{win.swaccess.key}")) +
-        list_item("Byte writes are " +
-                  (italic("not") if not win.byte_write else "") +
-                  " supported.") + "\n")
+        title(wname, 2)
+        + regref_to_link(win.desc)
+        + "\n\n"
+        + list_item(
+            "Word Aligned Offset Range: " + mono(f"{start_addr:#x}") + "to" + mono(f"{end_addr:#x}")
+        )
+        + list_item("Size (words): " + mono(f"{win.items}") + "")
+        + list_item("Access: " + mono(f"{win.swaccess.key}"))
+        + list_item(
+            "Byte writes are " + (italic("not") if not win.byte_write else "") + " supported."
+        )
+        + "\n"
+    )
 
 
 def multireg_is_compact(mreg: MultiRegister, width: int) -> bool:
@@ -129,27 +139,29 @@ def multireg_is_compact(mreg: MultiRegister, width: int) -> bool:
 
 
 def describe_reg_hdr(output: TextIO, reg: Register, with_offset: bool) -> None:
-    '''Write a header for the register description.
+    """Write a header for the register description.
 
     If with_offset is True, this includes the offset of the register. (Set it
     to False if printing a MultiRegister)
-    '''
+    """
     regwen_str = ""
     if reg.regwen is not None:
         regwen_url = "#" + reg.regwen.lower()
-        regwen_str = list_item("Register enable: " +
-                               url(mono(reg.regwen), regwen_url))
+        regwen_str = list_item("Register enable: " + url(mono(reg.regwen), regwen_url))
 
-    offset_str = (list_item("Offset: " +
-                            mono(f"{reg.offset:#x}")) if with_offset else "")
+    offset_str = list_item("Offset: " + mono(f"{reg.offset:#x}")) if with_offset else ""
     output.write(
-        title(reg.name, 2) + regref_to_link(reg.desc) + "\n" + offset_str +
-        list_item("Reset default: " + mono(f"{reg.resval:#x}")) +
-        list_item("Reset mask: " + mono(f"{reg.resmask:#x}")) + regwen_str)
+        title(reg.name, 2)
+        + regref_to_link(reg.desc)
+        + "\n"
+        + offset_str
+        + list_item("Reset default: " + mono(f"{reg.resval:#x}"))
+        + list_item("Reset mask: " + mono(f"{reg.resmask:#x}"))
+        + regwen_str
+    )
 
 
-def gen_md_multiregister(output: TextIO, mreg: MultiRegister, comp: str,
-                         width: int) -> None:
+def gen_md_multiregister(output: TextIO, mreg: MultiRegister, comp: str, width: int) -> None:
     # Check whether this is a compacted multireg, in which case we cannot use
     # the general definition of the first register as an example for all
     # other instances.
@@ -170,7 +182,8 @@ def gen_md_multiregister(output: TextIO, mreg: MultiRegister, comp: str,
         table(
             ["Name", "Offset"],
             [[reg.name, hex(reg.offset)] for reg in mreg.cregs],
-        ))
+        )
+    )
 
     # Fields
     output.write("\n" + title("Fields", 3))
@@ -182,8 +195,7 @@ def gen_md_multiregister(output: TextIO, mreg: MultiRegister, comp: str,
     gen_md_reg_fields(output, reg_def, width)
 
 
-def gen_md_register(output: TextIO, reg: Register, comp: str,
-                    width: int) -> None:
+def gen_md_register(output: TextIO, reg: Register, comp: str, width: int) -> None:
     describe_reg_hdr(output, reg, True)
 
     # Fields
@@ -236,12 +248,14 @@ def gen_md_reg_picture(output: TextIO, reg: Register, width: int) -> None:
             # increase vertical space if needed
             vspace = max(vspace, need_space)
 
-        fields.append({
-            "name": field.name,
-            "bits": field.bits.width(),
-            "attr": [field.swaccess.key],
-            "rotate": rotate
-        })
+        fields.append(
+            {
+                "name": field.name,
+                "bits": field.bits.width(),
+                "attr": [field.swaccess.key],
+                "rotate": rotate,
+            }
+        )
         next_bit = field.bits.msb + 1
 
     # add an empty field if necessary
@@ -261,9 +275,9 @@ def gen_md_reg_fields(output: TextIO, reg: Register, width: int) -> None:
     # If any field is an enum or has a long description,
     # put fields in their own sections.
     field_sections = any(
-        field.enum is not None or
-        (field.desc is not None and len(field.desc) > MAX_DESCRIPTION_LEN)
-        for field in reg.fields)
+        field.enum is not None or (field.desc is not None and len(field.desc) > MAX_DESCRIPTION_LEN)
+        for field in reg.fields
+    )
 
     header = ["Bits", "Type", "Reset", "Name"]
     colalign = ["center", "center", "center", "left"]
@@ -273,9 +287,11 @@ def gen_md_reg_fields(output: TextIO, reg: Register, width: int) -> None:
         colalign.append("left")
 
     def reserved_row(msb: int, lsb: int) -> List[str]:
-        return (([f"{msb}:{lsb}"] if msb != lsb else [str(msb)]) +
-                (["", "", ""] if not field_sections else ["", ""]) +
-                ["Reserved"])
+        return (
+            ([f"{msb}:{lsb}"] if msb != lsb else [str(msb)])
+            + (["", "", ""] if not field_sections else ["", ""])
+            + ["Reserved"]
+        )
 
     rows = []
     nextbit = width - 1
@@ -290,16 +306,14 @@ def gen_md_reg_fields(output: TextIO, reg: Register, width: int) -> None:
         row = [
             field.bits.as_str(),
             field.swaccess.key,
-            'x' if field.resval is None else hex(field.resval),
+            "x" if field.resval is None else hex(field.resval),
         ]
         # If generating field sections, just add the name with a link to it's section.
         if field_sections:
             row.append(url(fname, f"#{reg.name.lower()}--{fname.lower()}"))
         # Otherwise, add the name and description to the table.
         else:
-            row.extend([
-                fname, "" if field.desc is None else regref_to_link(field.desc)
-            ])
+            row.extend([fname, "" if field.desc is None else regref_to_link(field.desc)])
 
         rows.append(row)
 
@@ -330,8 +344,10 @@ def gen_md_reg_fields(output: TextIO, reg: Register, width: int) -> None:
             else:
                 header = ["Value", "Name", "Description"]
                 hex_width = 2 + ((field.bits.width() + 3) // 4)
-                rows = [[f"{enum.value:#0{hex_width}x}", enum.name, regref_to_link(enum.desc)]
-                        for enum in field.enum]
+                rows = [
+                    [f"{enum.value:#0{hex_width}x}", enum.name, regref_to_link(enum.desc)]
+                    for enum in field.enum
+                ]
                 output.write(table(header, rows))
 
                 if field.has_incomplete_enum():

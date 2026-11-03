@@ -26,12 +26,16 @@ def parse_test_vectors(raw_data):
             #   - aes_kwp_wrap: plaintext must be >= 16 bytes
             #   - aes_kwp_unwrap: ciphertext must be >= 24 bytes
             if len(plaintext) < 16:
-                logging.info("Skipped tcId %d: plaintext too short (%d bytes)",
-                             test["tcId"], len(plaintext))
+                logging.info(
+                    "Skipped tcId %d: plaintext too short (%d bytes)", test["tcId"], len(plaintext)
+                )
                 continue
             if len(ciphertext) < 24:
-                logging.info("Skipped tcId %d: ciphertext too short (%d bytes)",
-                             test["tcId"], len(ciphertext))
+                logging.info(
+                    "Skipped tcId %d: ciphertext too short (%d bytes)",
+                    test["tcId"],
+                    len(ciphertext),
+                )
                 continue
 
             # "invalid" vectors have tampered ciphertext,
@@ -43,23 +47,26 @@ def parse_test_vectors(raw_data):
                 operations = ("decrypt",)
 
             for operation in operations:
-                test_vectors.append({
-                    "vendor": "wycheproof",
-                    "test_case_id": test["tcId"],
-                    "operation": operation,
-                    "key_len": key_len,
-                    "key": list(bytes.fromhex(test["key"])),
-                    "plaintext": plaintext,
-                    "ciphertext": ciphertext,
-                    "result": result,
-                })
+                test_vectors.append(
+                    {
+                        "vendor": "wycheproof",
+                        "test_case_id": test["tcId"],
+                        "operation": operation,
+                        "key_len": key_len,
+                        "key": list(bytes.fromhex(test["key"])),
+                        "plaintext": plaintext,
+                        "ciphertext": ciphertext,
+                        "result": result,
+                    }
+                )
 
     return test_vectors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Parsing utility for Wycheproof AES-KWP testvectors.")
+        description="Parsing utility for Wycheproof AES-KWP testvectors."
+    )
     parser.add_argument(
         "--src",
         type=argparse.FileType("r"),

@@ -4,6 +4,7 @@
 """This contains a class which is used to help generate the device tables (DT)
 files.
 """
+
 from dtgen.helper import indent_text, IpHelper, Extension, StructType, ScalarType, ArrayMapType
 from topgen.lib import Name
 from collections import OrderedDict
@@ -114,14 +115,14 @@ class RstmgrExt(Extension):
         # Create a type to represent a reset request.
         self.reset_req_src_struct = StructType(self.RSTREQ_SOURCE_STRUCT_NAME)
         self.reset_req_src_struct.add_field(
-            name = self.RSTREQ_SOURCE_INST_FIELD_NAME,
-            field_type = ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
-            docstring = "Instance ID of the source of this reset request.",
+            name=self.RSTREQ_SOURCE_INST_FIELD_NAME,
+            field_type=ScalarType(self.ip_helper.top_helper.DT_INSTANCE_ID_NAME),
+            docstring="Instance ID of the source of this reset request.",
         )
         self.reset_req_src_struct.add_field(
-            name = self.RSTREQ_SOURCE_REQ_FIELD_NAME,
-            field_type = ScalarType("size_t"),
-            docstring = "Index of the reset request signal for that instance.",
+            name=self.RSTREQ_SOURCE_REQ_FIELD_NAME,
+            field_type=ScalarType("size_t"),
+            docstring="Index of the reset request signal for that instance.",
         )
 
         self._invalid_reset_req = {
@@ -140,38 +141,40 @@ class RstmgrExt(Extension):
         st = StructType()
         # Add field to list SW resets.
         st.add_field(
-            name = self.SW_RESETS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = ScalarType(self.ip_helper.top_helper.DT_RESET_ENUM_NAME),
-                index_type = ScalarType("size_t"),
-                length = str(sw_rsts_count),
+            name=self.SW_RESETS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=ScalarType(self.ip_helper.top_helper.DT_RESET_ENUM_NAME),
+                index_type=ScalarType("size_t"),
+                length=str(sw_rsts_count),
             ),
-            docstring = "List of software resets, in the order of the register fields",
+            docstring="List of software resets, in the order of the register fields",
         )
         # Add field to list HW reset requests.
         st.add_field(
-            name = self.HW_REQS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = self.reset_req_src_struct,
-                index_type = ScalarType("size_t"),
-                length = str(hw_reqs_count),
+            name=self.HW_REQS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=self.reset_req_src_struct,
+                index_type=ScalarType("size_t"),
+                length=str(hw_reqs_count),
             ),
-            docstring = "List of hardware reset requests, in the order of the register fields",
+            docstring="List of hardware reset requests, in the order of the register fields",
         )
         return Name(["rstmgr_ext"]), st
 
     def fill_dt_ip(self, m) -> dict:
         sw_rsts = {}
         self._extra_includes = OrderedDict()
-        for (idx, rst) in enumerate(self.ipconfig.sw_rsts_list()):
+        for idx, rst in enumerate(self.ipconfig.sw_rsts_list()):
             sw_rsts[str(idx)] = Name.from_snake_case(rst)
         hw_reqs = {}
-        for (idx, reset) in enumerate(self.ipconfig.hw_reset_req_list()):
+        for idx, reset in enumerate(self.ipconfig.hw_reset_req_list()):
             # NOTE Scafi_Deprecated pretends to have an escalation signal but
             # in fact does not have an alert_handler so we need to special case
             # that. Similarly there is no rv_dm.
-            if self.ip_helper.top_helper.top["name"] == "scafi_deprecated" and \
-                    reset["module"] in ["alert_handler", "rv_dm"]:
+            if self.ip_helper.top_helper.top["name"] == "scafi_deprecated" and reset["module"] in [
+                "alert_handler",
+                "rv_dm",
+            ]:
                 inst_id = Name(["unknown"])
             else:
                 inst_id = Name.from_snake_case(reset["module"])
@@ -186,7 +189,8 @@ class RstmgrExt(Extension):
                 rstreq += Name.from_snake_case(module_type)
                 rstreq += Name(["reset", "req"])
                 rstreq += Name.from_snake_case(
-                    self.ip_helper.simplify_reset_request_name(reset["name"]))
+                    self.ip_helper.simplify_reset_request_name(reset["name"])
+                )
                 rstreq = rstreq.as_c_enum()
             else:
                 rstreq = "0"
@@ -203,21 +207,21 @@ class RstmgrExt(Extension):
     def render_dt_ip(self, pos: Extension.DtIpPos) -> str:
         if pos == Extension.DtIpPos.HeaderEnd:
             subs = {
-                'reset_req_src_struct': self.reset_req_src_struct.render_type_def(),
+                "reset_req_src_struct": self.reset_req_src_struct.render_type_def(),
             }
             return HEADER_EXT_TEMPLATE % subs
         elif pos == Extension.DtIpPos.SourceIncludes:
             includes = ""
             for ip in self._extra_includes:
-                includes += f"#include \"hw/top/dt/{ip}.h\"\n"
+                includes += f'#include "hw/top/dt/{ip}.h"\n'
             return includes
         elif pos == Extension.DtIpPos.SourceEnd:
             subs = {
-                'sw_reset_count': len(self.ipconfig.sw_rsts_list()),
-                'hw_reset_req_count': len(self.ipconfig.hw_reset_req_list()),
-                'invalid_req':
-                    indent_text(self.reset_req_src_struct.
-                                render_value(self._invalid_reset_req), "  "),
+                "sw_reset_count": len(self.ipconfig.sw_rsts_list()),
+                "hw_reset_req_count": len(self.ipconfig.hw_reset_req_list()),
+                "invalid_req": indent_text(
+                    self.reset_req_src_struct.render_value(self._invalid_reset_req), "  "
+                ),
             }
             return SOURCE_EXT_TEMPLATE % subs
         else:

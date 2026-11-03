@@ -32,7 +32,6 @@ BOOTSTRAP = args.bootstrap
 
 
 class IbexScaTest(unittest.TestCase):
-
     def test_init(self):
         ibexsca = OTIbex(target)
         device_id, owner_page, boot_log, boot_measurements, version = ibexsca.init()
@@ -97,9 +96,7 @@ class IbexScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -128,9 +125,7 @@ class IbexScaTest(unittest.TestCase):
             actual_result_json = json.loads(actual_result)
 
             expected_result_json = json.loads('{"result":[0,0,0,0,0,0,0,0,0,0,0,0]}')
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             trigger = 32
             fixed_data1 = 11
@@ -156,20 +151,18 @@ class IbexScaTest(unittest.TestCase):
             if fixed_data2 == 0:
                 div = 0xFFFFFFFF
             elif (
-                utils.to_signed32(fixed_data1) == -2147483648 and
-                utils.to_signed32(fixed_data2) == -1
+                utils.to_signed32(fixed_data1) == -2147483648
+                and utils.to_signed32(fixed_data2) == -1
             ):
                 div = 0x80000000
             else:
                 div = (
-                    int(utils.to_signed32(fixed_data1) / utils.to_signed32(fixed_data2)) &
-                    0xFFFFFFFF
+                    int(utils.to_signed32(fixed_data1) / utils.to_signed32(fixed_data2))
+                    & 0xFFFFFFFF
                 )
 
             expected_result_json = {"result": [0, 0, 0, 0, 0, div, 0, 0, 0, 0, 0, 0]}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             trigger = 256
             fixed_data1 = 11
@@ -184,12 +177,8 @@ class IbexScaTest(unittest.TestCase):
             )
             actual_result_json = json.loads(actual_result)
 
-            expected_result_json = {
-                "result": [0, 0, 0, 0, 0, 0, 0, 0, fixed_data2, 0, 0, 0]
-            }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            expected_result_json = {"result": [0, 0, 0, 0, 0, 0, 0, 0, fixed_data2, 0, 0, 0]}
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             trigger = 4095
             fixed_data1 = 11
@@ -215,14 +204,14 @@ class IbexScaTest(unittest.TestCase):
             if fixed_data2 == 0:
                 div = 0xFFFFFFFF
             elif (
-                utils.to_signed32(fixed_data1) == -2147483648 and
-                utils.to_signed32(fixed_data2) == -1
+                utils.to_signed32(fixed_data1) == -2147483648
+                and utils.to_signed32(fixed_data2) == -1
             ):
                 div = 0x80000000
             else:
                 div = (
-                    int(utils.to_signed32(fixed_data1) / utils.to_signed32(fixed_data2)) &
-                    0xFFFFFFFF
+                    int(utils.to_signed32(fixed_data1) / utils.to_signed32(fixed_data2))
+                    & 0xFFFFFFFF
                 )
 
             expected_result_json = {
@@ -241,9 +230,7 @@ class IbexScaTest(unittest.TestCase):
                     fixed_data2,
                 ]
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_combi_operations_batch_fvsr(self):
         for num_segments in num_segments_list:
@@ -282,9 +269,7 @@ class IbexScaTest(unittest.TestCase):
                     sample_fixed = random.getrandbits(32) & 0x1
 
             expected_result_json = json.loads('{"result":[0,0,0,0,0,0,0,0,0,0,0,0]}')
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             # Seed the synchronized randomness with the same seed as in the chip which is 1
             random.seed(1)
@@ -330,9 +315,7 @@ class IbexScaTest(unittest.TestCase):
                 div = int(batch_data1 / batch_data2) & 0xFFFFFFFF
 
             expected_result_json = {"result": [0, 0, 0, 0, 0, div, 0, 0, 0, 0, 0, 0]}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             # Seed the synchronized randomness with the same seed as in the chip which is 1
             random.seed(1)
@@ -368,12 +351,8 @@ class IbexScaTest(unittest.TestCase):
                         batch_data2 = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
 
-            expected_result_json = {
-                "result": [0, 0, 0, 0, 0, 0, 0, 0, batch_data2, 0, 0, 0]
-            }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            expected_result_json = {"result": [0, 0, 0, 0, 0, 0, 0, 0, batch_data2, 0, 0, 0]}
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             # Seed the synchronized randomness with the same seed as in the chip which is 1
             random.seed(1)
@@ -420,14 +399,14 @@ class IbexScaTest(unittest.TestCase):
             if batch_data2 == 0:
                 div = 0xFFFFFFFF
             elif (
-                utils.to_signed32(batch_data1) == -2147483648 and
-                utils.to_signed32(batch_data2) == -1
+                utils.to_signed32(batch_data1) == -2147483648
+                and utils.to_signed32(batch_data2) == -1
             ):
                 div = 0x80000000
             else:
                 div = (
-                    int(utils.to_signed32(batch_data1) / utils.to_signed32(batch_data2)) &
-                    0xFFFFFFFF
+                    int(utils.to_signed32(batch_data1) / utils.to_signed32(batch_data2))
+                    & 0xFFFFFFFF
                 )
 
             expected_result_json = {
@@ -446,9 +425,7 @@ class IbexScaTest(unittest.TestCase):
                     batch_data2,
                 ]
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
             return True
 
@@ -480,9 +457,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_register_file_read_batch_random(self):
         for num_segments in num_segments_list:
@@ -499,9 +474,7 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_register_file_write(self):
         data = [7, 6, 5, 4, 3, 2, 1, 0]
@@ -531,9 +504,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_register_file_write_batch_random(self):
         for num_segments in num_segments_list:
@@ -551,9 +522,7 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_read(self):
         data = [255, 255, 255, 0, 0, 0, 0, 0]
@@ -583,9 +552,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_read_batch_fvsr_fix_address(self):
         for num_segments in num_segments_list:
@@ -608,9 +575,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_read_batch_random(self):
         for num_segments in num_segments_list:
@@ -627,9 +592,7 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_read_batch_random_fix_address(self):
         for num_segments in num_segments_list:
@@ -646,9 +609,7 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_write(self):
         data = [255, 255, 255, 0, 0, 0, 0, 0]
@@ -678,9 +639,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_write_batch_fvsr_fix_address(self):
         for num_segments in num_segments_list:
@@ -703,9 +662,7 @@ class IbexScaTest(unittest.TestCase):
                         batch_data = random.getrandbits(32)
                     sample_fixed = random.getrandbits(32) & 0x1
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_write_batch_random(self):
         for num_segments in num_segments_list:
@@ -722,9 +679,7 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_tl_write_batch_random_fix_address(self):
         for num_segments in num_segments_list:
@@ -741,27 +696,19 @@ class IbexScaTest(unittest.TestCase):
                 for __ in range(num_segments):
                     batch_data = random.getrandbits(32)
             expected_result_json = {"result": batch_data}
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
 
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:
-        bitstream_path = r.Rlocation(
-            "pavona_pavona/" + BITSTREAM
-        )
+        bitstream_path = r.Rlocation("pavona_pavona/" + BITSTREAM)
     # Get the firmware path.
-    firmware_path = r.Rlocation(
-        "pavona_pavona/" + BOOTSTRAP
-    )
+    firmware_path = r.Rlocation("pavona_pavona/" + BOOTSTRAP)
 
     if "fpga" in BOOTSTRAP:
         target_type = "fpga"
@@ -774,7 +721,7 @@ if __name__ == "__main__":
         fw_bin=firmware_path,
         opentitantool=opentitantool_path,
         bitstream=bitstream_path,
-        tool_args=config_args
+        tool_args=config_args,
     )
 
     target = targets.Target(target_cfg)

@@ -14,10 +14,10 @@ from ..model import Model
 
 
 class BadKmacAppReqInsn(KmacAppReqInsn):
-    '''A snippet generator that generates program ending kmac instructions.
+    """A snippet generator that generates program ending kmac instructions.
     This includes oversized/undersized messages, fifo overflows, invalid
     share read/writes.
-    '''
+    """
 
     pqc_program = True
     ends_program = True
@@ -29,22 +29,26 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         self._size_mode = SizeErrorMode.AltCFG
 
     def _gen(self, model: Model, program: Program) -> list[ProgInsn]:
-        """ Helper function to build and return a full instruction list for the given message size.
-            The list of instructions returned are illegal for KMAC operations.
+        """Helper function to build and return a full instruction list for the given message size.
+        The list of instructions returned are illegal for KMAC operations.
         """
         # Take a clean KMAC operation to inject errors into
         insn_list = super()._gen(model, program)
 
         # Split the valid errors by masking mode
         if self._masked_mode:
-            self._error_mode = random.choices([KmacErrorMode.MalformedSize,
-                                              KmacErrorMode.Overflow],
-                                              weights=[1, 0.5])[0]
+            self._error_mode = random.choices(
+                [KmacErrorMode.MalformedSize, KmacErrorMode.Overflow], weights=[1, 0.5]
+            )[0]
         else:
-            self._error_mode = random.choices([KmacErrorMode.MalformedSize,
-                                              KmacErrorMode.IllegalMsg,
-                                              KmacErrorMode.IllegalDigest],
-                                              weights=[0.5, 1, 1])[0]
+            self._error_mode = random.choices(
+                [
+                    KmacErrorMode.MalformedSize,
+                    KmacErrorMode.IllegalMsg,
+                    KmacErrorMode.IllegalDigest,
+                ],
+                weights=[0.5, 1, 1],
+            )[0]
 
         print(self._error_mode)
 
@@ -61,7 +65,7 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         return err_insn_list
 
     def _inject_size(self, model: Model, insn_list: list[ProgInsn]) -> list[ProgInsn]:
-        ''' Makes a malformed sized message both oversized and undersized '''
+        """Makes a malformed sized message both oversized and undersized"""
         cfg_insn_idx = []
         pw_insn_idx = []
         msg0_insn_idx = []
@@ -72,26 +76,26 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
 
         for insn in insn_list:
             if (
-                insn.insn.mnemonic == 'bn.wsrw' and
-                insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
+                insn.insn.mnemonic == "bn.wsrw"
+                and insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
             ):
                 # This is a valid write to the KMAC MSG0 register
                 msg0_insn_idx.append(insn_cnt)
             if (
-                insn.insn.mnemonic == 'bn.wsrw' and
-                insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG1"]
+                insn.insn.mnemonic == "bn.wsrw"
+                and insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG1"]
             ):
                 # This is a valid write to the KMAC MSG0 register
                 msg1_insn_idx.append(insn_cnt)
             if (
-                insn.insn.mnemonic == 'csrrw' and
-                insn.operands[1] == model._kmac_csr_addr["KMAC_CFG"]
+                insn.insn.mnemonic == "csrrw"
+                and insn.operands[1] == model._kmac_csr_addr["KMAC_CFG"]
             ):
                 # This is a valid write to the KMAC CFG register
                 cfg_insn_idx.append(insn_cnt)
             if (
-                insn.insn.mnemonic == 'csrrw' and
-                insn.operands[1] == model._kmac_csr_addr["KMAC_PW"]
+                insn.insn.mnemonic == "csrrw"
+                and insn.operands[1] == model._kmac_csr_addr["KMAC_PW"]
             ):
                 # This is a valid write to the KMAC PW register
                 pw_insn_idx.append(insn_cnt)
@@ -103,11 +107,15 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         if self._masked_mode:
             assert msg1_insn_idx[0] is not None
 
-        self._size_mode = random.choices([SizeErrorMode.AltCFG,
-                                         SizeErrorMode.AltPW,
-                                         SizeErrorMode.InsertPW,
-                                         SizeErrorMode.InsertMSG],
-                                         weights=[1, 1, 1, 1])[0]
+        self._size_mode = random.choices(
+            [
+                SizeErrorMode.AltCFG,
+                SizeErrorMode.AltPW,
+                SizeErrorMode.InsertPW,
+                SizeErrorMode.InsertMSG,
+            ],
+            weights=[1, 1, 1, 1],
+        )[0]
 
         if self._size_mode == SizeErrorMode.AltCFG:
             # Inject an error into the config to cause a mismatch in the size
@@ -132,7 +140,7 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
             if pw_insn_idx is not None:
                 addi_op_vals = []
                 # Change the addi instruction before the csrrw into partial write
-                addi_idx = (random.choice(pw_insn_idx) - 1)
+                addi_idx = random.choice(pw_insn_idx) - 1
                 # Get the destination register
                 addi_grd_val = insn_list[addi_idx].operands[0]
                 addi_op_vals.append(addi_grd_val)
@@ -172,7 +180,7 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         return err_insn_list
 
     def _inject_illegal_msg(self, model: Model, insn_list: list[ProgInsn]) -> list[ProgInsn]:
-        ''' Adds an illegal MSG write in unmasked mode '''
+        """Adds an illegal MSG write in unmasked mode"""
         insn_idx = []
         insn_cnt = 0
 
@@ -180,8 +188,8 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
 
         for insn in insn_list:
             if (
-                insn.insn.mnemonic == 'bn.wsrw' and
-                insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
+                insn.insn.mnemonic == "bn.wsrw"
+                and insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
             ):
                 # This is a valid write to the KMAC MSG0 register
                 insn_idx.append(insn_cnt)
@@ -199,7 +207,7 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         return err_insn_list
 
     def _inject_illegal_digest(self, model: Model, insn_list: list[ProgInsn]) -> list[ProgInsn]:
-        ''' Adds an illegal DIGEST read in unmasked mode '''
+        """Adds an illegal DIGEST read in unmasked mode"""
         insn_idx = []
         insn_cnt = 0
 
@@ -207,8 +215,8 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
 
         for insn in insn_list:
             if (
-                insn.insn.mnemonic == 'bn.wsrr' and
-                insn.operands[1] == model._kmac_wsr_addr["KMAC_DIGEST"]
+                insn.insn.mnemonic == "bn.wsrr"
+                and insn.operands[1] == model._kmac_wsr_addr["KMAC_DIGEST"]
             ):
                 # This is a valid read from the KMAC DIGEST0 register
                 insn_idx.append(insn_cnt)
@@ -225,7 +233,7 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
         return err_insn_list
 
     def _inject_fifo_overflow(self, model: Model, insn_list: list[ProgInsn]) -> list[ProgInsn]:
-        ''' Makes a deadlock by filling a message FIFO in masked mode '''
+        """Makes a deadlock by filling a message FIFO in masked mode"""
         msg0_insn_idx = []
         msg1_insn_idx = []
         insn_cnt = 0
@@ -235,14 +243,14 @@ class BadKmacAppReqInsn(KmacAppReqInsn):
 
         for insn in insn_list:
             if (
-                insn.insn.mnemonic == 'bn.wsrw' and
-                insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
+                insn.insn.mnemonic == "bn.wsrw"
+                and insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG"]
             ):
                 # This is a valid write to the KMAC MSG0 register
                 msg0_insn_idx.append(insn_cnt)
             if (
-                insn.insn.mnemonic == 'bn.wsrw' and
-                insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG1"]
+                insn.insn.mnemonic == "bn.wsrw"
+                and insn.operands[0] == model._kmac_wsr_addr["KMAC_MSG1"]
             ):
                 # This is a valid write to the KMAC MSG1 register
                 msg1_insn_idx.append(insn_cnt)

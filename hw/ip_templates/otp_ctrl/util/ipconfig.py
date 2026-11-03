@@ -5,6 +5,7 @@
 This contains a class to access the otp_ctrl's configuration from its ipconfig
 files.
 """
+
 from typing import List, Dict
 
 from topgen.lib import Name

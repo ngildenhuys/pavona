@@ -25,7 +25,7 @@ def bitslice_vec(x: List[int], k: int) -> bytes:
         x_int >>= N
         for bit in range(k):
             r[bit] <<= 1
-            r[bit] |= (t & vone)
+            r[bit] |= t & vone
             t >>= 1
 
     r_bytes = bytes()
@@ -35,8 +35,8 @@ def bitslice_vec(x: List[int], k: int) -> bytes:
 
 
 def gen_poly_to_bitsliced_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     # Generate random operands.
     if seed is not None:
         random.seed(seed)
@@ -50,34 +50,39 @@ def gen_poly_to_bitsliced_test(
     r_bytes = bitslice_vec(x, K)
 
     # Write input values.
-    inputs = {'xa': x_bytes}
+    inputs = {"xa": x_bytes}
     write_test_data(inputs, data_file)
 
     # Write expected register values (none).
     write_test_exp({}, exp_file)
 
     # Write expected dmem values.
-    write_test_dexp({'rbs': r_bytes}, dexp_file)
+    write_test_dexp({"rbs": r_bytes}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed',
-                        type=int,
-                        required=False,
-                        help=('Seed value for pseudorandomness.'))
-    parser.add_argument('data',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for input DMEM values.'))
-    parser.add_argument('exp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected register values.'))
-    parser.add_argument('dexp',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help=('Output file for expected DMEM values.'))
+    parser.add_argument(
+        "-s", "--seed", type=int, required=False, help=("Seed value for pseudorandomness.")
+    )
+    parser.add_argument(
+        "data",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for input DMEM values."),
+    )
+    parser.add_argument(
+        "exp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected register values."),
+    )
+    parser.add_argument(
+        "dexp",
+        metavar="FILE",
+        type=argparse.FileType("w"),
+        help=("Output file for expected DMEM values."),
+    )
     args = parser.parse_args()
 
     with args.data, args.exp, args.dexp:

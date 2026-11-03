@@ -5,6 +5,7 @@
 
 Communication with OpenTitan happens over the uJSON command interface.
 """
+
 import json
 import time
 from sw.host.penetrationtests.python.util import common_library
@@ -191,9 +192,7 @@ class OTHMAC:
             }
         self.target.write(json.dumps(mode).encode("ascii"))
 
-    def daisy_chain(
-        self, text: list[int], key: list[int], num_segments: int, trigger: int
-    ):
+    def daisy_chain(self, text: list[int], key: list[int], num_segments: int, trigger: int):
         """Start num_segments HMAC operations in daisy chain mode.
         Args:
             text: The input message

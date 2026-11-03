@@ -24,9 +24,7 @@ def apply_expected(test_vectors, path):
     if path is None:
         return
     expected = load_vector_set(path)
-    answers = {test["tcId"]: test
-               for group in expected["testGroups"]
-               for test in group["tests"]}
+    answers = {test["tcId"]: test for group in expected["testGroups"] for test in group["tests"]}
     for vector in test_vectors:
         answer = answers.get(vector["test_case_id"], {})
         for name, value in answer.items():
@@ -47,12 +45,14 @@ def acvp_common(data, group):
     }
     if "mode" in data:
         common["mode"] = data["mode"]
-    common.update({
-        "revision": data["revision"],
-        "is_sample": data.get("isSample", False),
-        "vs_id": data["vsId"],
-        "tg_id": group["tgId"],
-    })
+    common.update(
+        {
+            "revision": data["revision"],
+            "is_sample": data.get("isSample", False),
+            "vs_id": data["vsId"],
+            "tg_id": group["tgId"],
+        }
+    )
     return common
 
 
@@ -64,5 +64,4 @@ def report_skipped(where, counts, skip_unsupported):
             continue
         if not skip_unsupported:
             raise SystemExit(f"{where}: {reason}")
-        print(f"{where}: skipped {count} test case(s), {reason}",
-              file=sys.stderr)
+        print(f"{where}: skipped {count} test case(s), {reason}", file=sys.stderr)

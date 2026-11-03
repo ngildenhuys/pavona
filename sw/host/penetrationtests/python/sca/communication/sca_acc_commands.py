@@ -6,6 +6,7 @@
 Communication with OpenTitan happens the uJson
 command interface.
 """
+
 import json
 import time
 from sw.host.penetrationtests.python.util import common_library
@@ -111,9 +112,7 @@ class OTACC:
         data = {"msg": msg, "d0": d0, "ko": k0}
         self.target.write(json.dumps(data).encode("ascii"))
 
-    def ecdsa_p256_sign_batch_fvsr(
-        self, num_traces: int, masking_on: bool, msg, d0, k0
-    ):
+    def ecdsa_p256_sign_batch_fvsr(self, num_traces: int, masking_on: bool, msg, d0, k0):
         """Starts the EcdsaP256SignFvsrBatch test on ACC.
         Args:
             num_traces: Number of batch operations.
@@ -136,9 +135,7 @@ class OTACC:
         data = {"msg": msg, "d0": d0, "ko": k0}
         self.target.write(json.dumps(data).encode("ascii"))
 
-    def start_combi_ops_batch(
-        self, num_iterations, fixed_data1, fixed_data2, print_flag, trigger
-    ):
+    def start_combi_ops_batch(self, num_iterations, fixed_data1, fixed_data2, print_flag, trigger):
         """Start the combi ops app in batch mode.
         Args:
             num_iterations: How many traces per batch.

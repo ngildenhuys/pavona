@@ -6,15 +6,15 @@ from sw.host.penetrationtests.python.fi.communication.fi_acc_commands import OTF
 from sw.host.penetrationtests.python.util import common_library
 
 
-def char_beq(target, iterations, reset = False):
+def char_beq(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_beq()
@@ -23,15 +23,15 @@ def char_beq(target, iterations, reset = False):
     return response
 
 
-def char_bn_rshi(target, iterations, data, reset = False):
+def char_bn_rshi(target, iterations, data, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_bn_rshi(data)
@@ -40,15 +40,15 @@ def char_bn_rshi(target, iterations, data, reset = False):
     return response
 
 
-def char_bn_sel(target, iterations, data, reset = False):
+def char_bn_sel(target, iterations, data, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_bn_sel(data)
@@ -57,15 +57,15 @@ def char_bn_sel(target, iterations, data, reset = False):
     return response
 
 
-def char_bn_wsrr(target, iterations, reset = False):
+def char_bn_wsrr(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_bn_wsrr()
@@ -74,15 +74,15 @@ def char_bn_wsrr(target, iterations, reset = False):
     return response
 
 
-def char_bne(target, iterations, reset = False):
+def char_bne(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_bne()
@@ -91,15 +91,15 @@ def char_bne(target, iterations, reset = False):
     return response
 
 
-def char_dmem_access(target, iterations, reset = False):
+def char_dmem_access(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_dmem_access()
@@ -108,15 +108,15 @@ def char_dmem_access(target, iterations, reset = False):
     return response
 
 
-def char_dmem_write(target, iterations, reset = False):
+def char_dmem_write(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_dmem_write()
@@ -125,15 +125,15 @@ def char_dmem_write(target, iterations, reset = False):
     return response
 
 
-def char_dmem_op_loop(target, iterations, reset = False):
+def char_dmem_op_loop(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_hardware_dmem_op_loop()
@@ -142,15 +142,15 @@ def char_dmem_op_loop(target, iterations, reset = False):
     return response
 
 
-def char_reg_op_loop(target, iterations, reset = False):
+def char_reg_op_loop(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_hardware_reg_op_loop()
@@ -159,15 +159,15 @@ def char_reg_op_loop(target, iterations, reset = False):
     return response
 
 
-def char_jal(target, iterations, reset = False):
+def char_jal(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_jal()
@@ -176,15 +176,15 @@ def char_jal(target, iterations, reset = False):
     return response
 
 
-def char_lw(target, iterations, reset = False):
+def char_lw(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_lw()
@@ -193,15 +193,15 @@ def char_lw(target, iterations, reset = False):
     return response
 
 
-def char_mem(target, iterations, byte_offset, num_words, imem, dmem, reset = False):
+def char_mem(target, iterations, byte_offset, num_words, imem, dmem, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     # The config is only set in the first call
     first_call = True
@@ -213,15 +213,15 @@ def char_mem(target, iterations, byte_offset, num_words, imem, dmem, reset = Fal
     return response
 
 
-def char_rf(target, iterations, reset = False):
+def char_rf(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_rf()
@@ -230,15 +230,15 @@ def char_rf(target, iterations, reset = False):
     return response
 
 
-def char_unrolled_dmem_op_loop(target, iterations, reset = False):
+def char_unrolled_dmem_op_loop(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_unrolled_dmem_op_loop()
@@ -247,15 +247,15 @@ def char_unrolled_dmem_op_loop(target, iterations, reset = False):
     return response
 
 
-def char_unrolled_reg_op_loop(target, iterations, reset = False):
+def char_unrolled_reg_op_loop(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_char_unrolled_reg_op_loop()
@@ -264,15 +264,15 @@ def char_unrolled_reg_op_loop(target, iterations, reset = False):
     return response
 
 
-def char_load_integrity(target, iterations, reset = False):
+def char_load_integrity(target, iterations, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_load_integrity()
@@ -281,15 +281,15 @@ def char_load_integrity(target, iterations, reset = False):
     return response
 
 
-def char_pc(target, iterations, pc, reset = False):
+def char_pc(target, iterations, pc, reset=False):
     accfi = OTFIAcc(target)
     if reset:
         target.reset_target()
         # Clear the output from the reset
         target.dump_all()
     # Initialize our chip and catch its output
-    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = (
-        accfi.init(alert_config=common_library.default_fpga_friendly_alert_config)
+    device_id, sensors, alerts, owner_page, boot_log, boot_measurements, version = accfi.init(
+        alert_config=common_library.default_fpga_friendly_alert_config
     )
     for _ in range(iterations):
         accfi.acc_pc(pc)

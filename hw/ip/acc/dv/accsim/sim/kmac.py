@@ -10,8 +10,17 @@
 
 import sys
 from typing import Optional, Union
-from Crypto.Hash import cSHAKE128, cSHAKE256, SHAKE128, SHAKE256, SHA3_224, \
-    SHA3_256, SHA3_384, SHA3_512
+from Crypto.Hash import (
+    cSHAKE128,
+    cSHAKE256,
+    SHAKE128,
+    SHAKE256,
+    SHA3_224,
+    SHA3_256,
+    SHA3_384,
+    SHA3_512,
+)
+
 DEBUG_KMAC = False
 
 
@@ -21,14 +30,15 @@ def kmac_debug_print(text: str) -> None:
 
 
 class KmacBlock:
-    '''Emulates the KMAC hardware interface.'''
-    _CMD_START = 0x1d
-    _CMD_PROCESS = 0x2e
+    """Emulates the KMAC hardware interface."""
+
+    _CMD_START = 0x1D
+    _CMD_PROCESS = 0x2E
     _CMD_RUN = 0x31
     _CMD_DONE = 0x16
-    _STATUS_IDLE = 'IDLE'
-    _STATUS_ABSORB = 'ABSORB'
-    _STATUS_SQUEEZE = 'SQUEEZE'
+    _STATUS_IDLE = "IDLE"
+    _STATUS_ABSORB = "ABSORB"
+    _STATUS_SQUEEZE = "SQUEEZE"
     # The following MODE and STRENGTH values are mapped to their corresponding enums in
     # `hw/ip/kmac/rtl/kmac_pkg.sv`. This is required to do any hardware simulation that
     # uses the real KMAC IP and accsim.
@@ -87,13 +97,23 @@ class KmacBlock:
     _SHIFT_DIGEST_LATENCY = 1
     # If a request for a new chunk of the digest exceeds the rate (for XOFs)
     # the application interface triggers a new permutation.
-    _NEW_PERMUTATION_LATENCY = _KECCAK_CYCLES_PER_ROUND * _KECCAK_NUM_ROUNDS + \
-        _KECCAK_LATENCY_DIGEST_EXPOSED + _SHIFT_DIGEST_LATENCY
+    _NEW_PERMUTATION_LATENCY = (
+        _KECCAK_CYCLES_PER_ROUND * _KECCAK_NUM_ROUNDS
+        + _KECCAK_LATENCY_DIGEST_EXPOSED
+        + _SHIFT_DIGEST_LATENCY
+    )
 
     # Set valid typing
-    _state: Union[SHA3_224.SHA3_224_Hash, SHA3_256.SHA3_256_Hash, SHA3_384.SHA3_384_Hash,
-                  SHA3_512.SHA3_512_Hash, cSHAKE128.cSHAKE_XOF, SHAKE128.SHAKE128_XOF,
-                  SHAKE256.SHAKE256_XOF, None] = None
+    _state: Union[
+        SHA3_224.SHA3_224_Hash,
+        SHA3_256.SHA3_256_Hash,
+        SHA3_384.SHA3_384_Hash,
+        SHA3_512.SHA3_512_Hash,
+        cSHAKE128.cSHAKE_XOF,
+        SHAKE128.SHAKE128_XOF,
+        SHAKE256.SHAKE256_XOF,
+        None,
+    ] = None
 
     def __init__(self) -> None:
         self._reset()
@@ -198,8 +218,10 @@ class KmacBlock:
         self._kmac_undersized_err = False
 
     def set_configuration(self, mode: int, strength: int, msg_len: int, masked_mode: bool) -> None:
-        kmac_debug_print(f"\tSetting KMAC config: mode = {mode}, \
-                         strength = {strength}, len = {msg_len}, masked_mode = {masked_mode}")
+        kmac_debug_print(
+            f"\tSetting KMAC config: mode = {mode}, \
+                         strength = {strength}, len = {msg_len}, masked_mode = {masked_mode}"
+        )
         self._mode = mode
         self._strength = strength
         self._msg_len = msg_len
@@ -221,11 +243,13 @@ class KmacBlock:
         return self._app_intf_ready
 
     def get_done(self) -> int:
-        return int((self._digest0_ready and self._digest0_read) or
-                   (self._digest1_ready and self._digest1_read))
+        return int(
+            (self._digest0_ready and self._digest0_read)
+            or (self._digest1_ready and self._digest1_read)
+        )
 
     def message_done(self) -> None:
-        '''Indicate that the message input is done.'''
+        """Indicate that the message input is done."""
         # Don't issue the `process` command yet; wait for FIFOs to clear.
         kmac_debug_print("\tKMAC message done, pending process")
         self._pending_process = True
@@ -240,9 +264,11 @@ class KmacBlock:
         return self._status == self._STATUS_SQUEEZE
 
     def digest_req_err(self) -> bool:
-        msg_req_err = (self._msg_len > 0
-                       and len(self._app_intf_fifo) < 8
-                       and self._msg_len > len(self._app_intf_fifo))
+        msg_req_err = (
+            self._msg_len > 0
+            and len(self._app_intf_fifo) < 8
+            and self._msg_len > len(self._app_intf_fifo)
+        )
         if (
             not self._app_intf_last_latch
             and msg_req_err
@@ -260,7 +286,7 @@ class KmacBlock:
             nbytes = min(len(self._app_intf_fifo), self._APP_INTF_BYTES_PER_CYCLE)
             last_byte_valid = self._msg_size % 8
             kmac_debug_print(f"MSG Size: {self._msg_size}")
-            if (last_byte_valid == 0):
+            if last_byte_valid == 0:
                 last_byte_valid = 8
 
             if len(self._app_intf_fifo) < last_byte_valid:
@@ -283,13 +309,15 @@ class KmacBlock:
             self._app_intf_last = True
 
     def digest0_ready(self) -> bool:
-        kmac_debug_print(f"\tKMAC Digest Ready Req: \
+        kmac_debug_print(
+            f"\tKMAC Digest Ready Req: \
                         autowrite={self._automatically_write_digest} \
                         shift={self._shift_digest_reg} \
                         permute={self._new_permutation} \
                         read={self._digest0_read} ready={self._digest0_ready} \
                         read_offset={self._read_offset} \
-                        leftover={self._leftover_digest_bytes}")
+                        leftover={self._leftover_digest_bytes}"
+        )
 
         # This helper function is executed during a digest wsrr insn
         # Check if there is an undersized message at this point
@@ -322,13 +350,15 @@ class KmacBlock:
             return False
 
     def digest1_ready(self) -> bool:
-        kmac_debug_print(f"\tKMAC Digest Ready Req: \
+        kmac_debug_print(
+            f"\tKMAC Digest Ready Req: \
                         autowrite={self._automatically_write_digest} \
                         shift={self._shift_digest_reg} \
                         permute={self._new_permutation} \
                         read={self._digest1_read} ready={self._digest1_ready} \
                         read_offset={self._read_offset} \
-                        leftover={self._leftover_digest_bytes}")
+                        leftover={self._leftover_digest_bytes}"
+        )
 
         # This helper function is executed during a digest wsrr insn
         # Check if there is an undersized message at this point
@@ -361,18 +391,19 @@ class KmacBlock:
             return False
 
     def start(self) -> None:
-        '''Starts a hashing operation.'''
+        """Starts a hashing operation."""
         if not self.is_idle():
-            raise ValueError('KMAC: Cannot issue `start` command in '
-                             f'{self._status} status.')
+            raise ValueError(f"KMAC: Cannot issue `start` command in {self._status} status.")
         self._status = self._STATUS_ABSORB
         self._msg_fifo_flush_ctr = 0
 
         if self._mode == self._MODE_SHA3:
             if self._strength == self._STRENGTH_128:
-                raise ValueError(f'KMAC: Invalid config: \
+                raise ValueError(
+                    f"KMAC: Invalid config: \
                                  mode = {self._mode} and \
-                                 strength = {self._strength}')
+                                 strength = {self._strength}"
+                )
             elif self._strength == self._STRENGTH_224:
                 self._state = SHA3_224.new()
                 self._rate_bytes = (1600 - (224 * 2)) // 8
@@ -393,9 +424,11 @@ class KmacBlock:
                 self._state = SHAKE256.new()
                 self._rate_bytes = (1600 - (256 * 2)) // 8
             else:
-                raise ValueError(f'KMAC: Invalid config: \
+                raise ValueError(
+                    f"KMAC: Invalid config: \
                                  mode = {self._mode} and \
-                                 strength = {self._strength}')
+                                 strength = {self._strength}"
+                )
         elif self._mode == self._MODE_CSHAKE:
             if self._strength == self._STRENGTH_128:
                 self._state = cSHAKE128.new()
@@ -404,9 +437,11 @@ class KmacBlock:
                 self._state = cSHAKE256.new()
                 self._rate_bytes = (1600 - (256 * 2)) // 8
             else:
-                raise ValueError(f'KMAC: Invalid config: \
+                raise ValueError(
+                    f"KMAC: Invalid config: \
                                  mode = {self._mode} and \
-                                 strength = {self._strength}')
+                                 strength = {self._strength}"
+                )
 
         # Important assumption: since we send data to the core in fixed-size
         # chunks, we need to make sure the chunk size divides the rate.
@@ -434,16 +469,18 @@ class KmacBlock:
         )
 
     def write_to_app_intf_fifo0(self, msg: bytes) -> bool:
-        '''Appends new message data to an ongoing hashing operation.
+        """Appends new message data to an ongoing hashing operation.
 
         Check `app_intf_fifo_bytes_available` to ensure there is enough space
         in the FIFO before attempting to write.
-        '''
+        """
         if not self.is_absorbing():
-            raise ValueError(f'KMAC: Cannot write in {self._status} status.')
-        kmac_debug_print(f"\tAttempting write to App Share0 FIFO: \
+            raise ValueError(f"KMAC: Cannot write in {self._status} status.")
+        kmac_debug_print(
+            f"\tAttempting write to App Share0 FIFO: \
                         ready = {self.app_intf_fifo0_ready()}, \
-                        fifo len = {len(self._app_intf_fifo)}")
+                        fifo len = {len(self._app_intf_fifo)}"
+        )
         # If there is more than 8B we can not yet write
         # When the FIFO is flushing it is illegal to write to
         if (
@@ -457,10 +494,12 @@ class KmacBlock:
 
     def write_to_app_intf_fifo1(self, msg: bytes) -> bool:
         if not self.is_absorbing():
-            raise ValueError(f'KMAC: Cannot write in {self._status} status.')
-        kmac_debug_print(f"\tAttempting write to App Share1 FIFO: \
+            raise ValueError(f"KMAC: Cannot write in {self._status} status.")
+        kmac_debug_print(
+            f"\tAttempting write to App Share1 FIFO: \
                         ready = {self.app_intf_fifo1_ready()}, \
-                        fifo len = {len(self._app_intf_fifo1)}")
+                        fifo len = {len(self._app_intf_fifo1)}"
+        )
         # If there is more than 8B we can not yet write
         # When the FIFO is flushing it is illegal to write to
         if (
@@ -480,13 +519,15 @@ class KmacBlock:
     def _start_keccak_core(self, absorbed: bool) -> None:
         kmac_debug_print("\tStarting round logic")
         if absorbed:
-            self._core_cycles_remaining = self._KECCAK_NUM_ROUNDS * \
-                self._KECCAK_CYCLES_PER_ROUND + \
-                self._KECCAK_LATENCY_DIGEST_EXPOSED
+            self._core_cycles_remaining = (
+                self._KECCAK_NUM_ROUNDS * self._KECCAK_CYCLES_PER_ROUND
+                + self._KECCAK_LATENCY_DIGEST_EXPOSED
+            )
             kmac_debug_print(f"In Absorbed | remaining_cycles = {self._core_cycles_remaining}")
         else:
-            self._core_cycles_remaining = self._KECCAK_NUM_ROUNDS * \
-                self._KECCAK_CYCLES_PER_ROUND + self._KECCAK_LATENCY_DONE
+            self._core_cycles_remaining = (
+                self._KECCAK_NUM_ROUNDS * self._KECCAK_CYCLES_PER_ROUND + self._KECCAK_LATENCY_DONE
+            )
             kmac_debug_print(f"Not Absorbed | remaining_cycles = {self._core_cycles_remaining}")
 
     def _core_is_busy(self) -> bool:
@@ -499,41 +540,38 @@ class KmacBlock:
         return self._core_cycles_remaining is None or self._core_cycles_remaining <= 2
 
     def _process(self) -> None:
-        '''Issues a `process` command to the KMAC block.
+        """Issues a `process` command to the KMAC block.
 
         Signals to the hardware that the message is done and it should compute
         a digest. The amount of digest computed depends on the rate of the
         Keccak function instantiated (1600 - capacity, e.g. 1344 bits for
         SHAKE128).
-        '''
+        """
         if not self.is_absorbing():
-            raise ValueError('KMAC: Cannot issue `process` command in '
-                             f'{self._status} status.')
+            raise ValueError(f"KMAC: Cannot issue `process` command in {self._status} status.")
         kmac_debug_print("\tKMAC START PROCESS")
         self._status = self._STATUS_SQUEEZE
         self._start_keccak_core(True)
 
     def run(self) -> None:
-        '''Issues a `run` command to the KMAC block.
+        """Issues a `run` command to the KMAC block.
 
         This command should be issued if additional digest data, beyond the
         Keccak rate, is needed. It runs the Keccak core again to generate new
         digest material. The state buffer is invalid until the core computation
         is complete; the caller needs to read the previous digest before
         calling run().
-        '''
+        """
         if not self.is_squeezing():
-            raise ValueError('KMAC: Cannot issue `run` command in '
-                             f'{self._status} status.')
+            raise ValueError(f"KMAC: Cannot issue `run` command in {self._status} status.")
         kmac_debug_print("\tKMAC RUN PROCESS")
         self._start_keccak_core(True)
         self._read_offset = 0
 
     def done(self) -> None:
-        '''Finishes a hashing operation.'''
+        """Finishes a hashing operation."""
         if not self.is_squeezing():
-            raise ValueError('KMAC: Cannot issue `done` command in '
-                             f'{self._status} status.')
+            raise ValueError(f"KMAC: Cannot issue `done` command in {self._status} status.")
         self._status = self._STATUS_IDLE
         self._cycles_until_ready = None
         self._state = None
@@ -543,13 +581,15 @@ class KmacBlock:
         if self.is_idle():
             return
 
-        kmac_debug_print(f"CYCLE - Stepping KMAC, \
+        kmac_debug_print(
+            f"CYCLE - Stepping KMAC, \
                         remaining_cycles = {self._core_cycles_remaining}, \
                         core_pending_bytes = {self._core_pending_bytes}, \
                         available = {self._rate_bytes - self._core_pending_bytes} \
                         pending_process = {self._pending_process}, \
                         digest_req_ctr = {self._digest_request_ctr}, \
-                        MSG FIFO SIZE = {len(self._msg_fifo)}")
+                        MSG FIFO SIZE = {len(self._msg_fifo)}"
+        )
 
         if self._app_intf_ready_pending_ctr is not None:
             self._app_intf_ready_pending_ctr += 1
@@ -558,11 +598,13 @@ class KmacBlock:
                 self._app_intf_ready = True
                 self._app_intf_ready_pending_ctr = None
 
-        kmac_debug_print(f"Last Latch: {self._app_intf_last_latch} \
+        kmac_debug_print(
+            f"Last Latch: {self._app_intf_last_latch} \
                         | Msg Len: {self._msg_len} \
                         | AppIntf Share0 Size: {len(self._app_intf_fifo)} \
                         | AppIntf Share1 Size: {len(self._app_intf_fifo1)} \
-                        | Ready Next: {self._app_intf_fifo0_ready_next}")
+                        | Ready Next: {self._app_intf_fifo0_ready_next}"
+        )
 
         kmac_debug_print(f"Pending LAST Status: {self._pending_app_intf_last}")
 
@@ -576,12 +618,16 @@ class KmacBlock:
         msg_fifo_write_ready = self.msg_fifo_bytes_available() >= self._APP_INTF_BYTES_PER_CYCLE
         if core_available >= 1 and self._core_can_absorb():
             if self._msg_fifo_flush:
-                kmac_debug_print(f"\tIncrementing MSG FIFO FLUSH CTR: \
-                                {self._msg_fifo_flush_ctr} -> {self._msg_fifo_flush_ctr + 1}")
+                kmac_debug_print(
+                    f"\tIncrementing MSG FIFO FLUSH CTR: \
+                                {self._msg_fifo_flush_ctr} -> {self._msg_fifo_flush_ctr + 1}"
+                )
                 self._msg_fifo_flush_ctr += 1
             if len(self._msg_fifo) >= absorb_rate:
-                kmac_debug_print(f"\tMSG FIFO -> STATE: Absorbing 64-bit: \
-                          {self._msg_fifo[:absorb_rate][::-1].hex()}")
+                kmac_debug_print(
+                    f"\tMSG FIFO -> STATE: Absorbing 64-bit: \
+                          {self._msg_fifo[:absorb_rate][::-1].hex()}"
+                )
                 # Absorb a new chunk of the message.
                 self._core_pending_bytes_next = self._core_pending_bytes + absorb_rate
                 if self._state is None:
@@ -601,19 +647,25 @@ class KmacBlock:
                     # "hidden" and we only have one additional cycle of effective delay
                     # for flusing the fifo.
                     if self._msg_fifo_flush_ctr > 0:
-                        kmac_debug_print(f"\tMSG FIFO -> STATE: \
+                        kmac_debug_print(
+                            f"\tMSG FIFO -> STATE: \
                                   Absorbing last data (smaller than word): \
                                   {self._msg_fifo[:absorb_rate][::-1].hex()}, \
-                                  flush_ctr = {self._msg_fifo_flush_ctr}")
+                                  flush_ctr = {self._msg_fifo_flush_ctr}"
+                        )
                         # model cycle for consuming the last data
                         if self._state is None:
                             raise ValueError("KMAC: Hash state not initialized")
                         self._state.update(self._msg_fifo)
-                        self._core_pending_bytes_next = \
-                            self._core_pending_bytes + len(self._msg_fifo)
+                        self._core_pending_bytes_next = self._core_pending_bytes + len(
+                            self._msg_fifo
+                        )
                         self._msg_fifo = bytes()
-                elif not self._msg_fifo_packer_flushed and self._msg_fifo_flush_ctr <= 2 \
-                        and not self._padding_only:
+                elif (
+                    not self._msg_fifo_packer_flushed
+                    and self._msg_fifo_flush_ctr <= 2
+                    and not self._padding_only
+                ):
                     kmac_debug_print("\tFlushing MSG FIFO PACKER")
                     self._msg_fifo_packer_flushed = True
                 elif not self._msg_fifo_flushed and not self._padding_only:
@@ -647,14 +699,17 @@ class KmacBlock:
             self._app_intf_fifo1_ready_next = False
 
         # Set Latch for error detection
-        if (self._app_intf_bytes_sent == self._msg_size):
+        if self._app_intf_bytes_sent == self._msg_size:
             self._app_intf_last_latch = True
 
         # KMAC is not ready but next word is last and oversized
         if (
-            self._msg_len != 0 and self._msg_len < self._APP_INTF_BYTES_PER_CYCLE and
-            (len(self._app_intf_fifo) > self._msg_len or
-             len(self._app_intf_fifo1) > self._msg_len)
+            self._msg_len != 0
+            and self._msg_len < self._APP_INTF_BYTES_PER_CYCLE
+            and (
+                len(self._app_intf_fifo) > self._msg_len
+                or len(self._app_intf_fifo1) > self._msg_len
+            )
         ):
             self._kmac_oversized_err = True
 
@@ -662,14 +717,15 @@ class KmacBlock:
         if msg_fifo_write_ready and not self._msg_fifo_packer_flushing and self._app_intf_ready:
             # Pass data from the application interface FIFO to the message FIFO.
             nbytes = min(len(self._app_intf_fifo), self._APP_INTF_BYTES_PER_CYCLE, self._msg_len)
-            nbytes_share1 = min(len(self._app_intf_fifo1), self._APP_INTF_BYTES_PER_CYCLE,
-                                self._msg_len)
+            nbytes_share1 = min(
+                len(self._app_intf_fifo1), self._APP_INTF_BYTES_PER_CYCLE, self._msg_len
+            )
 
             # Masking has different requirements for pushing data to KMAC from the AppIntf
             if self._masked_mode:
                 if (
-                    nbytes >= self._APP_INTF_BYTES_PER_CYCLE and
-                    nbytes_share1 >= self._APP_INTF_BYTES_PER_CYCLE
+                    nbytes >= self._APP_INTF_BYTES_PER_CYCLE
+                    and nbytes_share1 >= self._APP_INTF_BYTES_PER_CYCLE
                 ):
                     kmac_debug_print(
                         f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} "
@@ -680,9 +736,12 @@ class KmacBlock:
                         f"{len(self._msg_fifo)}"
                     )
 
-                    unmasked_data = bytes(a ^ b for a, b in zip(self._app_intf_fifo[:nbytes],
-                                                                self._app_intf_fifo1
-                                                                [:nbytes_share1]))
+                    unmasked_data = bytes(
+                        a ^ b
+                        for a, b in zip(
+                            self._app_intf_fifo[:nbytes], self._app_intf_fifo1[:nbytes_share1]
+                        )
+                    )
                     self._msg_fifo += unmasked_data
                     self._app_intf_fifo = self._app_intf_fifo[nbytes:]
                     self._app_intf_fifo1 = self._app_intf_fifo1[nbytes_share1:]
@@ -690,10 +749,9 @@ class KmacBlock:
                     self._app_intf_bytes_sent += nbytes
                     self._app_intf_sending = True
 
-                elif (
-                    self._app_intf_fifo_flush and
-                    (nbytes < self._APP_INTF_BYTES_PER_CYCLE or
-                     nbytes_share1 < self._APP_INTF_BYTES_PER_CYCLE)
+                elif self._app_intf_fifo_flush and (
+                    nbytes < self._APP_INTF_BYTES_PER_CYCLE
+                    or nbytes_share1 < self._APP_INTF_BYTES_PER_CYCLE
                 ):
                     kmac_debug_print(
                         f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} "
@@ -704,12 +762,15 @@ class KmacBlock:
                         f"{len(self._msg_fifo)}"
                     )
 
-                    if (nbytes != nbytes_share1):
+                    if nbytes != nbytes_share1:
                         self._kmac_oversized_err = True
 
-                    unmasked_data = bytes(a ^ b for a, b in zip(self._app_intf_fifo[:nbytes],
-                                                                self._app_intf_fifo1
-                                                                [:nbytes_share1]))
+                    unmasked_data = bytes(
+                        a ^ b
+                        for a, b in zip(
+                            self._app_intf_fifo[:nbytes], self._app_intf_fifo1[:nbytes_share1]
+                        )
+                    )
 
                     self._msg_fifo += unmasked_data
                     self._app_intf_fifo = self._app_intf_fifo[nbytes:]
@@ -724,23 +785,28 @@ class KmacBlock:
                 elif (
                     self._msg_len < self._APP_INTF_BYTES_PER_CYCLE
                     and self._msg_len != 0
-                    and (len(self._app_intf_fifo) >= self._msg_len and
-                         len(self._app_intf_fifo1) >= self._msg_len)
+                    and (
+                        len(self._app_intf_fifo) >= self._msg_len
+                        and len(self._app_intf_fifo1) >= self._msg_len
+                    )
                 ):
-                    if (len(self._app_intf_fifo) < 8):
+                    if len(self._app_intf_fifo) < 8:
                         # Flushing the APP FIFO has an extra clock cycle to read
                         self._app_intf_fifo_flush = True
                         kmac_debug_print("FLUSHING APP INTF")
-                    elif (len(self._app_intf_fifo1) < 8):
+                    elif len(self._app_intf_fifo1) < 8:
                         # Flushing the APP FIFO has an extra clock cycle to read
                         self._app_intf_fifo_flush = True
                         kmac_debug_print("FLUSHING APP INTF")
                     else:
                         # This is an oversized message and has filled the next
                         # word therefore no etra flush cycle
-                        unmasked_data = bytes(a ^ b for a, b in zip(self._app_intf_fifo[:nbytes],
-                                                                    self._app_intf_fifo1
-                                                                    [:nbytes]))
+                        unmasked_data = bytes(
+                            a ^ b
+                            for a, b in zip(
+                                self._app_intf_fifo[:nbytes], self._app_intf_fifo1[:nbytes]
+                            )
+                        )
 
                         self._msg_fifo += unmasked_data
                         self._app_intf_fifo = self._app_intf_fifo[8:]
@@ -753,11 +819,13 @@ class KmacBlock:
             # When unmasked we only use the share0 fifo
             else:
                 if nbytes >= self._APP_INTF_BYTES_PER_CYCLE:
-                    kmac_debug_print(f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} \
+                    kmac_debug_print(
+                        f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} \
                                 bytes: \
                                 {hex(int.from_bytes(self._app_intf_fifo[:nbytes], 'little'))}, \
                                 size of contents in MSG FIFO before new data: \
-                                    {len(self._msg_fifo)}")
+                                    {len(self._msg_fifo)}"
+                    )
 
                     self._msg_fifo += self._app_intf_fifo[:nbytes]
                     self._app_intf_fifo = self._app_intf_fifo[nbytes:]
@@ -765,12 +833,14 @@ class KmacBlock:
                     self._app_intf_bytes_sent += nbytes
                     self._app_intf_sending = True
 
-                elif (self._app_intf_fifo_flush and nbytes < self._APP_INTF_BYTES_PER_CYCLE):
-                    kmac_debug_print(f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} \
+                elif self._app_intf_fifo_flush and nbytes < self._APP_INTF_BYTES_PER_CYCLE:
+                    kmac_debug_print(
+                        f"\tAPP FIFO -> MSG FIFO: Absorbing {nbytes} \
                                 bytes: \
                                 {hex(int.from_bytes(self._app_intf_fifo[:nbytes], 'little'))}, \
                                 size of contents in MSG FIFO before new data: \
-                                    {len(self._msg_fifo)}")
+                                    {len(self._msg_fifo)}"
+                    )
 
                     self._msg_fifo += self._app_intf_fifo[:nbytes]
                     self._app_intf_fifo = self._app_intf_fifo[nbytes:]
@@ -786,7 +856,7 @@ class KmacBlock:
                     and self._msg_len != 0
                     and len(self._app_intf_fifo) >= self._msg_len
                 ):
-                    if (len(self._app_intf_fifo) < 8):
+                    if len(self._app_intf_fifo) < 8:
                         # Flushing the APP FIFO has an extra clock cycle to read
                         self._app_intf_fifo_flush = True
                         kmac_debug_print("FLUSHING APP INTF")
@@ -818,7 +888,7 @@ class KmacBlock:
         if self._msg_len == 0 and not self._app_intf_last:
             kmac_debug_print("\tAPP FIFO last")
             self.message_done()
-            if (len(self._app_intf_fifo) != 0 or len(self._app_intf_fifo1) != 0):
+            if len(self._app_intf_fifo) != 0 or len(self._app_intf_fifo1) != 0:
                 self._kmac_oversized_err = True
             self._app_intf_last = True
 
@@ -853,9 +923,10 @@ class KmacBlock:
             self._digest1_ready_next = self.is_squeezing() and (self._core_cycles_remaining == 0)
 
         if (
-            (self._digest0_read and self._digest0_ready) and
-            ((self._digest1_read and self._digest1_ready) or not self._masked_mode) and not
-            self._shift_digest_reg and not self._new_permutation
+            (self._digest0_read and self._digest0_ready)
+            and ((self._digest1_read and self._digest1_ready) or not self._masked_mode)
+            and not self._shift_digest_reg
+            and not self._new_permutation
         ):
             # If we have read the digest then set ready to False as well for proper status sampling
             self._digest0_read = False
@@ -874,7 +945,7 @@ class KmacBlock:
                 self._shift_digest_reg = True
                 self._digest_request_ctr += 1
             else:
-                if self._mode in [self._MODE_SHAKE, self. _MODE_CSHAKE]:
+                if self._mode in [self._MODE_SHAKE, self._MODE_CSHAKE]:
                     # For XOF modes, eagerly trigger a new permutation.
                     self._new_permutation = True
                     self._leftover_digest_bytes += max(self._rate_bytes - self._read_offset, 0)
@@ -911,8 +982,7 @@ class KmacBlock:
         if (
             self._app_intf_last_latch
             and self._app_intf_bytes_sent >= self._msg_size
-            and (len(self._app_intf_fifo) > 0 or
-                 len(self._app_intf_fifo1) > 0)
+            and (len(self._app_intf_fifo) > 0 or len(self._app_intf_fifo1) > 0)
         ):
             self._pending_app_intf_last = False
             nbytes = min(len(self._app_intf_fifo), self._APP_INTF_BYTES_PER_CYCLE)
@@ -937,28 +1007,28 @@ class KmacBlock:
                 self._app_intf_fifo1_ready_next = False
 
         if self._pending_app_intf_last and len(self._app_intf_fifo) > self._msg_len:
-            self._app_intf_fifo = self._app_intf_fifo[:self._msg_len]
+            self._app_intf_fifo = self._app_intf_fifo[: self._msg_len]
             self._kmac_oversized_err = True
             kmac_debug_print("FLUSHING FIFO WITH OVERSIZED MSG")
 
         if self._pending_app_intf_last and len(self._app_intf_fifo1) > self._msg_len:
-            self._app_intf_fifo1 = self._app_intf_fifo1[:self._msg_len]
+            self._app_intf_fifo1 = self._app_intf_fifo1[: self._msg_len]
             self._kmac_oversized_err = True
             kmac_debug_print("FLUSHING SHARE1 FIFO WITH OVERSIZED MSG")
 
         if (
-            self._msg_len <= len(self._app_intf_fifo) and
-            self._msg_len <= len(self._app_intf_fifo1) and
-            self._msg_len <= self._APP_INTF_BYTES_PER_CYCLE and
-            len(self._app_intf_fifo) <= self._APP_INTF_BYTES_PER_CYCLE and
-            len(self._app_intf_fifo1) <= self._APP_INTF_BYTES_PER_CYCLE
+            self._msg_len <= len(self._app_intf_fifo)
+            and self._msg_len <= len(self._app_intf_fifo1)
+            and self._msg_len <= self._APP_INTF_BYTES_PER_CYCLE
+            and len(self._app_intf_fifo) <= self._APP_INTF_BYTES_PER_CYCLE
+            and len(self._app_intf_fifo1) <= self._APP_INTF_BYTES_PER_CYCLE
         ):
             self._pending_app_intf_last = True
         else:
             self._pending_app_intf_last = False
 
     def max_read_bytes(self) -> Optional[int]:
-        '''Returns the maximum readable bytes before a `run` command.'''
+        """Returns the maximum readable bytes before a `run` command."""
         # SHA3
         if self._mode == self._MODE_SHA3:
             if self._strength == self._STRENGTH_512:
@@ -976,7 +1046,7 @@ class KmacBlock:
                     raise ValueError("KMAC: Hash state not initialized")
                 max_bytes = self.max_read_bytes()
                 if max_bytes is not None and num_bytes > max_bytes:
-                    raise ValueError('KMAC: Read request exceeds Keccak rate.')
+                    raise ValueError("KMAC: Read request exceeds Keccak rate.")
                 if self._mode == self._MODE_SHAKE or self._mode == self._MODE_CSHAKE:
                     # XOFs SHAKE and CSHAKE
                     self._read_offset += num_bytes
@@ -985,11 +1055,12 @@ class KmacBlock:
                 else:
                     # SHA3
                     if hasattr(self._state, "digest"):
-                        self._unmasked_digest = self._state.digest()[self._read_offset:
-                                                                     self._read_offset + num_bytes]
+                        self._unmasked_digest = self._state.digest()[
+                            self._read_offset : self._read_offset + num_bytes
+                        ]
                     self._read_offset += num_bytes
 
-        mask_bytes = self._FIXED_MASK.to_bytes(32, byteorder='little')
+        mask_bytes = self._FIXED_MASK.to_bytes(32, byteorder="little")
 
         # Return the appropriate digest or fixed mask for testing
         if share0:

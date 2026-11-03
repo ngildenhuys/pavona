@@ -49,8 +49,9 @@ _FT_HOST_BIN = "sw/host/provisioning/ft/ft_{sku}"
 
 
 @dataclass
-class OtDut():
+class OtDut:
     """Class for holding data and routines for running provisioning flows."""
+
     logs_root_dir: str
     sku_config: SkuConfig
     device_id: DeviceId
@@ -65,9 +66,7 @@ class OtDut():
     def _make_log_dir(self) -> None:
         self.log_dir = f"{self.logs_root_dir}/{str(self.device_id)[2:]}"
         if self.require_confirmation and os.path.exists(self.log_dir):
-            logging.warning(
-                f"Log file {self.log_dir} already exists. Continue to overwrite."
-            )
+            logging.warning(f"Log file {self.log_dir} already exists. Continue to overwrite.")
             confirm()
         os.makedirs(self.log_dir, exist_ok=True)
 
@@ -80,10 +79,10 @@ class OtDut():
         Retuns:
             The extracted JSON data.
         """
-        with open(log_file, "r", encoding='utf-8', errors='ignore') as f:
+        with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
             log_data = f.read()
 
-        pattern = key + r':\s*({.*})'
+        pattern = key + r":\s*({.*})"
         match = re.search(pattern, log_data)
         if match:
             json_string = match.group(1)
@@ -113,26 +112,26 @@ class OtDut():
         openocd_cfg = resolve_runfile(_OPENOCD_ADAPTER_CONFIG)
         if self.fpga:
             # Set host flags and device binary for FPGA DUT.
-            host_flags = host_flags.format(target=self.fpga,
-                                           ott_intf=_OTT_FPGA_INTERFACE[self.fpga],
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+            host_flags = host_flags.format(
+                target=self.fpga,
+                ott_intf=_OTT_FPGA_INTERFACE[self.fpga],
+                openocd_bin=openocd_bin,
+                openocd_cfg=openocd_cfg,
+            )
             if not self.fpga_dont_clear_bitstream:
                 host_flags += " --clear-bitstream"
                 bitstream = resolve_runfile(_FPGA_UNIVERSAL_SPLICE_BITSTREAM)
                 host_flags += f" --bitstream={bitstream}"
             device_elf = device_elf.format(
-                base_dir=self._base_dev_dir(),
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
+                base_dir=self._base_dev_dir(), target=f"fpga_{self.fpga}_rom_with_fake_keys"
+            )
         else:
             # Set host flags and device binary for Silicon DUT.
-            host_flags = host_flags.format(target="teacup",
-                                           ott_intf="teacup",
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+            host_flags = host_flags.format(
+                target="teacup", ott_intf="teacup", openocd_bin=openocd_bin, openocd_cfg=openocd_cfg
+            )
             host_flags += " --disable-dft-on-reset"
-            device_elf = device_elf.format(base_dir=self._base_dev_dir(),
-                                           target="silicon_creator")
+            device_elf = device_elf.format(base_dir=self._base_dev_dir(), target="silicon_creator")
         device_elf = resolve_runfile(device_elf)
 
         # Assemble CP command.
@@ -163,8 +162,7 @@ class OtDut():
                 confirm()
 
             # Extract CP device ID.
-            chip_probe_data = self._extract_json_data("CHIP_PROBE_DATA",
-                                                      stdout_logfile)
+            chip_probe_data = self._extract_json_data("CHIP_PROBE_DATA", stdout_logfile)
             din_from_device = None
             if "cp_device_id" not in chip_probe_data:
                 logging.error("cp_device_id not found in CHIP_PROBE_DATA.")
@@ -173,15 +171,13 @@ class OtDut():
                 # This can occur if the orchestrator is provisioning a chip that
                 # has already run through CP, and only needs to execute FT.
                 if chip_probe_data["cp_device_id"] == "":
-                    logging.warning(
-                        "cp_device_id empty; setting default DIN of all 0xFF.")
+                    logging.warning("cp_device_id empty; setting default DIN of all 0xFF.")
                     din_from_device = DeviceIdentificationNumber.blind_asm()
                 else:
                     din_from_device = DeviceIdentificationNumber.from_int(
-                        (int(chip_probe_data["cp_device_id"], 16) >> 32) &
-                        (2**64 - 1))
-            logging.info(
-                f"Updating device ID to: {chip_probe_data['cp_device_id']}")
+                        (int(chip_probe_data["cp_device_id"], 16) >> 32) & (2**64 - 1)
+                    )
+            logging.info(f"Updating device ID to: {chip_probe_data['cp_device_id']}")
             self.device_id.update_din(din_from_device)
             self.device_id.pretty_print()
 
@@ -213,40 +209,49 @@ class OtDut():
             # Set host flags and device binaries for FPGA DUT.
             # No need to load another bitstream, we will take over where CP
             # stage above left off.
-            host_flags = host_flags.format(target=self.fpga,
-                                           ott_intf=_OTT_FPGA_INTERFACE[self.fpga],
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+            host_flags = host_flags.format(
+                target=self.fpga,
+                ott_intf=_OTT_FPGA_INTERFACE[self.fpga],
+                openocd_bin=openocd_bin,
+                openocd_cfg=openocd_cfg,
+            )
             individ_elf = individ_elf.format(
                 base_dir=self._base_dev_dir(),
                 sku=self.sku_config.name,
                 ate_suffix=ate_suffix,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
+                target=f"fpga_{self.fpga}_rom_with_fake_keys",
+            )
             perso_bin = perso_bin.format(
                 base_dir=self._base_dev_dir(),
                 sku=self.sku_config.name,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
+                target=f"fpga_{self.fpga}_rom_with_fake_keys",
+            )
             fw_bundle_bin = fw_bundle_bin.format(
                 base_dir=self._base_dev_dir(),
                 sku=self.sku_config.name,
-                target=f"fpga_{self.fpga}_rom_with_fake_keys")
+                target=f"fpga_{self.fpga}_rom_with_fake_keys",
+            )
         else:
             # Set host flags and device binaries for Silicon DUT.
-            host_flags = host_flags.format(target="teacup",
-                                           ottf_intf="teacup",
-                                           openocd_bin=openocd_bin,
-                                           openocd_cfg=openocd_cfg)
+            host_flags = host_flags.format(
+                target="teacup",
+                ottf_intf="teacup",
+                openocd_bin=openocd_bin,
+                openocd_cfg=openocd_cfg,
+            )
             host_flags += " --disable-dft-on-reset"
-            individ_elf = individ_elf.format(base_dir=self._base_dev_dir(),
-                                             sku=self.sku_config.name,
-                                             ate_suffix=ate_suffix,
-                                             target="silicon_creator")
-            perso_bin = perso_bin.format(base_dir=self._base_dev_dir(),
-                                         sku=self.sku_config.name,
-                                         target="silicon_creator")
-            fw_bundle_bin = fw_bundle_bin.format(base_dir=self._base_dev_dir(),
-                                                 sku=self.sku_config.name,
-                                                 target="silicon_creator")
+            individ_elf = individ_elf.format(
+                base_dir=self._base_dev_dir(),
+                sku=self.sku_config.name,
+                ate_suffix=ate_suffix,
+                target="silicon_creator",
+            )
+            perso_bin = perso_bin.format(
+                base_dir=self._base_dev_dir(), sku=self.sku_config.name, target="silicon_creator"
+            )
+            fw_bundle_bin = fw_bundle_bin.format(
+                base_dir=self._base_dev_dir(), sku=self.sku_config.name, target="silicon_creator"
+            )
 
         individ_elf = resolve_runfile(individ_elf)
         perso_bin = resolve_runfile(perso_bin)
@@ -283,11 +288,11 @@ class OtDut():
 
             # Add FT device ID if we are not running in ATE mode.
             if not self.ate_mode:
-                cmd += f" --ft-device-id=\"0x{hex(self.device_id.sku_specific)[2:].zfill(32)}\""
+                cmd += f' --ft-device-id="0x{hex(self.device_id.sku_specific)[2:].zfill(32)}"'
 
             # Add owner FW boot success message check.
             if self.sku_config.owner_fw_boot_str:
-                cmd += f" --owner-success-text=\"{self.sku_config.owner_fw_boot_str}\""
+                cmd += f' --owner-success-text="{self.sku_config.owner_fw_boot_str}"'
 
             # Enable UJSON message logging.
             if self.log_ujson_payloads:
@@ -306,8 +311,7 @@ class OtDut():
                 logging.warning(f"FT failed with exit code: {res.returncode}.")
                 confirm()
 
-            self.ft_data = self._extract_json_data("PROVISIONING_DATA",
-                                                   stdout_logfile)
+            self.ft_data = self._extract_json_data("PROVISIONING_DATA", stdout_logfile)
 
             # Check device ID from OTP matches one constructed on host.
             #
@@ -321,28 +325,20 @@ class OtDut():
             # Replace the AST configuration version field of the host device ID
             # to its counterpart from of the device as this field originates
             # from flash info page 0, not from any host configuration.
-            self.device_id.update_ast_cfg_version(
-                device_id_in_otp.ast_cfg_version)
+            self.device_id.update_ast_cfg_version(device_id_in_otp.ast_cfg_version)
             if device_id_in_otp.sku_specific != self.device_id.sku_specific:
-                logging.error(
-                    "FT Device ID from OTP does not match expected on host.")
+                logging.error("FT Device ID from OTP does not match expected on host.")
                 logging.error(
                     f"Final (device) FT DeviceId: {device_id_in_otp.sku_specific_hexstr()}"
                 )
-                logging.error(
-                    f"Final (host)   FT DeviceId: {self.device_id.sku_specific_hexstr()}"
-                )
+                logging.error(f"Final (host)   FT DeviceId: {self.device_id.sku_specific_hexstr()}")
                 sys.exit(-1)
             if device_id_in_otp.base_uid != self.device_id.base_uid:
                 logging.warning(
                     "CP Device ID from OTP does not match expected on host. Use OTP variant?"
                 )
-                logging.warning(
-                    f"Final (device) CP DeviceId: {device_id_in_otp.base_uid_hexstr()}"
-                )
-                logging.warning(
-                    f"Final (host)   CP DeviceId: {self.device_id.base_uid_hexstr()}"
-                )
+                logging.warning(f"Final (device) CP DeviceId: {device_id_in_otp.base_uid_hexstr()}")
+                logging.warning(f"Final (host)   CP DeviceId: {self.device_id.base_uid_hexstr()}")
                 if self.require_confirmation:
                     confirm()
                 self.device_id = device_id_in_otp

@@ -42,17 +42,19 @@ def parse_sigver(data):
             else:
                 message = list(msg_bytes)
                 sign_mode = "eddsa"
-            test_vectors.append({
-                "vendor": "acvp",
-                "test_case_id": test["tcId"],
-                "algorithm": "ed25519",
-                "operation": "verify",
-                "sign_mode": sign_mode,
-                "message": message,
-                "public_key": list(bytes.fromhex(test["q"])),
-                "signature": list(bytes.fromhex(test["signature"])),
-                "result": test["testPassed"],
-            })
+            test_vectors.append(
+                {
+                    "vendor": "acvp",
+                    "test_case_id": test["tcId"],
+                    "algorithm": "ed25519",
+                    "operation": "verify",
+                    "sign_mode": sign_mode,
+                    "message": message,
+                    "public_key": list(bytes.fromhex(test["q"])),
+                    "signature": list(bytes.fromhex(test["signature"])),
+                    "result": test["testPassed"],
+                }
+            )
     return test_vectors
 
 
@@ -80,19 +82,21 @@ def parse_siggen(data):
             else:
                 message = list(msg_bytes)
                 sign_mode = "eddsa"
-            test_vectors.append({
-                "vendor": "acvp",
-                "test_case_id": test["tcId"],
-                "algorithm": "ed25519",
-                "operation": "sign",
-                "sign_mode": sign_mode,
-                "private_key": d,
-                "public_key": q,
-                "message": message,
-                "context": context,
-                "expected_signature": list(bytes.fromhex(test["signature"])),
-                "result": True,
-            })
+            test_vectors.append(
+                {
+                    "vendor": "acvp",
+                    "test_case_id": test["tcId"],
+                    "algorithm": "ed25519",
+                    "operation": "sign",
+                    "sign_mode": sign_mode,
+                    "private_key": d,
+                    "public_key": q,
+                    "message": message,
+                    "context": context,
+                    "expected_signature": list(bytes.fromhex(test["signature"])),
+                    "result": True,
+                }
+            )
     return test_vectors
 
 

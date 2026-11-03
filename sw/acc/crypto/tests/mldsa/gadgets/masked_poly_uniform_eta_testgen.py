@@ -21,7 +21,7 @@ def expand_s_poly(seed: bytes, nonce: int, eta: int):
     n >= 9, coeff = 4 - n.  Mirrors sw/acc/crypto/mldsa/poly.s."""
     shake = hashlib.shake_256()
     shake.update(seed)
-    shake.update(nonce.to_bytes(2, 'little'))
+    shake.update(nonce.to_bytes(2, "little"))
     buf = shake.digest(1024)
     out = []
     pos = 0
@@ -42,7 +42,7 @@ def expand_s_poly(seed: bytes, nonce: int, eta: int):
 def pack_canonical(vals):
     buf = bytearray()
     for v in vals:
-        buf += v.to_bytes(4, 'little')
+        buf += v.to_bytes(4, "little")
     return bytes(buf)
 
 
@@ -54,8 +54,8 @@ def pack_share_major(seed_shares):
 
 
 def gen_masked_poly_uniform_eta_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -69,24 +69,23 @@ def gen_masked_poly_uniform_eta_test(
 
         s = expand_s_poly(rho, nonce, eta)
 
-        suf = 'e{}'.format(eta)
-        inputs['rho_{}'.format(suf)] = pack_share_major([rho_share0, mask])
-        inputs['nonce_{}'.format(suf)] = nonce.to_bytes(4, 'little')
-        inputs['s_{}'.format(suf)] = b'\x00' * (2 * N_COEFS * 4)
-        dexp['r_{}'.format(suf)] = pack_canonical(s)
+        suf = "e{}".format(eta)
+        inputs["rho_{}".format(suf)] = pack_share_major([rho_share0, mask])
+        inputs["nonce_{}".format(suf)] = nonce.to_bytes(4, "little")
+        inputs["s_{}".format(suf)] = b"\x00" * (2 * N_COEFS * 4)
+        dexp["r_{}".format(suf)] = pack_canonical(s)
 
     write_test_data(inputs, data_file)
     write_test_exp({}, exp_file)
     write_test_dexp(dexp, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
-        gen_masked_poly_uniform_eta_test(args.seed, args.data, args.exp,
-                                         args.dexp)
+        gen_masked_poly_uniform_eta_test(args.seed, args.data, args.exp, args.dexp)

@@ -9,15 +9,12 @@ from util import resolve_runfile
 
 
 class TestRunfileMustResolve(unittest.TestCase):
-
     def test_main_workspace_path(self):
-        resolved = resolve_runfile(
-            "sw/device/silicon_creator/manuf/keys/fake/dice_ca.pem")
+        resolved = resolve_runfile("sw/device/silicon_creator/manuf/keys/fake/dice_ca.pem")
         self.assertTrue(os.path.exists(resolved))
 
     def test_external_path(self):
-        resolved = resolve_runfile(
-            "external/openocd/tcl/interface/cmsis-dap.cfg")
+        resolved = resolve_runfile("external/openocd/tcl/interface/cmsis-dap.cfg")
         self.assertTrue(os.path.exists(resolved))
 
     def test_abs_path(self):
@@ -30,5 +27,5 @@ class TestRunfileMustResolve(unittest.TestCase):
             resolve_runfile("file-does-not-exist")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

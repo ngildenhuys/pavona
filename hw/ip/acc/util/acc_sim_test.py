@@ -4,7 +4,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-'''Run a test on the ACC simulator.'''
+"""Run a test on the ACC simulator."""
 
 import argparse
 import subprocess
@@ -20,14 +20,15 @@ from shared.dmem_dump import parse_dmem_exp, parse_actual_dmem
 from shared.testcase import AccTestCase
 
 # Names of special registers
-ERR_BITS = 'ERR_BITS'
-INSN_CNT = 'INSN_CNT'
-STOP_PC = 'STOP_PC'
+ERR_BITS = "ERR_BITS"
+INSN_CNT = "INSN_CNT"
+STOP_PC = "STOP_PC"
 
 
 # copied from hw/ip/acc/dv/accsim/sim/constants.py
 class ErrBits(IntEnum):
-    '''A copy of the list of bits in the ERR_BITS register.'''
+    """A copy of the list of bits in the ERR_BITS register."""
+
     BAD_DATA_ADDR = 1 << 0
     BAD_INSN_ADDR = 1 << 1
     CALL_STACK = 1 << 2
@@ -48,7 +49,7 @@ class ErrBits(IntEnum):
 
 
 def get_err_names(err: int) -> List[str]:
-    '''Get the names of all error bits that are set.'''
+    """Get the names of all error bits that are set."""
     out = []
     for err_bit in ErrBits:
         if err & err_bit != 0:
@@ -58,39 +59,43 @@ def get_err_names(err: int) -> List[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument('simulator',
-                        help='Path to the standalone ACC simulator.')
-    parser.add_argument('--expected_regs',
-                        metavar='FILE',
-                        type=argparse.FileType('r'),
-                        help=(f'File containing expected register values. '
-                              f'Registers that are not listed are allowed to '
-                              f'have any value, except for {ERR_BITS}. If '
-                              f'{ERR_BITS} is not listed, the test will assume '
-                              f'there are no errors expected (i.e. {ERR_BITS}'
-                              f'= 0).'))
-    parser.add_argument('--expected_dmem',
-                        metavar='FILE',
-                        type=argparse.FileType('r'),
-                        help=('File containing expected dmem values. '
-                              'Addresses that are not listed are allowed to '
-                              'have any value.'))
-    parser.add_argument('--testcase',
-                        metavar='FILE',
-                        type=argparse.FileType('r'),
-                        help='Path to a testcase hjson file.')
-    parser.add_argument('--pqc',
-                        action='store_true',
-                        help='Enable PQC mode for the simulator.')
-    parser.add_argument('--stats',
-                        action='store_true',
-                        help='Print statistics (makes test run slower).')
-    parser.add_argument('--trace',
-                        action='store_true',
-                        help='Print the ISS instruction trace.')
-    parser.add_argument('elf',
-                        help='Path to the .elf file for the ACC program.')
-    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument("simulator", help="Path to the standalone ACC simulator.")
+    parser.add_argument(
+        "--expected_regs",
+        metavar="FILE",
+        type=argparse.FileType("r"),
+        help=(
+            f"File containing expected register values. "
+            f"Registers that are not listed are allowed to "
+            f"have any value, except for {ERR_BITS}. If "
+            f"{ERR_BITS} is not listed, the test will assume "
+            f"there are no errors expected (i.e. {ERR_BITS}"
+            f"= 0)."
+        ),
+    )
+    parser.add_argument(
+        "--expected_dmem",
+        metavar="FILE",
+        type=argparse.FileType("r"),
+        help=(
+            "File containing expected dmem values. "
+            "Addresses that are not listed are allowed to "
+            "have any value."
+        ),
+    )
+    parser.add_argument(
+        "--testcase",
+        metavar="FILE",
+        type=argparse.FileType("r"),
+        help="Path to a testcase hjson file.",
+    )
+    parser.add_argument("--pqc", action="store_true", help="Enable PQC mode for the simulator.")
+    parser.add_argument(
+        "--stats", action="store_true", help="Print statistics (makes test run slower)."
+    )
+    parser.add_argument("--trace", action="store_true", help="Print the ISS instruction trace.")
+    parser.add_argument("elf", help="Path to the .elf file for the ACC program.")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
     if args.testcase and (args.expected_dmem or args.expected_regs):
@@ -106,25 +111,31 @@ def main() -> int:
     testcase = None
     if args.testcase:
         testcase = AccTestCase.from_hjson(args.testcase.read(), symbols)
-        cmd_flags.extend([
-            "--testcase",
-            args.testcase.name,
-        ])
+        cmd_flags.extend(
+            [
+                "--testcase",
+                args.testcase.name,
+            ]
+        )
 
     if args.pqc:
-        cmd_flags.extend([
-            "--pqc",
-            "-",
-        ])
+        cmd_flags.extend(
+            [
+                "--pqc",
+                "-",
+            ]
+        )
 
     if args.stats:
-        cmd_flags.extend([
-            "--dump-stats",
-            "-",
-        ])
+        cmd_flags.extend(
+            [
+                "--dump-stats",
+                "-",
+            ]
+        )
 
     if args.trace:
-        cmd_flags.append('-v')
+        cmd_flags.append("-v")
 
     with tempfile.NamedTemporaryFile() as regs_file, tempfile.NamedTemporaryFile() as dmem_file:
         cmd = [
@@ -138,13 +149,11 @@ def main() -> int:
             args.elf,
         ]
         # Run the simulation and produce a register and dmem dump.
-        subprocess.run(
-            cmd, check=True, universal_newlines=True
-        )
+        subprocess.run(cmd, check=True, universal_newlines=True)
 
         dmem_file.seek(0)
         actual_dmem = parse_actual_dmem(dmem_file.read())
-        actual_regs = parse_reg_dump(regs_file.read().decode('utf-8'))
+        actual_regs = parse_reg_dump(regs_file.read().decode("utf-8"))
 
     expected_err = 0
     expected_regs = {}
@@ -175,10 +184,12 @@ def main() -> int:
         # mismatched registers.
         if actual_err != 0:
             err_names = ", ".join(get_err_names(actual_err))
-            result.err(f"ACC encountered an unexpected error: {err_names}.\n"
-                       f"  {ERR_BITS}\t= {actual_err:#010x}\n"
-                       f"  {INSN_CNT}\t= {insn_cnt:#010x}\n"
-                       f"  {STOP_PC}\t= {stop_pc:#010x}")
+            result.err(
+                f"ACC encountered an unexpected error: {err_names}.\n"
+                f"  {ERR_BITS}\t= {actual_err:#010x}\n"
+                f"  {INSN_CNT}\t= {insn_cnt:#010x}\n"
+                f"  {STOP_PC}\t= {stop_pc:#010x}"
+            )
 
     else:
         for reg, expected_value in expected_regs.items():
@@ -190,16 +201,18 @@ def main() -> int:
                 else:
                     expected_str = f"{expected_value:#010x}"
                     actual_str = f"{actual_value:#010x}"
-                result.err(f"Mismatch for register {reg}:\n"
-                           f"  Expected: {expected_str}\n"
-                           f"  Actual:   {actual_str}")
+                result.err(
+                    f"Mismatch for register {reg}:\n"
+                    f"  Expected: {expected_str}\n"
+                    f"  Actual:   {actual_str}"
+                )
 
         for label, value in expected_dmem.items():
             try:
                 offset = symbols[label]
                 for i in range(0, len(value), 4):
-                    actual = actual_dmem[offset + i: offset + i + 4]
-                    expected = value[i: i + 4]
+                    actual = actual_dmem[offset + i : offset + i + 4]
+                    expected = value[i : i + 4]
                     if actual != expected:
                         result.err(
                             f"Mismatch for dmem {label} at word {i // 4}:\n"

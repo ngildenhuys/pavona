@@ -8,18 +8,24 @@ from pathlib import Path
 
 
 REPO_TOP = Path(__file__).parents[2].resolve()
-CHAPTER_HEADER_RE = (r'<li class="part-title">(?P<header>.*?)</li>'
-                     r'<li class="chapter-item "><a href="(?P<link>[^"]*)">')
-REPLACEMENT = (r'<li class="part-title"><a href="\g<link>">\g<header></a></li>'
-               r'<li class="chapter-item "><a href="\g<link>">')
+CHAPTER_HEADER_RE = (
+    r'<li class="part-title">(?P<header>.*?)</li>'
+    r'<li class="chapter-item "><a href="(?P<link>[^"]*)">'
+)
+REPLACEMENT = (
+    r'<li class="part-title"><a href="\g<link>">\g<header></a></li>'
+    r'<li class="chapter-item "><a href="\g<link>">'
+)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--toc-js",
-                        type=Path,
-                        default=REPO_TOP / "build-site" / "book" / "toc.js",
-                        help="Path to the toc.js file for the mdbook")
+    parser.add_argument(
+        "--toc-js",
+        type=Path,
+        default=REPO_TOP / "build-site" / "book" / "toc.js",
+        help="Path to the toc.js file for the mdbook",
+    )
     args = parser.parse_args()
 
     assert args.toc_js.exists()

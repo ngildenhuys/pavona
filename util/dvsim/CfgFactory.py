@@ -18,29 +18,30 @@ import SynCfg
 
 
 def _load_cfg(path, initial_values):
-    '''Worker function for make_cfg.
+    """Worker function for make_cfg.
 
     initial_values is passed to load_hjson (see documentation there).
 
     Returns a pair (cls, hjson_data) on success or raises a RuntimeError on
     failure.
 
-    '''
+    """
     # Set the `self_dir` template variable to the path of the currently
     # processed Hjson file.
-    assert 'self_dir' in initial_values
-    initial_values['self_dir'] = os.path.dirname(path)
+    assert "self_dir" in initial_values
+    initial_values["self_dir"] = os.path.dirname(path)
 
     # Start by loading up the hjson file and any included files
     hjson_data = load_hjson(path, initial_values)
 
     # Look up the value of flow in the loaded data. This is a required field,
     # and tells us what sort of FlowCfg to make.
-    flow = hjson_data.get('flow')
+    flow = hjson_data.get("flow")
     if flow is None:
-        raise RuntimeError('{!r}: No value for the "flow" key. Are you sure '
-                           'this is a dvsim configuration file?'
-                           .format(path))
+        raise RuntimeError(
+            '{!r}: No value for the "flow" key. Are you sure '
+            "this is a dvsim configuration file?".format(path)
+        )
 
     classes = [
         RdcCfg.RdcCfg,
@@ -48,7 +49,7 @@ def _load_cfg(path, initial_values):
         LintCfg.LintCfg,
         SynCfg.SynCfg,
         FormalCfg.FormalCfg,
-        SimCfg.SimCfg
+        SimCfg.SimCfg,
     ]
     found_cls = None
     known_types = []
@@ -59,9 +60,10 @@ def _load_cfg(path, initial_values):
             found_cls = cls
             break
     if found_cls is None:
-        raise RuntimeError('{}: Configuration file sets "flow" to {!r}, but '
-                           'this is not a known flow (known: {}).'
-                           .format(path, flow, ', '.join(known_types)))
+        raise RuntimeError(
+            '{}: Configuration file sets "flow" to {!r}, but '
+            "this is not a known flow (known: {}).".format(path, flow, ", ".join(known_types))
+        )
 
     return (found_cls, hjson_data)
 
@@ -76,10 +78,11 @@ def _make_child_cfg(path, args, initial_values, seed_index=None, default_reseed=
     # Since this is a child configuration (from some primary configuration),
     # make sure that we aren't ourselves a primary configuration. We don't need
     # multi-level hierarchies and this avoids circular dependencies.
-    if 'use_cfgs' in hjson_data:
-        raise RuntimeError('{}: Configuration file has use_cfgs, but is '
-                           'itself included from another configuration.'
-                           .format(path))
+    if "use_cfgs" in hjson_data:
+        raise RuntimeError(
+            "{}: Configuration file has use_cfgs, but is "
+            "itself included from another configuration.".format(path)
+        )
 
     if seed_index:
         reseed_source(hjson_data, seed_index, default_reseed)
@@ -90,15 +93,14 @@ def _make_child_cfg(path, args, initial_values, seed_index=None, default_reseed=
 
 
 def unit_identity(name, variant):
-    '''Case-normalized (name, variant) identity for matching a cfg against a
+    """Case-normalized (name, variant) identity for matching a cfg against a
     grading report entry. Lowercased because the report is built from the
-    lowercased results JSON, whereas reseed_source reads the cfg's raw fields.'''
+    lowercased results JSON, whereas reseed_source reads the cfg's raw fields."""
     return name.lower(), variant.lower() if variant else None
 
 
 def reseed_source(graded_reseeds: dict, seed_index: dict, default_reseed: int):
-    '''Source resets for each test that has a reseed if the flag --reseed-source was passed.
-    '''
+    """Source resets for each test that has a reseed if the flag --reseed-source was passed."""
     hjson_name = graded_reseeds["name"]
     log.debug("========== %s ==========", hjson_name)
     log.debug("before:")
@@ -128,8 +130,7 @@ def reseed_source(graded_reseeds: dict, seed_index: dict, default_reseed: int):
 
 
 def count_reseeds(graded_reseeds):
-    '''Helper function used in debug for counting seeds after override
-    '''
+    """Helper function used in debug for counting seeds after override"""
     total = 0
     for test in graded_reseeds.get("tests", []):
         global_reseed = graded_reseeds.get("reseed", 1)
@@ -142,14 +143,13 @@ def count_reseeds(graded_reseeds):
 
 
 def make_cfg(path, args, proj_root):
-    '''Make a flow config by loading the config file at path
-    '''
+    """Make a flow config by loading the config file at path"""
     initial_values = {
-        'proj_root': proj_root,
-        'self_dir': os.path.dirname(path),
+        "proj_root": proj_root,
+        "self_dir": os.path.dirname(path),
     }
     if args.tool is not None:
-        initial_values['tool'] = args.tool
+        initial_values["tool"] = args.tool
 
     try:
         cls, hjson_data = _load_cfg(path, initial_values)
@@ -171,12 +171,12 @@ def make_cfg(path, args, proj_root):
         default_reseed = seed_data.get("reseed", 1)
 
         # If it is a single config, just change the reseeds now
-        if 'use_cfgs' not in hjson_data and seed_data:
+        if "use_cfgs" not in hjson_data and seed_data:
             reseed_source(hjson_data, seed_index, default_reseed)
 
     def factory(child_path):
         child_ivs = initial_values.copy()
-        child_ivs['flow'] = hjson_data['flow']
+        child_ivs["flow"] = hjson_data["flow"]
         return _make_child_cfg(child_path, args, child_ivs, seed_index, default_reseed)
 
     return cls(path, hjson_data, args, factory)

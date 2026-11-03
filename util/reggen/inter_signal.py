@@ -9,14 +9,21 @@ from basegen.validate import create_validator
 from reggen.params import ReggenParams, Parameter
 
 
-INTERSIG_VALIDATOR = create_validator('urn:reggen:inter_signal')
+INTERSIG_VALIDATOR = create_validator("urn:reggen:inter_signal")
 
 
 class InterSignal:
-
-    def __init__(self, name: str, desc: Optional[str], struct: str,
-                 package: Optional[str], signal_type: str, act: str,
-                 width: Union[int, Parameter], default: Optional[str]):
+    def __init__(
+        self,
+        name: str,
+        desc: Optional[str],
+        struct: str,
+        package: Optional[str],
+        signal_type: str,
+        act: str,
+        width: Union[int, Parameter],
+        default: Optional[str],
+    ):
         if isinstance(width, Parameter):
             if isinstance(width.default, int):
                 assert 0 < width.default
@@ -32,65 +39,62 @@ class InterSignal:
         self.default = default
 
     @staticmethod
-    def from_raw(params: ReggenParams, what: str,
-                 raw: object) -> 'InterSignal':
+    def from_raw(params: ReggenParams, what: str, raw: object) -> "InterSignal":
         if not isinstance(raw, dict):
-            raise TypeError('intermodule signal must be instantiated from dict: intersignal of '
-                            + what)
+            raise TypeError(
+                "intermodule signal must be instantiated from dict: intersignal of " + what
+            )
         INTERSIG_VALIDATOR.validate(raw)
 
-        name = check_name(raw['name'], 'name field of ' + what)
+        name = check_name(raw["name"], "name field of " + what)
 
-        r_desc = raw.get('desc')
+        r_desc = raw.get("desc")
         if r_desc is None:
             desc = None
         else:
-            desc = check_str(r_desc, 'desc field of ' + what)
+            desc = check_str(r_desc, "desc field of " + what)
 
-        struct = check_str(raw['struct'], 'struct field of ' + what)
+        struct = check_str(raw["struct"], "struct field of " + what)
 
-        r_package = raw.get('package')
-        if r_package is None or r_package == '':
+        r_package = raw.get("package")
+        if r_package is None or r_package == "":
             package = None
         else:
-            package = check_name(r_package, 'package field of ' + what)
+            package = check_name(r_package, "package field of " + what)
 
-        signal_type = check_name(raw['type'], 'type field of ' + what)
-        act = check_name(raw['act'], 'act field of ' + what)
+        signal_type = check_name(raw["type"], "type field of " + what)
+        act = check_name(raw["act"], "act field of " + what)
 
-        default = check_optional_str(raw.get('default'),
-                                     'default field of ' + what)
+        default = check_optional_str(raw.get("default"), "default field of " + what)
         width: Union[int, Parameter] = 1
-        width_p = params.get(raw.get('width'), 1)
+        width_p = params.get(raw.get("width"), 1)
         if isinstance(width_p, Parameter):
-            width_p.default = check_int(width_p.default,
-                                        'width field of ' + what)
+            width_p.default = check_int(width_p.default, "width field of " + what)
             if width_p.default <= 0:
-                raise ValueError(f'width field of {what} is not positive.')
+                raise ValueError(f"width field of {what} is not positive.")
             # Parameter must be exposed to create a top-level (local) param
             if not width_p.expose:
-                raise ValueError(f'width field of {what} is not exposed.')
+                raise ValueError(f"width field of {what} is not exposed.")
             width = width_p
         else:
-            width = check_int(raw.get('width', 1), 'width field of ' + what)
+            width = check_int(raw.get("width", 1), "width field of " + what)
             if width <= 0:
-                raise ValueError(f'width field of {what} is not positive.')
+                raise ValueError(f"width field of {what} is not positive.")
 
-        return InterSignal(name, desc, struct, package, signal_type, act,
-                           width, default)
+        return InterSignal(name, desc, struct, package, signal_type, act, width, default)
 
     def _asdict(self) -> Dict[str, object]:
-        ret = {'name': self.name}  # type: Dict[str, object]
+        ret = {"name": self.name}  # type: Dict[str, object]
         if self.desc is not None:
-            ret['desc'] = self.desc
-        ret['struct'] = self.struct
+            ret["desc"] = self.desc
+        ret["struct"] = self.struct
         if self.package is not None:
-            ret['package'] = self.package
-        ret['type'] = self.signal_type
-        ret['act'] = self.act
-        ret['width'] = self.width
+            ret["package"] = self.package
+        ret["type"] = self.signal_type
+        ret["act"] = self.act
+        ret["width"] = self.width
         if self.default is not None:
-            ret['default'] = self.default
+            ret["default"] = self.default
 
         return ret
 

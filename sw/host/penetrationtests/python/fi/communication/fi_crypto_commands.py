@@ -5,6 +5,7 @@
 
 Communication with OpenTitan happens over the uJSON command interface.
 """
+
 import json
 import time
 from sw.host.penetrationtests.python.util import common_library
@@ -369,7 +370,7 @@ class OTFICrypto:
         self.target.write(json.dumps(mode).encode("ascii"))
 
     def start_test(self, cfg: dict, *args, **kwargs) -> None:
-        """ Start the selected test.
+        """Start the selected test.
 
         Call the function selected in the config file. Uses the getattr()
         construct to call the function.

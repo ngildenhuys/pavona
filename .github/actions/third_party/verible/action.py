@@ -20,18 +20,18 @@ def recursive_find(file_extensions, pwd):
 
 
 def log_raw(issues, filename):
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         f.write(issues)
 
 
 def print_annotations(issues):
-    '''
+    """
     Print linter output in a way
     that is parsed by GitHub and used to annotate code automatically
-    '''
+    """
     for issue in issues.splitlines():
         file_name, line, column, issue = issue.split(":", 3)
-        print(f'::error file={file_name},line={line},col={column}::{issue}')
+        print(f"::error file={file_name},line={line},col={column}::{issue}")
 
 
 def unwrap_from_gha_string(args):
@@ -49,8 +49,7 @@ def unwrap_from_gha_string(args):
 
 
 def find_sources_in_paths(paths, exts):
-    '''Scan {paths} for files with extensions from set
-    '''
+    """Scan {paths} for files with extensions from set"""
     files = set()
     for filename in paths:
         # check if filename is a directory or a source file
@@ -66,25 +65,27 @@ def find_sources_in_paths(paths, exts):
 
 
 @click.command()
-@click.option('--conf-file', '-c', type=str, required=False,
-              help='lint rules configuration file')
-@click.option('--extra-opts', '-e', required=False,
-              help='extra options for the linter')
-@click.option('--exclude-paths', '-x', required=False,
-              help='exclude these paths from the files to lint')
-@click.option('--extensions', '-t', type=str, required=False,
-              help='lint files with these extensions (starting with a dot, split by comma)')
-@click.option('--log-file', '-l', type=str, required=False,
-              help='log file name')
-@click.option('--patch', '-p', type=str, required=False,
-              help='patch file name')
-@click.argument('path', nargs=-1, required=True)
+@click.option("--conf-file", "-c", type=str, required=False, help="lint rules configuration file")
+@click.option("--extra-opts", "-e", required=False, help="extra options for the linter")
+@click.option(
+    "--exclude-paths", "-x", required=False, help="exclude these paths from the files to lint"
+)
+@click.option(
+    "--extensions",
+    "-t",
+    type=str,
+    required=False,
+    help="lint files with these extensions (starting with a dot, split by comma)",
+)
+@click.option("--log-file", "-l", type=str, required=False, help="log file name")
+@click.option("--patch", "-p", type=str, required=False, help="patch file name")
+@click.argument("path", nargs=-1, required=True)
 def main(conf_file, extra_opts, exclude_paths, extensions, log_file, patch, path):
-    '''
+    """
     Lint .v and .sv files specified in PATHs
-    '''
+    """
     if conf_file:  # GitHub Actions passes "" here if it's not used
-        conf_file = ['--rules_config', conf_file]
+        conf_file = ["--rules_config", conf_file]
     else:
         conf_file = []
 
@@ -99,9 +100,9 @@ def main(conf_file, extra_opts, exclude_paths, extensions, log_file, patch, path
         patch = []
 
     if extensions:
-        extensions = set(ext if ext.startswith('.') else '.' + ext for ext in extensions.split())
+        extensions = set(ext if ext.startswith(".") else "." + ext for ext in extensions.split())
     else:
-        extensions = {'.v', '.sv'}
+        extensions = {".v", ".sv"}
 
     paths = unwrap_from_gha_string(path)
     # set of target files to lint
@@ -116,14 +117,13 @@ def main(conf_file, extra_opts, exclude_paths, extensions, log_file, patch, path
         warnings.warn("File set is empty, the action has nothing to do.")
         exit()
 
-    command = (["verible-verilog-lint"]
-               + patch + conf_file + extra_opts + list(files))
+    command = ["verible-verilog-lint"] + patch + conf_file + extra_opts + list(files)
     print("Running " + " ".join(command) + "\n\n")
     verible_linted = subprocess.run(command, capture_output=True)
 
     issues = verible_linted.stderr.decode("utf-8")
-    log_raw(issues, log_file if log_file else 'verible-verilog-lint.log')
+    log_raw(issues, log_file if log_file else "verible-verilog-lint.log")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

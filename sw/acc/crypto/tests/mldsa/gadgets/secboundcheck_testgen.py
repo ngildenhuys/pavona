@@ -37,18 +37,18 @@ def pack_arith_shares(share_vals):
     buf = bytearray()
     for s in range(NSHARES):
         for v in share_vals[s]:
-            buf += int(v).to_bytes(4, 'little')
+            buf += int(v).to_bytes(4, "little")
     return bytes(buf)
 
 
 def pack_c_wdr(C):
     """32-byte WDR-image with C in lane 0 (low 4 bytes); other lanes = 0."""
-    return C.to_bytes(4, 'little') + b'\x00' * 28
+    return C.to_bytes(4, "little") + b"\x00" * 28
 
 
 def gen_secboundcheck_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -71,7 +71,7 @@ def gen_secboundcheck_test(
         xb = pack_arith_shares(arith_share(x_vals))
         cb = pack_c_wdr((1 << (KBITS + 1)) - psi - 1)
         # lambda_0 broadcast: 8 int32 lanes packed into one 32-byte WDR.
-        lam_bytes = (lambda0 % Q).to_bytes(4, 'little') * 8
+        lam_bytes = (lambda0 % Q).to_bytes(4, "little") * 8
 
         # Expected per-lane mask: bit set iff -lambda_0 <= x <= lambda_1 mod q.
         out_word = 0
@@ -80,22 +80,22 @@ def gen_secboundcheck_test(
             if -lambda0 <= c <= lambda1:
                 out_word |= 1 << lane
 
-        inputs['x_arith{}'.format(idx)] = xb
-        inputs['c_wdr{}'.format(idx)] = cb
-        inputs['lambda0_vec{}'.format(idx)] = lam_bytes
-        dexp['y_out{}'.format(idx)] = out_word.to_bytes(SHARE_BYTES, 'little')
+        inputs["x_arith{}".format(idx)] = xb
+        inputs["c_wdr{}".format(idx)] = cb
+        inputs["lambda0_vec{}".format(idx)] = lam_bytes
+        dexp["y_out{}".format(idx)] = out_word.to_bytes(SHARE_BYTES, "little")
 
     write_test_data(inputs, data_file)
     write_test_exp({}, exp_file)
     write_test_dexp(dexp, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_secboundcheck_test(args.seed, args.data, args.exp, args.dexp)

@@ -8,30 +8,41 @@ from enum import Enum
 from math import inf
 from typing import Dict, Optional, Tuple
 
-from .control_flow import (ControlGraph, Cycle, Ecall, ImemEnd, LoopEnd,
-                           LoopStart, Ret, program_control_graph,
-                           subroutine_control_graph)
+from .control_flow import (
+    ControlGraph,
+    Cycle,
+    Ecall,
+    ImemEnd,
+    LoopEnd,
+    LoopStart,
+    Ret,
+    program_control_graph,
+    subroutine_control_graph,
+)
 from .decode import ACCProgram
 from .information_flow_analysis import get_subroutine_loop_iters
 
 
 class StopPoint(Enum):
-    LOOP_END = 'loop end'
-    RET = 'ret'
-    ECALL = 'ecall'
+    LOOP_END = "loop end"
+    RET = "ret"
+    ECALL = "ecall"
 
 
-InsnCountMemo = Dict[Tuple[int, StopPoint, Optional[str]],
-                     Optional[Tuple[int, int]]]
+InsnCountMemo = Dict[Tuple[int, StopPoint, Optional[str]], Optional[Tuple[int, int]]]
 
 
 def _get_insn_count_range(
-        program: ACCProgram, graph: ControlGraph, start_pc: int,
-        stop_at: StopPoint, loop_iters: Optional[Dict[int, int]],
-        thru_label: Optional[str],
-        exclude_labels: list[str],
-        memo: Optional[InsnCountMemo] = None) -> Optional[Tuple[int, int]]:
-    '''Return minimum and maximum instruction counts across control paths.
+    program: ACCProgram,
+    graph: ControlGraph,
+    start_pc: int,
+    stop_at: StopPoint,
+    loop_iters: Optional[Dict[int, int]],
+    thru_label: Optional[str],
+    exclude_labels: list[str],
+    memo: Optional[InsnCountMemo] = None,
+) -> Optional[Tuple[int, int]]:
+    """Return minimum and maximum instruction counts across control paths.
 
     In the presence of control-flow cycles or loops with a non-constant
     number of iterations, the maximum number of iterations will be
@@ -53,7 +64,7 @@ def _get_insn_count_range(
     `stop_at` = RET, then there will be an error. The function will return the
     min/max instruction counts across *all control-flow paths* from the given
     start point to the stopping point.
-    '''
+    """
     # Memoized on (start_pc, stop_at, thru_label); cycles are leaves, so the
     # traversal is a DAG and each PC is computed once.
     if memo is None:
@@ -102,16 +113,21 @@ def _get_insn_count_range(
             loc_min, loc_max = 0, 0
         elif isinstance(loc, LoopEnd):
             # All LoopEnds should have been handled above!
-            assert False, f'Unexpected loop end at PC {section.end:#x}'
+            assert False, f"Unexpected loop end at PC {section.end:#x}"
         elif isinstance(loc, LoopStart):
             # Calculate the number of iterations if possible.
             num_iterations = loop_iters.get(section.end)
             if num_iterations is not None:
-                loop_range = _get_insn_count_range(program, graph,
-                                                   loc.loop_start_pc,
-                                                   StopPoint.LOOP_END,
-                                                   loop_iters, thru_label,
-                                                   exclude_labels, memo)
+                loop_range = _get_insn_count_range(
+                    program,
+                    graph,
+                    loc.loop_start_pc,
+                    StopPoint.LOOP_END,
+                    loop_iters,
+                    thru_label,
+                    exclude_labels,
+                    memo,
+                )
                 if loop_range is None:
                     continue
                 loop_min, loop_max = loop_range
@@ -122,11 +138,16 @@ def _get_insn_count_range(
                 loop_min, loop_max = 0, inf
 
             # Calculate the instruction count range after the loop.
-            post_loop_range = _get_insn_count_range(program, graph,
-                                                    loc.loop_end_pc + 4,
-                                                    stop_at, loop_iters,
-                                                    thru_label, exclude_labels,
-                                                    memo)
+            post_loop_range = _get_insn_count_range(
+                program,
+                graph,
+                loc.loop_end_pc + 4,
+                stop_at,
+                loop_iters,
+                thru_label,
+                exclude_labels,
+                memo,
+            )
             if post_loop_range is None:
                 continue
             post_loop_min, post_loop_max = post_loop_range
@@ -151,21 +172,28 @@ def _get_insn_count_range(
             if skip_loc:
                 continue
 
-            if insn.mnemonic == 'jal' and operands['grd'] == 1:
+            if insn.mnemonic == "jal" and operands["grd"] == 1:
                 # Jumping to another subroutine; count the range for the
                 # subroutine itself, and if we've gone through the required
                 # label.
-                jump_range = _get_insn_count_range(program, graph, loc.pc,
-                                                   StopPoint.RET, loop_iters,
-                                                   None, exclude_labels, memo)
+                jump_range = _get_insn_count_range(
+                    program, graph, loc.pc, StopPoint.RET, loop_iters, None, exclude_labels, memo
+                )
                 if jump_range is None:
                     continue
                 jump_min, jump_max = jump_range
                 # Calculate the instruction count range after returning from
                 # the jump.
                 post_jump_range = _get_insn_count_range(
-                    program, graph, section.end + 4, stop_at, loop_iters,
-                    thru_label, exclude_labels, memo)
+                    program,
+                    graph,
+                    section.end + 4,
+                    stop_at,
+                    loop_iters,
+                    thru_label,
+                    exclude_labels,
+                    memo,
+                )
                 if post_jump_range is None:
                     continue
                 post_jump_min, post_jump_max = post_jump_range
@@ -183,10 +211,16 @@ def _get_insn_count_range(
 
                 # If not a jump, then this is just a normal PC (i.e. a branch).
                 # Follow the branch to get the min/max range.
-                loc_range = _get_insn_count_range(program, graph, loc.pc,
-                                                  stop_at, loop_iters,
-                                                  edge_thru_label,
-                                                  exclude_labels, memo)
+                loc_range = _get_insn_count_range(
+                    program,
+                    graph,
+                    loc.pc,
+                    stop_at,
+                    loop_iters,
+                    edge_thru_label,
+                    exclude_labels,
+                    memo,
+                )
                 if loc_range is None:
                     continue
                 loc_min, loc_max = loc_range
@@ -204,12 +238,13 @@ def _get_insn_count_range(
     return memo[key]
 
 
-def program_insn_count_range(program: ACCProgram,
-                             thru_label: Optional[str],
-                             exclude_labels,
-                             program_graph: Optional[ControlGraph] = None
-                             ) -> Tuple[int, Optional[int]]:
-    '''Return minimum and maximum instruction counts for the program.
+def program_insn_count_range(
+    program: ACCProgram,
+    thru_label: Optional[str],
+    exclude_labels,
+    program_graph: Optional[ControlGraph] = None,
+) -> Tuple[int, Optional[int]]:
+    """Return minimum and maximum instruction counts for the program.
 
     Wrapper for `_get_insn_count_range` that works on the full program; it
     starts at graph.start and returns the instruction counts for all paths that
@@ -218,38 +253,45 @@ def program_insn_count_range(program: ACCProgram,
     `program_graph` is the whole-program control-flow graph; it depends only on
     `program`, so callers that query many modes should build it once and pass
     it in to avoid reconstructing it per call.
-    '''
+    """
     if thru_label is not None:
         subroutine_graph = subroutine_control_graph(program, thru_label)
-        loop_iters = get_subroutine_loop_iters(program, subroutine_graph, thru_label,
-                                               {}, coarse_dmem=True)
+        loop_iters = get_subroutine_loop_iters(
+            program, subroutine_graph, thru_label, {}, coarse_dmem=True
+        )
     else:
         loop_iters = {}
     if program_graph is None:
         program_graph = program_control_graph(program)
-    count_range = _get_insn_count_range(program, program_graph,
-                                        program_graph.start, StopPoint.ECALL,
-                                        loop_iters, thru_label, exclude_labels)
+    count_range = _get_insn_count_range(
+        program,
+        program_graph,
+        program_graph.start,
+        StopPoint.ECALL,
+        loop_iters,
+        thru_label,
+        exclude_labels,
+    )
     if count_range is None:
-        raise ValueError('No control flow path found.')
+        raise ValueError("No control flow path found.")
     min_count, max_count = count_range
     if max_count == inf:
         max_count = None
     return min_count, max_count
 
 
-def subroutine_insn_count_range(program: ACCProgram,
-                                subroutine: str) -> Tuple[int, Optional[int]]:
-    '''Return minimum and maximum instruction counts for the subroutine.
+def subroutine_insn_count_range(program: ACCProgram, subroutine: str) -> Tuple[int, Optional[int]]:
+    """Return minimum and maximum instruction counts for the subroutine.
 
     Wrapper for `_get_insn_count_range` that works on a subroutine; it starts
     at graph.start and returns the instruction counts for all paths that lead
     to a return to the original caller. If a path leads to the program ending
     (i.e. an `ecall` instruction), then there will be an error.
-    '''
+    """
     graph = subroutine_control_graph(program, subroutine)
-    min_count, max_count = _get_insn_count_range(program, graph, graph.start,
-                                                 StopPoint.RET, {}, None)
+    min_count, max_count = _get_insn_count_range(
+        program, graph, graph.start, StopPoint.RET, {}, None
+    )
     if max_count == inf:
         max_count = None
     return min_count, max_count

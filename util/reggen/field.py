@@ -190,7 +190,7 @@ class Field:
     ) -> "Field":
         where = f"field {field_idx} of {reg_name} register"
         if not isinstance(raw, dict):
-            raise TypeError('must instantiate field with dict: ' + where)
+            raise TypeError("must instantiate field with dict: " + where)
         FIELD_VALIDATOR.validate(cast_hjson_values(raw))
 
         raw_name = raw.get("name")

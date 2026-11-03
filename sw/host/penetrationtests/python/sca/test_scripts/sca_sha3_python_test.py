@@ -37,7 +37,6 @@ BOOTSTRAP = args.bootstrap
 # The Sha3 implementation on the testOS works in a stateful way
 # so we reset between tests
 class Sha3ScaTest(unittest.TestCase):
-
     def test_init(self):
         sha3sca = OTSHA3(target)
         device_id, owner_page, boot_log, boot_measurements, version = sha3sca.init(fpga)
@@ -102,9 +101,7 @@ class Sha3ScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -133,9 +130,7 @@ class Sha3ScaTest(unittest.TestCase):
         expected_result_json = {
             "batch_digest": expected_result,
         }
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_sha3_batch_absorb(self):
         for num_segments in num_segments_list:
@@ -168,27 +163,19 @@ class Sha3ScaTest(unittest.TestCase):
             expected_result_json = {
                 "batch_digest": xor_tag,
             }
-            utils.compare_json_data(
-                actual_result_json, expected_result_json, ignored_keys_set
-            )
+            utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
 
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:
-        bitstream_path = r.Rlocation(
-            "pavona_pavona/" + BITSTREAM
-        )
+        bitstream_path = r.Rlocation("pavona_pavona/" + BITSTREAM)
     # Get the firmware path.
-    firmware_path = r.Rlocation(
-        "pavona_pavona/" + BOOTSTRAP
-    )
+    firmware_path = r.Rlocation("pavona_pavona/" + BOOTSTRAP)
 
     if "fpga" in BOOTSTRAP:
         target_type = "fpga"
@@ -201,7 +188,7 @@ if __name__ == "__main__":
         fw_bin=firmware_path,
         opentitantool=opentitantool_path,
         bitstream=bitstream_path,
-        tool_args=config_args
+        tool_args=config_args,
     )
 
     target = targets.Target(target_cfg)

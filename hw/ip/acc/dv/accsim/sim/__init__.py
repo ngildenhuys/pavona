@@ -8,5 +8,4 @@ import sys
 
 # Ensure that the ACC util directory is on sys.path. This allows us to import
 # modules "shared.foo" to get the ACC shared code.
-sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__),
-                                              '../../../util')))
+sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), "../../../util")))

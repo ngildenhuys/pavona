@@ -16,7 +16,7 @@ from ..snippet_gen import GenCont, GenRet, SnippetGen
 
 
 class BadInsn(SnippetGen):
-    '''A simple snippet generator that generates one invalid instruction'''
+    """A simple snippet generator that generates one invalid instruction"""
 
     ends_program = True
 
@@ -70,9 +70,8 @@ class BadInsn(SnippetGen):
                     raise ValueError("Op Val produced for pqc instruction is not valid")
 
                 # Ensure a proper type enum for mulv/l
-                if (
-                    (insn.mnemonic == 'bn.mulv.l' or insn.mnemonic == "bn.mulv")
-                    and (len(op_vals) == len(insn.operands) - 1)
+                if (insn.mnemonic == "bn.mulv.l" or insn.mnemonic == "bn.mulv") and (
+                    len(op_vals) == len(insn.operands) - 1
                 ):
                     while operand.op_type.op_val_to_str(op_val, 0) == '""':  # Empty enum is ""
                         op_val = model.pick_operand_value(operand.op_type)
@@ -100,10 +99,7 @@ class BadInsn(SnippetGen):
 
         return prog_insn
 
-    def gen(self,
-            cont: GenCont,
-            model: Model,
-            program: Program) -> Optional[GenRet]:
+    def gen(self, cont: GenCont, model: Model, program: Program) -> Optional[GenRet]:
         # Create union of valid typing
         prog_insn: Union[DummyProgInsn, ProgInsn]
 
@@ -120,13 +116,9 @@ class BadInsn(SnippetGen):
         snippet.insert_into_program(program)
         return (snippet, model)
 
-    def pick_weight(self,
-                    model: Model,
-                    program: Program) -> float:
+    def pick_weight(self, model: Model, program: Program) -> float:
         # Choose small weights when we've got lots of room and large ones when
         # we haven't.
         room = min(model.fuel, program.space)
         assert 0 < room
-        return (1e-10 if room > 5
-                else 0.1 if room > 1
-                else 1e10)
+        return 1e-10 if room > 5 else 0.1 if room > 1 else 1e10

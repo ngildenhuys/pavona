@@ -18,18 +18,21 @@ from .xbar import Xbar
 REPO_TOP = Path(__file__).parents[2].resolve()
 
 
-def generate_tb(xbar: Xbar,
-                dv_path: Path,
-                library_name: str = "ip") -> None:
+def generate_tb(xbar: Xbar, dv_path: Path, library_name: str = "ip") -> None:
     """Generate the testbench RTL."""
     tb_files = [
-        "xbar_env_pkg__params.sv", "tb__xbar_connect.sv", "xbar.sim.core",
-        "xbar.bind.core", "xbar.bind.sv", "xbar.sim_cfg.hjson",
-        "xbar_cov_excl.el", "xbar_cover.cfg"
+        "xbar_env_pkg__params.sv",
+        "tb__xbar_connect.sv",
+        "xbar.sim.core",
+        "xbar.bind.core",
+        "xbar.bind.sv",
+        "xbar.sim_cfg.hjson",
+        "xbar_cov_excl.el",
+        "xbar_cover.cfg",
     ]
 
     for fname in tb_files:
-        tpl = Template(filename=str(importlib.resources.files('tlgen') / (fname + '.tpl')))
+        tpl = Template(filename=str(importlib.resources.files("tlgen") / (fname + ".tpl")))
 
         # some files need to be renamed
         if fname == "xbar.sim.core":
@@ -43,16 +46,20 @@ def generate_tb(xbar: Xbar,
 
         # save testplan at data directory
         if fname == "xbar_%s_testplan.hjson" % (xbar.name):
-            data_filepath = dv_path / '../../data/autogen'
+            data_filepath = dv_path / "../../data/autogen"
             data_filepath.mkdir(parents=True, exist_ok=True)
             dv_filepath = data_filepath / fname
         else:
             dv_filepath = dv_path / fname
 
-        with dv_filepath.open(mode='w', encoding='UTF-8') as fout:
+        with dv_filepath.open(mode="w", encoding="UTF-8") as fout:
             try:
                 fout.write(
-                    tpl.render(xbar=xbar, library_name=library_name,
-                               dv_filepath=dv_filepath.relative_to(REPO_TOP)))
+                    tpl.render(
+                        xbar=xbar,
+                        library_name=library_name,
+                        dv_filepath=dv_filepath.relative_to(REPO_TOP),
+                    )
+                )
             except:  # noqa: E722 for general exception handling
                 log.error(exceptions.text_error_template().render())

@@ -6,6 +6,7 @@
 Communication with OpenTitan happens over the uJson
 command interface.
 """
+
 import json
 import time
 from typing import Optional
@@ -67,9 +68,7 @@ class OTSHA3:
                     if "status" in json_string:
                         status = json.loads(json_string)["status"]
                         if status != 0:
-                            raise Exception(
-                                "Acknowledge error: Device and host not in sync"
-                            )
+                            raise Exception("Acknowledge error: Device and host not in sync")
                         return status
                 except Exception:
                     raise Exception("Acknowledge error: Device and host not in sync")

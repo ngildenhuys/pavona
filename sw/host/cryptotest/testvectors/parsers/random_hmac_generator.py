@@ -29,13 +29,15 @@ def generate_test_vectors(args):
         # Generate random key
         key_bytes = args.key_length // 8
         if args.key_length % 8 != 0:
-            logging.warning(f"Key length {args.key_length} is not a multiple of 8. "
-                            f"Generating {key_bytes + 1} bytes for the key.")
+            logging.warning(
+                f"Key length {args.key_length} is not a multiple of 8. "
+                f"Generating {key_bytes + 1} bytes for the key."
+            )
             key = random(key_bytes + 1)
         else:
             key = random(key_bytes)
 
-        msg_len = int.from_bytes(random(4), byteorder='big', signed=False) % (MESSAGE_LENGTH + 1)
+        msg_len = int.from_bytes(random(4), byteorder="big", signed=False) % (MESSAGE_LENGTH + 1)
         msg = random(msg_len)
         tag = []
 
@@ -78,40 +80,46 @@ def generate_test_vectors(args):
                 tag = bytes(tag_list)  # Convert back to bytes
                 verify_result = False
 
-        test_vectors.append({
-            "vendor": "random",
-            "test_case_id": count,
-            "algorithm": "hmac",
-            "hash_alg": args.hash_alg,
-            "key": list(key),
-            "message": list(msg),
-            "tag": list(tag),
-            "result": verify_result,
-        })
+        test_vectors.append(
+            {
+                "vendor": "random",
+                "test_case_id": count,
+                "algorithm": "hmac",
+                "hash_alg": args.hash_alg,
+                "key": list(key),
+                "message": list(msg),
+                "tag": list(tag),
+                "result": verify_result,
+            }
+        )
 
     return test_vectors
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dst',
-                        metavar='FILE',
-                        type=argparse.FileType('w'),
-                        help='Write output to this file.')
-    parser.add_argument('--schema', type=str, help='Testvector schema file')
-    parser.add_argument('--count',
-                        type=int,
-                        help='Number of test vectors to generate',
-                        required=True)
-    parser.add_argument('--key_length',
-                        type=int,
-                        default=DEFAULT_KEY_LENGTH,
-                        help=f'Key length in bits [{MIN_KEY_LENGTH}-{MAX_KEY_LENGTH}]')
-    parser.add_argument('--hash_alg',
-                        type=str,
-                        help=('Hash algorithm [sha-1, sha-224, sha-256, sha-384, '
-                              'sha-512, sha3-256, sha3-384, sha3-512]'),
-                        required=True)
+    parser.add_argument(
+        "--dst", metavar="FILE", type=argparse.FileType("w"), help="Write output to this file."
+    )
+    parser.add_argument("--schema", type=str, help="Testvector schema file")
+    parser.add_argument(
+        "--count", type=int, help="Number of test vectors to generate", required=True
+    )
+    parser.add_argument(
+        "--key_length",
+        type=int,
+        default=DEFAULT_KEY_LENGTH,
+        help=f"Key length in bits [{MIN_KEY_LENGTH}-{MAX_KEY_LENGTH}]",
+    )
+    parser.add_argument(
+        "--hash_alg",
+        type=str,
+        help=(
+            "Hash algorithm [sha-1, sha-224, sha-256, sha-384, "
+            "sha-512, sha3-256, sha3-384, sha3-512]"
+        ),
+        required=True,
+    )
     args = parser.parse_args()
 
     if not (MIN_KEY_LENGTH <= args.key_length <= MAX_KEY_LENGTH):
@@ -132,5 +140,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

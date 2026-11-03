@@ -21,32 +21,34 @@ REPO_TOP = Path(__file__).parents[1].resolve()
 def main():
     """Run tlgen as a script."""
     parser = argparse.ArgumentParser(prog="tlgen")
-    parser.add_argument('--tl-xbar-cfg',
-                        '-t',
-                        metavar='file',
-                        required=True,
-                        type=argparse.FileType('r'),
-                        help="Crossbar configuration Hjson file.")
-    parser.add_argument('--doc',
-                        '-d',
-                        action='store_true',
-                        help='Generate self HTML document in stdout')
-    parser.add_argument('--outdir',
-                        '-o',
-                        help=("Target directory. tlgen needs 'rtl/' and 'dv/' "
-                              "directory under the target dir"),
-                        required=True)
-    parser.add_argument('--ip-path',
-                        default="",
-                        help='''
+    parser.add_argument(
+        "--tl-xbar-cfg",
+        "-t",
+        metavar="file",
+        required=True,
+        type=argparse.FileType("r"),
+        help="Crossbar configuration Hjson file.",
+    )
+    parser.add_argument(
+        "--doc", "-d", action="store_true", help="Generate self HTML document in stdout"
+    )
+    parser.add_argument(
+        "--outdir",
+        "-o",
+        help=("Target directory. tlgen needs 'rtl/' and 'dv/' directory under the target dir"),
+        required=True,
+    )
+    parser.add_argument(
+        "--ip-path",
+        default="",
+        help="""
         Additional path to generated rtl/ or dv/ folders: outdir/ip_path/rtl
-        Only needed when there are multiple xbar in outdir''')
-    parser.add_argument('--libname',
-                        '-l',
-                        type=str,
-                        default="ip",
-                        help="Library name for xbar. Default is 'ip'.")
-    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose')
+        Only needed when there are multiple xbar in outdir""",
+    )
+    parser.add_argument(
+        "--libname", "-l", type=str, default="ip", help="Library name for xbar. Default is 'ip'."
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose")
 
     args = parser.parse_args()
 
@@ -57,7 +59,7 @@ def main():
 
     if args.doc:
         # Generate Doc and return
-        sys.stdout.write(tlgen.selfdoc(heading=2, cmd='tlgen.py --doc'))
+        sys.stdout.write(tlgen.selfdoc(heading=2, cmd="tlgen.py --doc"))
         return
 
     # Check if outdir exists. If not, show error and exit
@@ -88,13 +90,13 @@ def main():
     outdir = Path(args.outdir).resolve().relative_to(REPO_TOP) / args.ip_path
     results = tlgen.generate(xbar, str(outdir), args.libname)
 
-    dv_path = Path(args.outdir) / args.ip_path / 'dv/autogen'
+    dv_path = Path(args.outdir) / args.ip_path / "dv/autogen"
     dv_path.mkdir(parents=True, exist_ok=True)
 
     for filename, filecontent in results:
         filepath = Path(args.outdir) / args.ip_path / filename
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        with filepath.open(mode='w', encoding='UTF-8') as fout:
+        with filepath.open(mode="w", encoding="UTF-8") as fout:
             fout.write(filecontent)
 
     # generate TB

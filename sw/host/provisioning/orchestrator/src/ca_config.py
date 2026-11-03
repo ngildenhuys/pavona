@@ -12,6 +12,7 @@ from util import resolve_runfile
 @dataclass
 class CaConfig:
     """Class for Certificate Authority configuration."""
+
     name: str  # valid: must be in ["dice_ca", "ext_ca"]
     certificate: str  # valid: any valid path to a CA PEM file
     key_type: str  # valid: must be in ["Raw", "Token"]
@@ -29,27 +30,24 @@ class CaConfig:
         """Validates this object's attributes."""
         # Validate name.
         if self.name not in {"dice_ca", "ext_ca"}:
-            raise ValueError("CA name must be in [\"dice_ca\", \"ext_ca\"]")
+            raise ValueError('CA name must be in ["dice_ca", "ext_ca"]')
         # Validate certificate path.
         if not self.certificate.exists():
-            raise ValueError("CA certificate file ({}) does not exist.".format(
-                self.certificate))
+            raise ValueError("CA certificate file ({}) does not exist.".format(self.certificate))
         if self.certificate.suffix != ".pem":
             raise ValueError(
-                "CA certificate file ({}) must be a PEM file.".format(
-                    self.certificate))
+                "CA certificate file ({}) must be a PEM file.".format(self.certificate)
+            )
         # Validate key_type.
         if self.key_type not in {"Raw", "Token"}:
-            raise ValueError("CA key type must be in [\"Raw\", \"Token\"]")
+            raise ValueError('CA key type must be in ["Raw", "Token"]')
         # TODO: validate key_id
         # Validate key.
         if self.key_type == "Raw":
             if not self.key.exists():
                 raise ValueError("CA private file does not exist.")
             if self.key.suffix != ".der":
-                raise ValueError(
-                    "CA private file ({}) must be a DER file.".format(
-                        self.key))
+                raise ValueError("CA private file ({}) must be a DER file.".format(self.key))
         elif self.key_type == "Token":
             # TODO: check if Cloud KMS / Nitokey token ID exists.
             pass

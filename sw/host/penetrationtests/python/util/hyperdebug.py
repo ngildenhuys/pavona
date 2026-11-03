@@ -50,9 +50,9 @@ class HyperDebug:
 
     def clear_bitstream(self, delay=2, print_output=True):
         command = (
-            [self.opentitantool] +
-            self.tool_args +
-            ["--exec", "transport init", "--exec", "fpga clear-bitstream", "no-op"]
+            [self.opentitantool]
+            + self.tool_args
+            + ["--exec", "transport init", "--exec", "fpga clear-bitstream", "no-op"]
         )
         try:
             run(command, check=True, capture_output=True, text=True)
@@ -247,7 +247,7 @@ class HyperDebug:
         decoded_response = response.decode("utf-8", errors="ignore").strip()
 
         if decoded_response.startswith(command):
-            decoded_response = decoded_response[len(command):].strip()
+            decoded_response = decoded_response[len(command) :].strip()
 
         return decoded_response.strip()
 

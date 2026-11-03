@@ -42,14 +42,14 @@ def pack_arith_shares(share_vals, kbits, nshares):
     for s in range(nshares):
         for bit in range(kbits):
             w = bitslice(share_vals[s], bit)
-            buf += w.to_bytes(32, 'little')
-        buf += b'\x00' * 32
+            buf += w.to_bytes(32, "little")
+        buf += b"\x00" * 32
     return bytes(buf)
 
 
 def gen_seca2bmodq_test(
-        seed: Optional[int],
-        data_file: TextIO, exp_file: TextIO, dexp_file: TextIO):
+    seed: Optional[int], data_file: TextIO, exp_file: TextIO, dexp_file: TextIO
+):
     if seed is not None:
         random.seed(seed)
 
@@ -57,23 +57,23 @@ def gen_seca2bmodq_test(
     share_vals = arith_share(x_vals, NSHARES)
 
     xa = pack_arith_shares(share_vals, KBITS, NSHARES)
-    zb_init = b'\x00' * ((KBITS + 1) * NSHARES * 32)
+    zb_init = b"\x00" * ((KBITS + 1) * NSHARES * 32)
 
     r_bytes = bytearray()
     for bit in range(KBITS):
-        r_bytes += bitslice(x_vals, bit).to_bytes(32, 'little')
+        r_bytes += bitslice(x_vals, bit).to_bytes(32, "little")
 
-    write_test_data({'xa': xa, 'zb': zb_init}, data_file)
+    write_test_data({"xa": xa, "zb": zb_init}, data_file)
     write_test_exp({}, exp_file)
-    write_test_dexp({'r': bytes(r_bytes)}, dexp_file)
+    write_test_dexp({"r": bytes(r_bytes)}, dexp_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--seed', type=int, required=False)
-    parser.add_argument('data', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('exp', metavar='FILE', type=argparse.FileType('w'))
-    parser.add_argument('dexp', metavar='FILE', type=argparse.FileType('w'))
+    parser.add_argument("-s", "--seed", type=int, required=False)
+    parser.add_argument("data", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("exp", metavar="FILE", type=argparse.FileType("w"))
+    parser.add_argument("dexp", metavar="FILE", type=argparse.FileType("w"))
     args = parser.parse_args()
     with args.data, args.exp, args.dexp:
         gen_seca2bmodq_test(args.seed, args.data, args.exp, args.dexp)

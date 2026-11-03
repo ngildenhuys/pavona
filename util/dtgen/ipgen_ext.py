@@ -44,11 +44,11 @@ dtgen_schema = {
                 },
                 "doc": {
                     "type": "string",
-                }
+                },
             },
             "required": ["type"],
         }
-    }
+    },
 }
 
 SCALAR_GETTER_HDR_TEMPLATE = """
@@ -77,9 +77,8 @@ class IpgenDtGenParam:
 
     @staticmethod
     def from_raw(param_name: str, value: object, dtgen: dict[str, object]) -> "IpgenDtGenParam":
-        name = dtgen.get('name', param_name)
-        return IpgenDtGenParam(type = dtgen['type'], value = value, name = name,
-                               doc = dtgen.get('doc', ""))
+        name = dtgen.get("name", param_name)
+        return IpgenDtGenParam(type=dtgen["type"], value=value, name=name, doc=dtgen.get("doc", ""))
 
 
 @dataclass
@@ -89,15 +88,17 @@ class IpgenDtGen:
     @staticmethod
     def from_ipconfig(ipconfig: dict[str, object]) -> "IpgenDtGen":
         param_values = ipconfig["param_values"]
-        dtgen = ipconfig.get('dtgen', {})
-        validate(instance = dtgen, schema = dtgen_schema)
+        dtgen = ipconfig.get("dtgen", {})
+        validate(instance=dtgen, schema=dtgen_schema)
         params = []
-        for (name, param) in dtgen.items():
+        for name, param in dtgen.items():
             if name not in param_values:
-                raise ValueError(f"dtgen refers to ipconfig parameter '{name}' " +
-                                 "which does not appear in 'param_values'")
+                raise ValueError(
+                    f"dtgen refers to ipconfig parameter '{name}' "
+                    + "which does not appear in 'param_values'"
+                )
             params.append(IpgenDtGenParam.from_raw(name, param_values[name], param))
-        return IpgenDtGen(params = params)
+        return IpgenDtGen(params=params)
 
 
 class IpgenExt(Extension):
@@ -110,7 +111,7 @@ class IpgenExt(Extension):
         self.dtgen = IpgenDtGen.from_ipconfig(self.ip_helper.ipconfig)
 
     def create_ext(ip_helper: IpHelper) -> Optional["Extension"]:
-        if ip_helper.ipconfig and 'dtgen' in ip_helper.ipconfig:
+        if ip_helper.ipconfig and "dtgen" in ip_helper.ipconfig:
             return IpgenExt(ip_helper)
 
     def extend_dt_ip(self) -> tuple[Name, StructType]:
@@ -119,9 +120,9 @@ class IpgenExt(Extension):
         for param in self.dtgen.params:
             # At the moment, only simple scalar types are supported
             st.add_field(
-                name = Name.from_snake_case(param.name),
-                field_type = ScalarType(SCALAR_TYPES[param.type]["c_typename"]),
-                docstring = param.doc,
+                name=Name.from_snake_case(param.name),
+                field_type=ScalarType(SCALAR_TYPES[param.type]["c_typename"]),
+                docstring=param.doc,
             )
 
         return Name(["ipgen_ext"]), st
@@ -140,21 +141,21 @@ class IpgenExt(Extension):
             # Generate one function per attribute
             for param in self.dtgen.params:
                 res += SCALAR_GETTER_HDR_TEMPLATE.format(
-                    rettype = SCALAR_TYPES[param.type]["c_typename"],
-                    ipname = self.ip_helper.ip_name.as_snake_case(),
-                    fnname = param.name,
-                    docshort = param.doc,
+                    rettype=SCALAR_TYPES[param.type]["c_typename"],
+                    ipname=self.ip_helper.ip_name.as_snake_case(),
+                    fnname=param.name,
+                    docshort=param.doc,
                 )
         elif pos == Extension.DtIpPos.SourceEnd:
             # Generate one function per attribute
             for param in self.dtgen.params:
                 res += SCALAR_GETTER_SRC_TEMPLATE.format(
-                    rettype = SCALAR_TYPES[param.type]["c_typename"],
-                    ipname = self.ip_helper.ip_name.as_snake_case(),
-                    fnname = param.name,
-                    attrname = param.name,
-                    docshort = param.doc,
-                    invalid_value = SCALAR_TYPES[param.type]["c_invalid_value"],
+                    rettype=SCALAR_TYPES[param.type]["c_typename"],
+                    ipname=self.ip_helper.ip_name.as_snake_case(),
+                    fnname=param.name,
+                    attrname=param.name,
+                    docshort=param.doc,
+                    invalid_value=SCALAR_TYPES[param.type]["c_invalid_value"],
                 )
 
         return res

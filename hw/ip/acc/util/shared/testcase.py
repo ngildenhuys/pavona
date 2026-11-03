@@ -12,46 +12,44 @@ def _get_symbol(symbols: Dict[str, int], label: str) -> int:
     try:
         return symbols[label]
     except KeyError:
-        raise KeyError(f'Symbol {label} does not exist in the elf')
+        raise KeyError(f"Symbol {label} does not exist in the elf")
 
 
 def _is_numeric_str(value: str) -> bool:
-    return bool(re.match(r'(0x)?[0-9a-fA-F\s]+$', value))
+    return bool(re.match(r"(0x)?[0-9a-fA-F\s]+$", value))
 
 
 def _get_str_keyed_dict(data: Dict[str, object], key: str) -> Dict[str, object]:
     res = data.get(key, {})
-    assert isinstance(res, dict), f'Value of {key} must be a str-keyed dictionary'
+    assert isinstance(res, dict), f"Value of {key} must be a str-keyed dictionary"
     for label in res.keys():
-        assert isinstance(label, str), f'{label} must be a string, got {type(label)}'
+        assert isinstance(label, str), f"{label} must be a string, got {type(label)}"
     return res
 
 
-def _to_bytes_dict(input_dict: Dict[str, object],
-                   symbols: Dict[str, int]) -> Dict[str, bytes]:
+def _to_bytes_dict(input_dict: Dict[str, object], symbols: Dict[str, int]) -> Dict[str, bytes]:
     dmem: Dict[str, bytes] = {}
     for label, value in input_dict.items():
         assert isinstance(value, str), f"{label} value must be an ELF symbol or a BE hex string"
         value = value.strip()
         if _is_numeric_str(value):
-            value = re.sub(r'\s', '', value)
-            if not value.startswith('0x'):
+            value = re.sub(r"\s", "", value)
+            if not value.startswith("0x"):
                 # Raise an error to avoid confusion with decimal values.
                 raise ValueError('Numeric hex string must start with "0x"')
             value = value.removeprefix("0x")
-            value = '0' * (len(value) % 2) + value
+            value = "0" * (len(value) % 2) + value
             data_bytes = bytes.fromhex(value)[::-1]  # big-endian -> little-endian
         else:
             value_int = _get_symbol(symbols, value)
-            data_bytes = value_int.to_bytes(4, 'little')
+            data_bytes = value_int.to_bytes(4, "little")
         dmem[label] = data_bytes
     return dmem
 
 
-def _to_int_dict(input_dict: Dict[str, object],
-                 symbols: Dict[str, int]) -> Dict[str, int]:
+def _to_int_dict(input_dict: Dict[str, object], symbols: Dict[str, int]) -> Dict[str, int]:
     bytes_dict = _to_bytes_dict(input_dict, symbols)
-    return {k: int.from_bytes(v, 'little') for k, v in bytes_dict.items()}
+    return {k: int.from_bytes(v, "little") for k, v in bytes_dict.items()}
 
 
 @dataclass
@@ -60,15 +58,14 @@ class StateExpectations:
     regs: Dict[str, int]  # register label (e.g. x1) -> value
 
     @staticmethod
-    def _from_dict(data: Dict[str, object],
-                   symbols: Dict[str, int]) -> 'StateExpectations':
-        unknown_keys = set(data.keys()) - {'dmem', 'regs'}
+    def _from_dict(data: Dict[str, object], symbols: Dict[str, int]) -> "StateExpectations":
+        unknown_keys = set(data.keys()) - {"dmem", "regs"}
         if len(unknown_keys):
-            raise ValueError(f'Got unknown keys in testcase input/output: {unknown_keys}')
+            raise ValueError(f"Got unknown keys in testcase input/output: {unknown_keys}")
 
         return StateExpectations(
-            dmem=_to_bytes_dict(_get_str_keyed_dict(data, 'dmem'), symbols),
-            regs=_to_int_dict(_get_str_keyed_dict(data, 'regs'), symbols)
+            dmem=_to_bytes_dict(_get_str_keyed_dict(data, "dmem"), symbols),
+            regs=_to_int_dict(_get_str_keyed_dict(data, "regs"), symbols),
         )
 
 
@@ -79,8 +76,7 @@ class AccTestCase:
     output: StateExpectations
 
     @staticmethod
-    def from_hjson(hjson_str: str,
-                   symbols: Dict[str, int]) -> 'AccTestCase':
+    def from_hjson(hjson_str: str, symbols: Dict[str, int]) -> "AccTestCase":
         """
         Parse a testcase HJSON string into a AccTestCase object.
 
@@ -128,11 +124,11 @@ class AccTestCase:
         """
         data: Dict[str, object] = hjson.loads(hjson_str)
 
-        unknown_keys = set(data.keys()) - {'entrypoint', 'input', 'output'}
+        unknown_keys = set(data.keys()) - {"entrypoint", "input", "output"}
         if len(unknown_keys):
-            raise ValueError(f'Got unknown keys in testcase: {unknown_keys}')
+            raise ValueError(f"Got unknown keys in testcase: {unknown_keys}")
 
-        entrypoint = data.get('entrypoint', 0)
+        entrypoint = data.get("entrypoint", 0)
         if isinstance(entrypoint, int):
             entrypoint_addr = entrypoint
         elif isinstance(entrypoint, str):
@@ -141,10 +137,10 @@ class AccTestCase:
             else:
                 entrypoint_addr = _get_symbol(symbols, entrypoint)
         else:
-            raise ValueError(f'Entrypoint must be int or str, got {type(entrypoint)}')
+            raise ValueError(f"Entrypoint must be int or str, got {type(entrypoint)}")
 
         return AccTestCase(
             entrypoint=entrypoint_addr,
-            input=StateExpectations._from_dict(_get_str_keyed_dict(data, 'input'), symbols),
-            output=StateExpectations._from_dict(_get_str_keyed_dict(data, 'output'), symbols),
+            input=StateExpectations._from_dict(_get_str_keyed_dict(data, "input"), symbols),
+            output=StateExpectations._from_dict(_get_str_keyed_dict(data, "output"), symbols),
         )

@@ -13,7 +13,7 @@ class Fix:
         self.end_line = end_line
 
     def __repr__(self):
-        return 'Fix: ' + self.filename
+        return "Fix: " + self.filename
 
 
 class ErrorMessage:
@@ -25,47 +25,47 @@ class ErrorMessage:
         self.suggestion = None
 
     def __repr__(self):
-        return f'{self.filename}:{self.line}:{self.column}: {self.message}'
+        return f"{self.filename}:{self.line}:{self.column}: {self.message}"
 
     def fix(self, suggestion):
-        '''Adds a change suggestion to an existing ErrorMessage'''
+        """Adds a change suggestion to an existing ErrorMessage"""
         self.suggestion = suggestion
 
     def as_rdf_dict(self):
-        '''Creates a dictionary with data used as a component
+        """Creates a dictionary with data used as a component
         in Reviewdog Diagnostic Format
 
         The result is a dict for a single element of 'diagnostics' node in RDF
         implements this structure:
         https://github.com/reviewdog/reviewdog/blob/master/proto/rdf/reviewdog.proto#L39
-        '''
+        """
         result = {
-            'message': self.message,
-            'location': {
-                'path': self.filename,
-                'range': {
-                    'start': {'line': self.line, 'column': self.column}
-                }
+            "message": self.message,
+            "location": {
+                "path": self.filename,
+                "range": {"start": {"line": self.line, "column": self.column}},
             },
-            'severity': 'WARNING',
+            "severity": "WARNING",
             # rule code is embedded in the message, but we can move it here:
             # 'code':
         }
 
         if self.suggestion:
-            result['suggestions'] = [{
-                'range': {
-                    'start': {'line': self.line, 'column': self.column},
-                    'end': {'line': self.suggestion.end_line}
-                },
-                'text': self.suggestion.text
-            }]
+            result["suggestions"] = [
+                {
+                    "range": {
+                        "start": {"line": self.line, "column": self.column},
+                        "end": {"line": self.suggestion.end_line},
+                    },
+                    "text": self.suggestion.text,
+                }
+            ]
 
         return result
 
 
 def error_messages_to_rdf(messages):
-    '''Create a dictionary structured as Reviewdog Diagnostic Format
+    """Create a dictionary structured as Reviewdog Diagnostic Format
     using ErrorMessages
 
     implements this structure:
@@ -76,18 +76,20 @@ def error_messages_to_rdf(messages):
         a dictionary ready to be json-dumped to look like this:
         https://github.com/reviewdog/reviewdog/tree/master/proto/rdf#rdjson
 
-    '''
+    """
     result = {
-        'source': {'name': 'verible-verilog-lint',
-                   'url': 'https://github.com/chipsalliance/verible'},
-        'severity': 'WARNING'
+        "source": {
+            "name": "verible-verilog-lint",
+            "url": "https://github.com/chipsalliance/verible",
+        },
+        "severity": "WARNING",
     }
-    result['diagnostics'] = tuple([msg.as_rdf_dict() for msg in messages])
+    result["diagnostics"] = tuple([msg.as_rdf_dict() for msg in messages])
     return result
 
 
 def read_efm(filename):
-    '''Reads errorformat-ed log from linter
+    """Reads errorformat-ed log from linter
 
     the syntax of each line should be: "%f:%l:%c: %m"
     the fields are documented here:
@@ -97,40 +99,38 @@ def read_efm(filename):
     Returns
     -------
         a list of ErrorMessage, an instance for each error is created
-    '''
-    with open(filename, 'r') as f:
+    """
+    with open(filename, "r") as f:
         lines = f.readlines()
 
     messages = []
     for line in lines:
-        data = re.split(':', line)
+        data = re.split(":", line)
         if len(data) < 4:
             # skip this line, it's not errorformat
             continue
         if len(data) > 4:
             # there are ':' inside the message part
             # merge the message part into one string
-            data = data[0:3] + [':'.join(data[3:])]
+            data = data[0:3] + [":".join(data[3:])]
 
         data[2] = re.split("-", data[2])[0]
 
         # now the data has 4 elements
         data = [elem.strip() for elem in data]
-        messages.append(
-            ErrorMessage(data[0], int(data[1]), int(data[2]), data[3])
-        )
+        messages.append(ErrorMessage(data[0], int(data[1]), int(data[2]), data[3]))
 
     return messages
 
 
 def read_diff(filename):
-    '''Read unified diff file with code changes
+    """Read unified diff file with code changes
 
     Returns
     -------
         a list of Fix, an instance for each hunk in the diff file is created
-    '''
-    patch_set = PatchSet.from_filename(filename, encoding='utf-8')
+    """
+    patch_set = PatchSet.from_filename(filename, encoding="utf-8")
     fixes = []
 
     # iterating over a PatchSet returns consecutive lines
@@ -139,12 +139,8 @@ def read_diff(filename):
         patch = patch_set[file_no]
         path = patch.path
         for hunk in patch:
-            removed_lines = [
-                line[1:] for line in hunk.source if line.startswith('-')
-            ]
-            added_lines = [
-                line[1:] for line in hunk.target if line.startswith('+')
-            ]
+            removed_lines = [line[1:] for line in hunk.source if line.startswith("-")]
+            added_lines = [line[1:] for line in hunk.target if line.startswith("+")]
             start_line = hunk.source_start + 1
             end_line = hunk.source_start + 1 + len(removed_lines)
 
@@ -152,15 +148,13 @@ def read_diff(filename):
             #     added_lines will be empty as expected
             # if the fix only adds text
             #     start_line == end_line as expected
-            fixes.append(
-                Fix(path, ''.join(added_lines), start_line, end_line)
-            )
+            fixes.append(Fix(path, "".join(added_lines), start_line, end_line))
 
     return fixes
 
 
 def apply_fixes(err_messages, fixes):
-    '''Add change suggestions to ErrorMessages using Fix objects
+    """Add change suggestions to ErrorMessages using Fix objects
 
     this function matches Fixes with their corresponding ErrorMessages
     using file names and line numbers, then applies the Fixes
@@ -171,10 +165,11 @@ def apply_fixes(err_messages, fixes):
     Returns
     -------
         None
-    '''
+    """
     for fix in fixes:
         filtered_msgs = [
-            msg for msg in err_messages
+            msg
+            for msg in err_messages
             if msg.filename == fix.filename and msg.line == fix.start_line
         ]
 
@@ -186,16 +181,25 @@ def apply_fixes(err_messages, fixes):
 
 
 @click.command()
-@click.option('--efm-file', '-e', type=click.Path(exists=True), required=True,
-              help='name of a file containing linter output in errorformat')
-@click.option('--diff-file', '-d', type=click.Path(exists=True),
-              required=False, help='name of a file containing '
-                                   'change suggestions in diff format')
+@click.option(
+    "--efm-file",
+    "-e",
+    type=click.Path(exists=True),
+    required=True,
+    help="name of a file containing linter output in errorformat",
+)
+@click.option(
+    "--diff-file",
+    "-d",
+    type=click.Path(exists=True),
+    required=False,
+    help="name of a file containing change suggestions in diff format",
+)
 def main(efm_file, diff_file):
-    '''Generate Reviewdog Diagnostic Format file,
+    """Generate Reviewdog Diagnostic Format file,
     using a log file from a linter (errorformat) and optionally a patch with
     fix suggestions
-    '''
+    """
     messages = read_efm(efm_file)
 
     if diff_file:
@@ -205,5 +209,5 @@ def main(efm_file, diff_file):
     print(json.dumps(error_messages_to_rdf(messages)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

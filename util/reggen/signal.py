@@ -10,11 +10,10 @@ from basegen.validate import create_validator
 from basegen.lib import cast_hjson_values
 
 
-SIGNAL_VALIDATOR = create_validator('urn:reggen:signal')
+SIGNAL_VALIDATOR = create_validator("urn:reggen:signal")
 
 
 class Signal:
-
     def __init__(self, name: str, desc: str, bits: Bits, enabled_after_reset: bool = False):
         self.name = name
         self.desc = desc
@@ -22,53 +21,48 @@ class Signal:
         self.enabled_after_reset = enabled_after_reset
 
     @staticmethod
-    def from_raw(what: str, lsb: int, raw: object) -> 'Signal':
+    def from_raw(what: str, lsb: int, raw: object) -> "Signal":
         if not isinstance(raw, dict):
-            raise TypeError('signal must be instantiated from dict: signal of ' + what)
+            raise TypeError("signal must be instantiated from dict: signal of " + what)
         SIGNAL_VALIDATOR.validate(cast_hjson_values(raw))
 
-        name = check_name(raw['name'], 'name field of ' + what)
-        desc = check_str(raw['desc'], 'desc field of ' + what)
-        width = check_int(raw.get('width', 1), 'width field of ' + what)
-        enabled_after_reset = check_bool(raw.get("enabled_after_reset", False),
-                                         "enabled_after_reset field of " + what)
+        name = check_name(raw["name"], "name field of " + what)
+        desc = check_str(raw["desc"], "desc field of " + what)
+        width = check_int(raw.get("width", 1), "width field of " + what)
+        enabled_after_reset = check_bool(
+            raw.get("enabled_after_reset", False), "enabled_after_reset field of " + what
+        )
 
         if width <= 0:
-            raise ValueError(f'The width field of signal {name} ({what}) '
-                             f'has value {width}, but should be positive.')
+            raise ValueError(
+                f"The width field of signal {name} ({what}) "
+                f"has value {width}, but should be positive."
+            )
 
         bits = Bits(lsb + width - 1, lsb)
 
         return Signal(name, desc, bits, enabled_after_reset)
 
     @staticmethod
-    def from_raw_list(what: str, raw: object) -> Sequence['Signal']:
+    def from_raw_list(what: str, raw: object) -> Sequence["Signal"]:
         lsb = 0
         ret = []
         for idx, entry in enumerate(check_list(raw, what)):
-            entry_what = 'entry {} of {}'.format(idx, what)
+            entry_what = "entry {} of {}".format(idx, what)
             interrupt = Signal.from_raw(entry_what, lsb, entry)
             ret.append(interrupt)
             lsb += interrupt.bits.width()
         return ret
 
     def _asdict(self) -> Dict[str, object]:
-        return {
-            'name': self.name,
-            'desc': self.desc,
-            'width': str(self.bits.width())
-        }
+        return {"name": self.name, "desc": self.desc, "width": str(self.bits.width())}
 
     def as_nwt_dict(self, type_field: str) -> Dict[str, object]:
-        '''Return a view of the signal as a dictionary
+        """Return a view of the signal as a dictionary
 
         The dictionary has fields "name", "width" and "type", the last
         of which comes from the type_field argument. Used for topgen
         integration.
 
-        '''
-        return {
-            'name': self.name,
-            'width': self.bits.width(),
-            'type': type_field
-        }
+        """
+        return {"name": self.name, "width": self.bits.width(), "type": type_field}

@@ -39,7 +39,6 @@ BOOTSTRAP = args.bootstrap
 
 
 class AsymCryptoScaTest(unittest.TestCase):
-
     def test_init(self):
         asymsca = OTAsymCrypto(target)
         device_id, owner_page, boot_log, boot_measurements, version = asymsca.init()
@@ -104,9 +103,7 @@ class AsymCryptoScaTest(unittest.TestCase):
         }
         actual_boot_log_keys = set(boot_log_json.keys())
 
-        self.assertEqual(
-            expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match"
-        )
+        self.assertEqual(expected_boot_log_keys, actual_boot_log_keys, "boot_log keys do not match")
 
         expected_boot_measurements_keys = {"bl0", "rom_ext"}
         actual_boot_measurements_keys = set(boot_measurements_json.keys())
@@ -160,9 +157,7 @@ class AsymCryptoScaTest(unittest.TestCase):
             "cfg": 0,
         }
 
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, sign_ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, sign_ignored_keys_set)
 
         signature = actual_result_json["sig"]
         signature = signature[:256]
@@ -201,9 +196,7 @@ class AsymCryptoScaTest(unittest.TestCase):
             "cfg": 0,
         }
 
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_p256_sign(self):
         key = ECC.generate(curve="P-256")
@@ -239,9 +232,7 @@ class AsymCryptoScaTest(unittest.TestCase):
             "cfg": 0,
         }
 
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, sign_ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, sign_ignored_keys_set)
 
         verifier = DSS.new(key.public_key(), "fips-186-3")
         r = actual_result_json["r"]
@@ -281,9 +272,7 @@ class AsymCryptoScaTest(unittest.TestCase):
             "cfg": 0,
         }
 
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, ignored_keys_set)
 
     def test_char_p384_sign(self):
         key = ECC.generate(curve="P-384")
@@ -319,9 +308,7 @@ class AsymCryptoScaTest(unittest.TestCase):
             "cfg": 0,
         }
 
-        utils.compare_json_data(
-            actual_result_json, expected_result_json, sign_ignored_keys_set
-        )
+        utils.compare_json_data(actual_result_json, expected_result_json, sign_ignored_keys_set)
 
         verifier = DSS.new(key.public_key(), "fips-186-3")
         r = actual_result_json["r"]
@@ -335,9 +322,7 @@ class AsymCryptoScaTest(unittest.TestCase):
 if __name__ == "__main__":
     r = Runfiles.Create()
     # Get the opentitantool path.
-    opentitantool_path = r.Rlocation(
-        "pavona_pavona/sw/host/opentitantool/opentitantool"
-    )
+    opentitantool_path = r.Rlocation("pavona_pavona/sw/host/opentitantool/opentitantool")
     # Program the bitstream for FPGAs.
     bitstream_path = None
     if BITSTREAM:

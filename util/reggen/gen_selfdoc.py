@@ -6,6 +6,7 @@
 Generates the documentation for the register tool
 
 """
+
 from reggen.access import SWACCESS_PERMITTED, HWACCESS_PERMITTED
 from reggen import validate
 
@@ -177,17 +178,16 @@ doc_tail = """
 
 """  # noqa: E501
 
-TBL_HEAD_USE = ("\nKey | Kind | Type | Description of Value\n"
-                + "--- | ---- | ---- | --------------------\n")
-TBL_HEAD = ("\nKey | Description\n"
-            + "--- | -----------\n")
+TBL_HEAD_USE = (
+    "\nKey | Kind | Type | Description of Value\n" + "--- | ---- | ---- | --------------------\n"
+)
+TBL_HEAD = "\nKey | Description\n" + "--- | -----------\n"
 
 
 def doc_tbl_line(key: str, use: Optional[str], desc: Any) -> str:
     if use is not None:
         desc_key, desc_txt = desc
-        val_type = (validate.val_types[desc_key][0]
-                    if desc_key is not None else None)
+        val_type = validate.val_types[desc_key][0] if desc_key is not None else None
     else:
         assert isinstance(desc, str)
         val_type = None
@@ -195,8 +195,7 @@ def doc_tbl_line(key: str, use: Optional[str], desc: Any) -> str:
 
     if val_type is not None:
         assert use is not None
-        return '{} | {} | {} | {}\n'.format(key, validate.key_use[use],
-                                            val_type, desc_txt)
+        return "{} | {} | {} | {}\n".format(key, validate.key_use[use], val_type, desc_txt)
     else:
         return key + " | " + desc_txt + "\n"
 
@@ -228,11 +227,13 @@ def document(outfile: TextIO) -> None:
     doc_text += "\n"
     doc_text += document_schema(None, "urn:reggen:enum_entry", schema_parser)
 
-    doc_text += ("\n\nThe list of registers may include single entry groups "
-                 "to control the offset, open a window or generate registers:")
+    doc_text += (
+        "\n\nThe list of registers may include single entry groups "
+        "to control the offset, open a window or generate registers:"
+    )
     doc_text += "\n" + TBL_HEAD_USE
     for x in validate.list_optone:
-        doc_text += doc_tbl_line(x, 'o', validate.list_optone[x])
+        doc_text += doc_tbl_line(x, "o", validate.list_optone[x])
 
     doc_text += offset_intro
     doc_text += regwen_intro

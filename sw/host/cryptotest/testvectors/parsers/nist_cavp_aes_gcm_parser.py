@@ -4,9 +4,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Parser for converting NIST AES-GCM testvectors to JSON.
-
-"""
+"""Parser for converting NIST AES-GCM testvectors to JSON."""
 
 import argparse
 import sys
@@ -64,8 +62,13 @@ def parse_testcases(args) -> None:
         if len(test_case["plaintext"]) < 64:
             plaintext_length_valid = True
 
-        if (tag_length_valid and iv_length_valid and aad_length_valid and
-                ciphertext_length_valid and plaintext_length_valid):
+        if (
+            tag_length_valid
+            and iv_length_valid
+            and aad_length_valid
+            and ciphertext_length_valid
+            and plaintext_length_valid
+        ):
             test_cases.append(test_case)
 
     # Validate generated JSON
@@ -79,34 +82,17 @@ def parse_testcases(args) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Parsing utility for AES-GCM testvectors.")
+    parser = argparse.ArgumentParser(description="Parsing utility for AES-GCM testvectors.")
 
+    parser.add_argument("--src", help="Source file to import.")
+    parser.add_argument("--dst", help="Destination of the output file.")
     parser.add_argument(
-        "--src",
-        help="Source file to import."
+        "--operation", choices=["Encrypt", "Decrypt"], type=str, help="Type of operation."
     )
     parser.add_argument(
-        "--dst",
-        help="Destination of the output file."
+        "--key_len", choices=[128, 192, 256], type=int, help="Length of key in bits."
     )
-    parser.add_argument(
-        "--operation",
-        choices = ["Encrypt", "Decrypt"],
-        type = str,
-        help="Type of operation."
-    )
-    parser.add_argument(
-        "--key_len",
-        choices = [128, 192, 256],
-        type = int,
-        help = "Length of key in bits."
-    )
-    parser.add_argument(
-        "--schema",
-        type = str,
-        help = "Testvector schema file"
-    )
+    parser.add_argument("--schema", type=str, help="Testvector schema file")
     args = parser.parse_args()
     parse_testcases(args)
 

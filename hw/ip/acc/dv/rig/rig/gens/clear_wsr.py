@@ -14,12 +14,12 @@ from ..snippet_gen import GenCont, GenRet, SnippetGen
 
 
 class ClearWsr(SnippetGen):
-    ''' A snippet generator to XOR wide state registers after blanking
-        in order to allow for bignum instruction execution with known
-        register values in the ISS model. This is most important for
-        verifying the PQC vector extensions which perform computation
-        based on known wide data registers and the specialized MOD reg.
-    '''
+    """A snippet generator to XOR wide state registers after blanking
+    in order to allow for bignum instruction execution with known
+    register values in the ISS model. This is most important for
+    verifying the PQC vector extensions which perform computation
+    based on known wide data registers and the specialized MOD reg.
+    """
 
     starts_program = True
 
@@ -27,24 +27,21 @@ class ClearWsr(SnippetGen):
         super().__init__()
 
         # bn.xor insn
-        self.bn_xor = self._get_named_insn(insns_file, 'bn.xor')
+        self.bn_xor = self._get_named_insn(insns_file, "bn.xor")
         self.bn_xor_wrd_op_type = self.bn_xor.operands[0].op_type
         self.bn_xor_wrs1_op_type = self.bn_xor.operands[1].op_type
         self.bn_xor_wrs2_op_type = self.bn_xor.operands[1].op_type
 
         # bn.wsrw insn
-        self.bn_wsrw = self._get_named_insn(insns_file, 'bn.wsrw')
+        self.bn_wsrw = self._get_named_insn(insns_file, "bn.wsrw")
         self.bn_wsrw_wsr_op_type = self.bn_wsrw.operands[0].op_type
         self.bn_wsrw_wrs_op_type = self.bn_wsrw.operands[1].op_type
 
-    def gen(self,
-            cont: GenCont,
-            model: Model,
-            program: Program) -> Optional[GenRet]:
-        ''' Generate XOR operations for each WSR and wide data register
-            in order to clear the value to a default of 0 after internal
-            blanking of registers.
-        '''
+    def gen(self, cont: GenCont, model: Model, program: Program) -> Optional[GenRet]:
+        """Generate XOR operations for each WSR and wide data register
+        in order to clear the value to a default of 0 after internal
+        blanking of registers.
+        """
 
         # Make sure there is enough fuel to clear register values
         if model.fuel < 34:
@@ -67,8 +64,8 @@ class ClearWsr(SnippetGen):
             prog_xor_insn = ProgInsn(self.bn_xor, xor_op_vals, None)
             insn_list.append(prog_xor_insn)
 
-        mem_type = 'wsr'
-        wsrw_wsr = model._kmac_wsr_addr['MOD']
+        mem_type = "wsr"
+        wsrw_wsr = model._kmac_wsr_addr["MOD"]
         addr = wsrw_wsr
         wsrw_wrs = 0
         wsrw_op_vals = [wsrw_wsr, wsrw_wrs]

@@ -21,23 +21,18 @@ def generate(xbar: Xbar, outpath: str, library_name: str = "ip") -> List[Tuple[s
     This assumes that the model has been elaborated already. Returns a list of
     pairs of files to write, each in the form (path, contents).
     """
-    xbar_rtl_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.rtl.sv.tpl'))
-    xbar_pkg_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.pkg.sv.tpl'))
-    xbar_core_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.core.tpl'))
-    xbar_hjson_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.hjson.tpl'))
-    xbar_build_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.BUILD.tpl'))
+    xbar_rtl_tpl = Template(filename=str(importlib.resources.files("tlgen") / "xbar.rtl.sv.tpl"))
+    xbar_pkg_tpl = Template(filename=str(importlib.resources.files("tlgen") / "xbar.pkg.sv.tpl"))
+    xbar_core_tpl = Template(filename=str(importlib.resources.files("tlgen") / "xbar.core.tpl"))
+    xbar_hjson_tpl = Template(filename=str(importlib.resources.files("tlgen") / "xbar.hjson.tpl"))
+    xbar_build_tpl = Template(filename=str(importlib.resources.files("tlgen") / "xbar.BUILD.tpl"))
     xbar_databuild_tpl = Template(
-        filename=str(importlib.resources.files('tlgen') / 'xbar.data_BUILD.tpl'))
+        filename=str(importlib.resources.files("tlgen") / "xbar.data_BUILD.tpl")
+    )
     try:
         out_rtl = xbar_rtl_tpl.render(xbar=xbar)
         out_pkg = xbar_pkg_tpl.render(xbar=xbar)
-        out_core = xbar_core_tpl.render(xbar=xbar,
-                                        library_name=library_name)
+        out_core = xbar_core_tpl.render(xbar=xbar, library_name=library_name)
         out_hjson = xbar_hjson_tpl.render(xbar=xbar)
         out_build = xbar_build_tpl.render(xbar=xbar, outpath=outpath)
         out_databuild = xbar_databuild_tpl.render(xbar=xbar, outpath=outpath)

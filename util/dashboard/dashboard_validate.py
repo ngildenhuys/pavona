@@ -26,41 +26,37 @@ def check_keys(obj, required_keys, optional_keys, err_prefix):
 
 
 field_required = {
-    'name': ['s', "module name"],
-    'version': ['s', "module version"],
-    'life_stage': ['s', "life stage of module"]
+    "name": ["s", "module name"],
+    "version": ["s", "module version"],
+    "life_stage": ["s", "life stage of module"],
 }
 field_optional = {
-    'design_spec':
-    ['s', "path to the design specification, relative to repo root"],
-    'dv_doc': ['s', "path to the DV document, relative to repo root"],
-    'hw_checklist': ['s', "path to the hw_checklist, relative to repo root"],
-    'sw_checklist': ['s', "path to the sw_checklist, relative to repo root"],
-    'design_stage': ['s', "design stage of module"],
-    'dif_stage': ['s', 'DIF stage of module'],
-    'verification_stage': ['s', "verification stage of module"],
-    'notes': ['s', "random notes"],
+    "design_spec": ["s", "path to the design specification, relative to repo root"],
+    "dv_doc": ["s", "path to the DV document, relative to repo root"],
+    "hw_checklist": ["s", "path to the hw_checklist, relative to repo root"],
+    "sw_checklist": ["s", "path to the sw_checklist, relative to repo root"],
+    "design_stage": ["s", "design stage of module"],
+    "dif_stage": ["s", "DIF stage of module"],
+    "verification_stage": ["s", "verification stage of module"],
+    "notes": ["s", "random notes"],
 }
 
-entry_required = {
-    'version': ['s', "module version"],
-    'life_stage': ['s', "life stage of module"]
-}
+entry_required = {"version": ["s", "module version"], "life_stage": ["s", "life stage of module"]}
 entry_optional = {
-    'design_stage': ['s', "design stage of module"],
-    'verification_stage': ['s', "verification stage of module"],
-    'dif_stage': ['s', 'DIF stage of module'],
-    'commit_id': ['s', "Staged commit ID"],
-    'notes': ['s', "notes"],
+    "design_stage": ["s", "design stage of module"],
+    "verification_stage": ["s", "verification stage of module"],
+    "dif_stage": ["s", "DIF stage of module"],
+    "commit_id": ["s", "Staged commit ID"],
+    "notes": ["s", "notes"],
 }
 
 
 def validate(regs, is_comportable_spec):
     regs = cast_hjson_values(regs)
-    if 'name' not in regs:
+    if "name" not in regs:
         log.error("Component has no name. Aborting.")
         return 1
-    component = regs['name']
+    component = regs["name"]
 
     # If `revisions` is not in the object keys, the tool runs previous
     # version checker, which has only one version entry.
@@ -78,19 +74,19 @@ def validate(regs, is_comportable_spec):
         else:
             error += check_keys(regs, field_required, field_optional, component)
 
-        if (error > 0):
+        if error > 0:
             log.error("Component has top level errors. Aborting.")
         return error
 
     # Assumes `revisions` field exists in the Hjson object.
     # It iterates the entries in the `revisions` group.
     error = 0
-    if not isinstance(regs['revisions'], list):
+    if not isinstance(regs["revisions"], list):
         error += 1
         log.error("`revisions` field should be a list of version entries")
         return error
 
-    for rev in regs['revisions']:
+    for rev in regs["revisions"]:
         if is_comportable_spec:
             try:
                 validate_schema(rev, "urn:reggen:revision")
@@ -100,7 +96,7 @@ def validate(regs, is_comportable_spec):
         else:
             error += check_keys(rev, entry_required, entry_optional, component)
 
-    if (error > 0):
+    if error > 0:
         log.error("Component has errors in revision field. Aborting.")
 
     return error

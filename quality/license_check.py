@@ -51,9 +51,7 @@ class CommentStyle:
         self.comment_prefix = comment_prefix
 
     def search_line_pattern(self, licence_first_word):
-        return re.compile(
-            re.escape(self.comment_prefix + " " + licence_first_word)
-        )
+        return re.compile(re.escape(self.comment_prefix + " " + licence_first_word))
 
     def full_line_parts(self, licence_line):
         return [re.escape(self.comment_prefix), licence_line]
@@ -192,9 +190,7 @@ class LicenceMatcher:
         if match_regex:
             for i, ll in enumerate(licence):
                 try:
-                    self.expected_lines.append(
-                        comment_style.full_line_pattern(ll)
-                    )
+                    self.expected_lines.append(comment_style.full_line_pattern(ll))
                     # Catch any regex error here and raise a runtime error.
                 except re.error as e:
                     raise RuntimeError(
@@ -207,13 +203,8 @@ class LicenceMatcher:
         # This can never throw an exception as everything has been escaped and
         # therefore is always a legal regex.
         else:
-            self.search_marker = comment_style.search_line_pattern(
-                licence.first_word
-            )
-            self.expected_lines = [
-                comment_style.full_line_pattern(re.escape(ll))
-                for ll in licence
-            ]
+            self.search_marker = comment_style.search_line_pattern(licence.first_word)
+            self.expected_lines = [comment_style.full_line_pattern(re.escape(ll)) for ll in licence]
 
         self.lines_left = []
 
@@ -287,9 +278,7 @@ def detect_comment_char(all_matchers, filename):
 
 def git_find_repo_toplevel():
     try:
-        git_output = subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"]
-        )
+        git_output = subprocess.check_output(["git", "rev-parse", "--show-toplevel"])
         return Path(git_output.decode().strip()).resolve()
     except subprocess.CalledProcessError:
         logging.warning("unable to find repo top level with git; using relative path")
@@ -379,8 +368,7 @@ def check_paths(config, git_paths):
     results = ResultsTracker(config.base_dir)
     try:
         all_matchers = {
-            key: [LicenceMatcher(style, text, match_regex)
-                  for text, match_regex in config.licences]
+            key: [LicenceMatcher(style, text, match_regex) for text, match_regex in config.licences]
             for key, style in COMMENT_STYLES.items()
         }
     except RuntimeError as e:
@@ -542,9 +530,7 @@ def main():
     options = parser.parse_args()
 
     if options.verbose:
-        logging.basicConfig(
-            format="%(levelname)s: %(message)s", level=logging.INFO
-        )
+        logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
     else:
         logging.basicConfig(format="%(levelname)s: %(message)s")
 
@@ -560,12 +546,13 @@ def main():
         match_regex = licence.get("match_regex", "false")
         if match_regex not in ["true", "false"]:
             print(
-                "Invalid value for match_regex: {!r}. "
-                'Should be "true" or "false".'.format(match_regex)
+                'Invalid value for match_regex: {!r}. Should be "true" or "false".'.format(
+                    match_regex
+                )
             )
             exit(1)
         # Check whether we should use regex matching or full string matching.
-        match_regex = (match_regex == "true")
+        match_regex = match_regex == "true"
         config.licences.append((text, match_regex))
 
     results = check_paths(config, options.paths)

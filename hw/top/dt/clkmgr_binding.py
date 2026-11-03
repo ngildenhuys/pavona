@@ -4,6 +4,7 @@
 """This contains a class which is used to help generate the device tables (DT)
 files.
 """
+
 from dtgen.helper import indent_text, IpHelper, Extension, StructType, ScalarType, ArrayMapType
 from topgen.lib import Name
 from typing import Dict, Optional
@@ -113,13 +114,14 @@ class ClkmgrExt(Extension):
     MEASURABLE_CLOCK_STRUCT_NAME = Name.from_snake_case("dt_clkmgr_measurable_clk")
     MEASURABLE_CLOCK_STRUCT_CLK_FIELD_NAME = Name(["clock"])
     MEASURABLE_CLOCK_STRUCT_CTRL_EN_OFF_FIELD_NAME = Name(["meas", "ctrl", "en", "off"])
-    MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME = \
-        Name(["meas", "ctrl", "en", "en", "field"])
+    MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME = Name(["meas", "ctrl", "en", "en", "field"])
     MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_FIELD_NAME = Name(["meas", "ctrl", "shadowed", "off"])
-    MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME = \
-        Name(["meas", "ctrl", "shadowed", "lo", "field"])
-    MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME = \
-        Name(["meas", "ctrl", "shadowed", "hi", "field"])
+    MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME = Name(
+        ["meas", "ctrl", "shadowed", "lo", "field"]
+    )
+    MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME = Name(
+        ["meas", "ctrl", "shadowed", "hi", "field"]
+    )
 
     def __init__(self, ip_helper: IpHelper):
         self.ip_helper = ip_helper
@@ -130,34 +132,34 @@ class ClkmgrExt(Extension):
         # Create a type to represent a measurable clock.
         self.measurable_clk_struct = StructType(self.MEASURABLE_CLOCK_STRUCT_NAME)
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_STRUCT_CLK_FIELD_NAME,
-            field_type = ScalarType(self.ip_helper.top_helper.DT_CLOCK_ENUM_NAME),
-            docstring = "Clock",
+            name=self.MEASURABLE_CLOCK_STRUCT_CLK_FIELD_NAME,
+            field_type=ScalarType(self.ip_helper.top_helper.DT_CLOCK_ENUM_NAME),
+            docstring="Clock",
         )
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_OFF_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "MEAS_CTRL_EN register offset",
+            name=self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_OFF_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="MEAS_CTRL_EN register offset",
         )
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME,
-            field_type = ScalarType("bitfield_field32_t"),
-            docstring = "MEAS_CTRL_EN_EN bitfield",
+            name=self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME,
+            field_type=ScalarType("bitfield_field32_t"),
+            docstring="MEAS_CTRL_EN_EN bitfield",
         )
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_FIELD_NAME,
-            field_type = ScalarType("uint32_t"),
-            docstring = "CTRL_SHADOWED register offset",
+            name=self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_FIELD_NAME,
+            field_type=ScalarType("uint32_t"),
+            docstring="CTRL_SHADOWED register offset",
         )
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME,
-            field_type = ScalarType("bitfield_field32_t"),
-            docstring = "CTRL_SHADOWED_LO bitfield",
+            name=self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME,
+            field_type=ScalarType("bitfield_field32_t"),
+            docstring="CTRL_SHADOWED_LO bitfield",
         )
         self.measurable_clk_struct.add_field(
-            name = self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME,
-            field_type = ScalarType("bitfield_field32_t"),
-            docstring = "CTRL_SHADOWED_HI bitfield",
+            name=self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME,
+            field_type=ScalarType("bitfield_field32_t"),
+            docstring="CTRL_SHADOWED_HI bitfield",
         )
 
         # For an invalid clock, use an invalid clock ID, empty bitfields and
@@ -186,58 +188,56 @@ class ClkmgrExt(Extension):
         st = StructType()
         # Add field to list gateable clocks.
         st.add_field(
-            name = self.SW_CLOCKS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = ScalarType(instance_id_enum.name),
-                index_type = ScalarType("size_t"),
-                length = str(sw_clk_count),
+            name=self.SW_CLOCKS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=ScalarType(instance_id_enum.name),
+                index_type=ScalarType("size_t"),
+                length=str(sw_clk_count),
             ),
-            docstring = "List of gateable clocks, in the order of the register fields",
+            docstring="List of gateable clocks, in the order of the register fields",
         )
         # Add field to list hintable clocks.
         st.add_field(
-            name = self.HINT_CLOCKS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = ScalarType(instance_id_enum.name),
-                index_type = ScalarType("size_t"),
-                length = str(hint_clk_count),
+            name=self.HINT_CLOCKS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=ScalarType(instance_id_enum.name),
+                index_type=ScalarType("size_t"),
+                length=str(hint_clk_count),
             ),
-            docstring = "List of hintable clocks, in the order of the register fields",
+            docstring="List of hintable clocks, in the order of the register fields",
         )
         # Add field to list measurable clocks.
         st.add_field(
-            name = self.MEASURABLE_CLOCKS_FIELD_NAME,
-            field_type = ArrayMapType(
-                elem_type = self.measurable_clk_struct,
-                index_type = ScalarType("size_t"),
-                length = str(measurable_clk_count),
+            name=self.MEASURABLE_CLOCKS_FIELD_NAME,
+            field_type=ArrayMapType(
+                elem_type=self.measurable_clk_struct,
+                index_type=ScalarType("size_t"),
+                length=str(measurable_clk_count),
             ),
-            docstring = "List of measurables clocks",
+            docstring="List of measurables clocks",
         )
         return Name(["clkmgr_ext"]), st
 
     def fill_dt_ip(self, m) -> Dict:
         sw_clks = {}
-        for (idx, clk) in enumerate(self.ipconfig.sw_clks()):
+        for idx, clk in enumerate(self.ipconfig.sw_clks()):
             sw_clks[str(idx)] = Name.from_snake_case(clk["module"])
         hint_clks = {}
-        for (idx, clk) in enumerate(self.ipconfig.hint_clks()):
+        for idx, clk in enumerate(self.ipconfig.hint_clks()):
             hint_clks[str(idx)] = Name.from_snake_case(clk["module"])
         measurable_clks = {}
-        for (idx, clk) in enumerate(self.ipconfig.measurable_clks()):
+        for idx, clk in enumerate(self.ipconfig.measurable_clks()):
             reg_prefix = "CLKMGR_{}_MEAS_CTRL_".format(clk.upper())
             measurable_clks[str(idx)] = {
                 self.MEASURABLE_CLOCK_STRUCT_CLK_FIELD_NAME: Name.from_snake_case(clk),
-                self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_OFF_FIELD_NAME:
-                    reg_prefix + "EN_REG_OFFSET",
-                self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME:
-                    reg_prefix + "EN_EN_FIELD",
-                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_FIELD_NAME:
-                    reg_prefix + "SHADOWED_REG_OFFSET",
-                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME:
-                    reg_prefix + "SHADOWED_LO_FIELD",
-                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME:
-                    reg_prefix + "SHADOWED_HI_FIELD",
+                self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_OFF_FIELD_NAME: reg_prefix + "EN_REG_OFFSET",
+                self.MEASURABLE_CLOCK_STRUCT_CTRL_EN_EN_OFF_FIELD_NAME: reg_prefix + "EN_EN_FIELD",
+                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_FIELD_NAME: reg_prefix
+                + "SHADOWED_REG_OFFSET",
+                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_LO_FIELD_NAME: reg_prefix
+                + "SHADOWED_LO_FIELD",
+                self.MEASURABLE_CLOCK_CTRL_SHADOWED_OFF_HI_FIELD_NAME: reg_prefix
+                + "SHADOWED_HI_FIELD",
             }
 
         return {
@@ -253,18 +253,19 @@ class ClkmgrExt(Extension):
 
         if pos == Extension.DtIpPos.HeaderEnd:
             subs = {
-                'measurable_clk_struct': self.measurable_clk_struct.render_type_def(),
-                'measurable_clk_struct_name': self.MEASURABLE_CLOCK_STRUCT_NAME.as_c_type(),
+                "measurable_clk_struct": self.measurable_clk_struct.render_type_def(),
+                "measurable_clk_struct_name": self.MEASURABLE_CLOCK_STRUCT_NAME.as_c_type(),
             }
             return HEADER_EXT_TEMPLATE % subs
         elif pos == Extension.DtIpPos.SourceEnd:
             subs = {
-                'sw_clk_count': sw_clk_count,
-                'hint_clk_count': hint_clk_count,
-                'measurable_clk_count': measurable_clk_count,
-                'invalid_measure_clk':
-                    indent_text(self.measurable_clk_struct.render_value(self.invalid_clk), "  "),
-                'measurable_clk_struct_name': self.MEASURABLE_CLOCK_STRUCT_NAME.as_c_type(),
+                "sw_clk_count": sw_clk_count,
+                "hint_clk_count": hint_clk_count,
+                "measurable_clk_count": measurable_clk_count,
+                "invalid_measure_clk": indent_text(
+                    self.measurable_clk_struct.render_value(self.invalid_clk), "  "
+                ),
+                "measurable_clk_struct_name": self.MEASURABLE_CLOCK_STRUCT_NAME.as_c_type(),
             }
             return SOURCE_EXT_TEMPLATE % subs
         elif pos == Extension.DtIpPos.SourceIncludes:
