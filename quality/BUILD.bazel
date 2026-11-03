@@ -115,11 +115,17 @@ alias(
     actual = "@aspect_rules_lint//format:yamlfmt",
 )
 
+alias(
+    name = "pythonfmt",
+    actual = "@aspect_rules_lint//format:ruff",
+)
+
 # Run all formatters.
 format_multirun(
     name = "format",
     c = ":clang-format",
     cc = ":clang-format",
+    python = ":pythonfmt",
     rust = ":rustfmt",
     starlark = ":buildifier",
     yaml = ":yamlfmt",
@@ -132,6 +138,7 @@ format_test(
     cc = ":clang-format",
     fix_target = ":format",
     no_sandbox = True,
+    python = ":pythonfmt",
     rust = ":rustfmt",
     starlark = ":buildifier",
     workspace = "//:MODULE.bazel",
